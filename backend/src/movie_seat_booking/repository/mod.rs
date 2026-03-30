@@ -1,0 +1,10 @@
+pub mod user_repository;
+pub mod payment_repository; 
+pub mod seat_repository;
+pub mod show_repository;
+pub mod booking_repository;
+pub mod in_memory_booking_repository;
+pub mod in_memory_payment_repository;
+pub mod in_memory_seat_repository;
+pub mod in_memory_show_repository;
+pub mod in_memory_user_repository;
