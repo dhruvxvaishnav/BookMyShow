@@ -24,7 +24,7 @@ impl Payment {
             user_id,
             amount,
             booking_id,
-            status: PaymentStatus::Pending, // default
+            status: PaymentStatus::Pending,
         }
     }
 }

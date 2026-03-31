@@ -4,9 +4,9 @@ use crate::movie_seat_booking::model::seat_status::SeatStatus;
 use crate::movie_seat_booking::repository::show_repository::ShowRepository;
 use crate::movie_seat_booking::repository::seat_repository::SeatRepository;
 use crate::movie_seat_booking::repository::booking_repository::BookingRepository;
+use crate::movie_seat_booking::repository::payment_repository::PaymentRepository;
 use crate::movie_seat_booking::repository::user_repository::UserRepository  ;
 use super::seat_booking_service::{SeatBookingService, SeatBookingResult };
-
 
 pub struct SeatBookingServiceImpl{
     show_repository: Box<dyn ShowRepository>,
