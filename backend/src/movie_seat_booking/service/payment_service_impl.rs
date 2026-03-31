@@ -7,7 +7,7 @@ use super::payment_service::PaymentService;
 use super::seat_booking_service::SeatBookingService;
 
 
-pub struct PaymentServiceImpl{
+pub struct PaymentServiceImpl {
     booking_repository: Box<dyn BookingRepository>,
     payment_repository: Box<dyn PaymentRepository>,
     seat_booking_service: Box<dyn SeatBookingService>
@@ -49,8 +49,7 @@ impl PaymentService for PaymentServiceImpl {
         let mut payment = self.payment_repository.find_by_payment_intent_id(payment_intent_id).expect("payment not found");
         payment.status = PaymentStatus::from_str(status);
         self.payment_repository.save(payment.clone());
-    //     If success - confirm booking
-    //     If failed - cancel booking
+
         if payment.status == PaymentStatus::Success {
             self.seat_booking_service.confirm_booking(&payment.booking_id, &payment.payment_id);
         } else {
@@ -58,3 +57,4 @@ impl PaymentService for PaymentServiceImpl {
         }
     }
 }
+

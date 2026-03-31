@@ -1,10 +1,10 @@
 use uuid::{uuid, Uuid};
 use crate::movie_seat_booking::model::booking::Booking;
+use crate::movie_seat_booking::model::booking_status::BookingStatus;
 use crate::movie_seat_booking::model::seat_status::SeatStatus;
 use crate::movie_seat_booking::repository::show_repository::ShowRepository;
 use crate::movie_seat_booking::repository::seat_repository::SeatRepository;
 use crate::movie_seat_booking::repository::booking_repository::BookingRepository;
-use crate::movie_seat_booking::repository::payment_repository::PaymentRepository;
 use crate::movie_seat_booking::repository::user_repository::UserRepository  ;
 use super::seat_booking_service::{SeatBookingService, SeatBookingResult };
 
@@ -55,10 +55,22 @@ impl SeatBookingService for SeatBookingServiceImpl {
         SeatBookingResult {booking_id, payment_intent_id}
     }
     fn confirm_booking(&mut self, booking_id: &str, payment_id: &str) -> Booking {
-        todo!()
+        let mut booking = self.booking_repository
+            .find_by_id(booking_id)
+            .expect("Booking Not Found");
+        for  seat in &mut booking.seats {
+            seat.status = SeatStatus::Booked;
+            self.seat_repository.save(seat.clone());
+        }
+        booking.status = BookingStatus::Success;
+        self.booking_repository.save(booking.clone());
+        booking
     }
     fn mark_booking_failed(&mut self, booking_id: &str, payment_id: Option<&str>) {
-        todo!()
+        let mut booking = self.booking_repository
+            .find_by_id(booking_id)
+            .expect("Booking Not Found");
+        booking.status = BookingStatus::Failed;
+        self.booking_repository.save(booking.clone());
     }
-
 }
