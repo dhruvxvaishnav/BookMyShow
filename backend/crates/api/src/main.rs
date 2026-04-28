@@ -1,0 +1,132 @@
+use std::sync::Arc;
+use std::time::Instant;
+use tokio::time::{interval, Duration};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+
+use api::routes::create_router;
+use common::AppConfig;
+use repository::{
+    BookingRepository, PaymentRepository, QueueRepository, SeatLockRepository,
+    SeatRepository, ShowRepository, UserRepository,
+};
+use repository_inmemory::{
+    InMemoryBookingRepository, InMemoryPaymentRepository, InMemoryQueueRepository,
+    InMemorySeatLockRepository, InMemorySeatRepository, InMemoryShowRepository,
+    InMemoryUserRepository,
+};
+use service::{
+    booking_service::BookingServiceTrait,
+    payment_service::PaymentServiceTrait,
+    BookingService, PaymentService,
+    QueueService, SeatLockingService, ShowService,
+};
+use api::state::AppState;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let start = Instant::now();
+
+    // ── 1. Load configuration ─────────────────────────────────────────────
+    let cfg = AppConfig::load().expect("failed to load config");
+
+    // ── 2. Initialise logging ─────────────────────────────────────────────
+    let filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new(&cfg.app.log_level));
+
+    tracing_subscriber::registry()
+        .with(filter)
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+    tracing::info!(
+        host = %cfg.app.host,
+        port = %cfg.app.port,
+        lock_ttl_secs = %cfg.seat_lock.ttl_seconds,
+        "BookMyShow backend starting"
+    );
+
+    // ── 3. Initialise repositories (in-memory for now) ─────────────────────
+    let in_memory_user_repo = InMemoryUserRepository::new();
+    in_memory_user_repo.seed_test_user().await;
+    let user_repo: Arc<dyn UserRepository> = Arc::new(in_memory_user_repo);
+    let show_repo: Arc<dyn ShowRepository> = Arc::new(InMemoryShowRepository::new());
+    let seat_repo: Arc<dyn SeatRepository> = Arc::new(InMemorySeatRepository::new());
+    let booking_repo: Arc<dyn BookingRepository> = Arc::new(InMemoryBookingRepository::new());
+    let payment_repo: Arc<dyn PaymentRepository> = Arc::new(InMemoryPaymentRepository::new());
+    let seat_lock_repo: Arc<dyn SeatLockRepository> = Arc::new(InMemorySeatLockRepository::new());
+    let queue_repo: Arc<dyn QueueRepository> = Arc::new(InMemoryQueueRepository::new());
+
+    // ── 4. Initialise services ─────────────────────────────────────────────
+    let seat_locking_svc = Arc::new(SeatLockingService::new(
+        Arc::clone(&show_repo),
+        Arc::clone(&seat_repo),
+        Arc::clone(&booking_repo),
+        Arc::clone(&seat_lock_repo),
+        Arc::clone(&user_repo),
+        cfg.clone(),
+    ));
+
+    let booking_svc = Arc::new(BookingService::new(
+        Arc::clone(&booking_repo),
+        Arc::clone(&seat_repo),
+        Arc::clone(&payment_repo),
+        cfg.clone(),
+    ));
+
+    let payment_svc = Arc::new(PaymentService::new(
+        Arc::clone(&payment_repo),
+        Arc::clone(&booking_repo),
+        Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
+        cfg.clone(),
+    ));
+
+    let show_svc = Arc::new(ShowService::new(
+        Arc::clone(&show_repo),
+        Arc::clone(&seat_repo),
+        cfg.clone(),
+    ));
+
+    let queue_svc = Arc::new(QueueService::new(
+        Arc::clone(&queue_repo),
+        Arc::clone(&seat_repo),
+        Arc::clone(&seat_lock_repo),
+        Arc::clone(&seat_locking_svc),
+        cfg.clone(),
+    ));
+
+    // ── 5. Build app state and router ──────────────────────────────────────
+    let state = AppState::new(
+        Arc::clone(&seat_locking_svc),
+        Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
+        Arc::clone(&payment_svc) as Arc<dyn PaymentServiceTrait>,
+        Arc::clone(&show_svc),
+        Arc::clone(&queue_svc),
+        cfg.clone(),
+    );
+
+    let lock_svc = state.seat_locking_svc.clone();
+    let app = create_router(state);
+
+    // ── 6. Spawn background tasks ──────────────────────────────────────────
+    tokio::spawn(async move {
+        let mut ticker = interval(Duration::from_secs(10));
+        loop {
+            ticker.tick().await;
+            if let Err(e) = lock_svc.process_expired_locks().await {
+                tracing::error!(error = %e, "lock expiration task error");
+            }
+        }
+    });
+
+    tracing::info!("background tasks started");
+
+    // ── 7. Start HTTP server ───────────────────────────────────────────────
+    let addr = format!("{}:{}", cfg.app.host, cfg.app.port);
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    tracing::info!(addr = %addr, "listening");
+
+    axum::serve(listener, app).await?;
+
+    tracing::info!(uptime = ?start.elapsed(), "server shutdown");
+    Ok(())
+}

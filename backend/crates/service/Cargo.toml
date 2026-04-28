@@ -1,0 +1,24 @@
+[package]
+name = "service"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+repository = { path = "../repository" }
+domain = { path = "../domain" }
+common = { path = "../common" }
+async-trait = "0.1"
+tokio = { version = "1", features = ["sync", "time", "rt"] }
+uuid = { version = "1.23", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+rand = "0.8"
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+tokio = { version = "1", features = ["sync", "time", "rt", "macros"] }
+futures = "0.3"
+rand = "0.8"
+repository_inmemory = { path = "../repository-inmemory" }
+domain = { path = "../domain" }

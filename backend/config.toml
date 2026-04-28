@@ -1,0 +1,25 @@
+[app]
+host = "0.0.0.0"
+port = 8080
+log_level = "info"
+
+[seat_lock]
+ttl_seconds = 300
+max_extensions = 2
+extension_seconds = 120
+grace_period_seconds = 30
+
+[queue]
+processing_timeout_seconds = 10
+max_concurrent_per_show = 3
+poll_interval_ms = 500
+
+[payment]
+timeout_seconds = 600
+mock_gateway_delay_ms = 2000
+mock_gateway_failure_rate = 0.2
+
+[rate_limit]
+lock_requests_per_min = 5
+payment_requests_per_min = 3
+default_requests_per_min = 60
