@@ -17,8 +17,17 @@ serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
 tokio-test = "0.4"
-tokio = { version = "1", features = ["sync", "time", "rt", "macros"] }
+tokio = { version = "1", features = ["sync", "time", "rt", "macros", "full"] }
 futures = "0.3"
 rand = "0.8"
 repository_inmemory = { path = "../repository-inmemory" }
 domain = { path = "../domain" }
+criterion = { version = "0.5", features = ["async_tokio", "html_reports"] }
+
+[[bench]]
+name = "booking_flow"
+harness = false
+
+[[bench]]
+name = "seat_locking"
+harness = false

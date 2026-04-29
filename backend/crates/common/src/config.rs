@@ -90,8 +90,7 @@ impl AppConfig {
     /// Falls back to compiled-in defaults if config.toml is absent or incomplete.
     pub fn load() -> Result<Self, ConfigError> {
         // config.toml is optional — missing file is not an error
-        let mut builder =
-            Config::builder().add_source(File::with_name("config").required(false));
+        let mut builder = Config::builder().add_source(File::with_name("config").required(false));
 
         // Env-var overrides use set_override (builder API, not deprecated)
         macro_rules! env_override {
@@ -108,7 +107,10 @@ impl AppConfig {
         env_override!("seat_lock.ttl_seconds", "SEAT_LOCK_TTL_SECS");
         env_override!("seat_lock.max_extensions", "SEAT_LOCK_MAX_EXTENSIONS");
         env_override!("seat_lock.extension_seconds", "SEAT_LOCK_EXTENSION_SECS");
-        env_override!("seat_lock.grace_period_seconds", "SEAT_LOCK_GRACE_PERIOD_SECS");
+        env_override!(
+            "seat_lock.grace_period_seconds",
+            "SEAT_LOCK_GRACE_PERIOD_SECS"
+        );
 
         // If deserialization fails (e.g. no config.toml and no env vars), use defaults
         match builder.build()?.try_deserialize::<Self>() {

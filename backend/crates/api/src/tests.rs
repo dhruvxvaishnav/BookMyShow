@@ -95,7 +95,6 @@ fn admin_hdr() -> (HeaderName, HeaderValue) {
     )
 }
 
-
 /// Helper: create a show and return its show_id.
 async fn create_show(client: &axum_test::TestServer, name: &str) -> String {
     let resp = client
