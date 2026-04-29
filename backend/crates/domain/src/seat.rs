@@ -36,7 +36,7 @@ pub struct Seat {
 }
 
 mod opt_ts_seconds {
-    use chrono::{DateTime, Utc, OutOfRange};
+    use chrono::{DateTime, Utc};
     use serde::{self, Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S>(v: &Option<DateTime<Utc>>, s: S) -> Result<S::Ok, S::Error>

@@ -73,4 +73,14 @@ impl QueueRepository for InMemoryQueueRepository {
         w.remove(queue_id);
         Ok(())
     }
+
+    async fn find_all_show_ids(&self) -> Result<Vec<String>, AppError> {
+        let r = self.entries.read().await;
+        let show_ids: std::collections::HashSet<_> = r
+            .values()
+            .filter(|e| matches!(e.status, QueueStatus::Waiting | QueueStatus::Processing))
+            .map(|e| e.show_id.clone())
+            .collect();
+        Ok(show_ids.into_iter().collect())
+    }
 }

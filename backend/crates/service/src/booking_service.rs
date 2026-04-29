@@ -6,7 +6,6 @@ use repository::{BookingRepository, PaymentRepository, SeatRepository};
 use std::sync::Arc;
 
 use super::booking::BookingConfirmed;
-use super::payment_service::PaymentService;
 
 /// Trait for the booking service.
 #[async_trait]

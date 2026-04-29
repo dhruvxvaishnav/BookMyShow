@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cargo build:*)"
+      "Bash(cargo build:*)",
+      "Bash(find /c/Users/admin/Desktop/BookMyShow/backend/crates -type f -name *.rs)",
+      "Bash(cargo test:*)"
     ]
   }
 }

@@ -104,16 +104,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         cfg.clone(),
     );
 
+    // ── 6. Spawn background tasks ──────────────────────────────────────────
     let lock_svc = state.seat_locking_svc.clone();
+    let queue_svc = state.queue_svc.clone();
     let app = create_router(state);
 
-    // ── 6. Spawn background tasks ──────────────────────────────────────────
+    // Lock expiration task (every 10s)
     tokio::spawn(async move {
         let mut ticker = interval(Duration::from_secs(10));
         loop {
             ticker.tick().await;
             if let Err(e) = lock_svc.process_expired_locks().await {
                 tracing::error!(error = %e, "lock expiration task error");
+            }
+        }
+    });
+
+    // Queue processor task (polls every 500ms)
+    tokio::spawn(async move {
+        let poll_interval = Duration::from_millis(500);
+        let mut ticker = interval(poll_interval);
+        loop {
+            ticker.tick().await;
+            if let Ok(shows) = queue_svc.queue_repo.find_all_show_ids().await {
+                for show_id in shows {
+                    if let Err(e) = queue_svc.process_next(&show_id).await {
+                        tracing::error!(show_id = %show_id, error = %e, "queue processor error");
+                    }
+                }
             }
         }
     });

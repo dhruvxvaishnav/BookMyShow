@@ -16,4 +16,6 @@ pub trait QueueRepository: Send + Sync {
     async fn mark_processed(&self, queue_id: &str, status: QueueStatus) -> Result<QueueEntry, AppError>;
     /// Delete a queue entry.
     async fn delete(&self, queue_id: &str) -> Result<(), AppError>;
+    /// Get all unique show_ids that have waiting/processing entries.
+    async fn find_all_show_ids(&self) -> Result<Vec<String>, AppError>;
 }

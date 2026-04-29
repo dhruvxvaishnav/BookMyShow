@@ -18,8 +18,8 @@ pub struct CreateShowRequestDto {
     pub show_name: String,
     pub theatre_name: String,
     pub screen_number: u32,
-    pub start_time: chrono::DateTime<chrono::Utc>,
-    pub end_time: chrono::DateTime<chrono::Utc>,
+    pub start_time: i64,
+    pub end_time: i64,
     pub price_per_seat: f64,
     pub seat_layout: SeatLayoutDto,
 }

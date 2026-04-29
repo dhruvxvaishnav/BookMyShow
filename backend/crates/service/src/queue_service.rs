@@ -10,10 +10,13 @@ use super::seat_locking_service::SeatLockingService;
 /// Per-show queue service for ordering concurrent seat requests fairly.
 #[derive(Clone)]
 pub struct QueueService {
-    queue_repo: Arc<dyn QueueRepository>,
+    pub queue_repo: Arc<dyn QueueRepository>,
+    #[allow(dead_code)]
     seat_repo: Arc<dyn SeatRepository>,
+    #[allow(dead_code)]
     seat_lock_repo: Arc<dyn SeatLockRepository>,
     locking_svc: Arc<SeatLockingService>,
+    #[allow(dead_code)]
     cfg: AppConfig,
 }
 

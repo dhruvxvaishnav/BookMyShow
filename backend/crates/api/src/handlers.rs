@@ -351,19 +351,35 @@ pub async fn mock_gateway_pay(
     State(state): State<AppState>,
     Json(req): Json<service::payment::MockPaymentRequest>,
 ) -> Result<Json<ApiResponse<service::payment::MockPaymentResponse>>, crate::impl_from_response::ApiError> {
+    let payment_intent_id = req.payment_intent_id.clone();
     let response = state.payment_svc.mock_gateway_pay(req).await?;
 
     // After the mock gateway "processes" the payment, trigger the callback
     // This bridges the mock gateway back into our service layer
     state
         .payment_svc
-        .payment_callback(&response.gateway_reference, &response.status, Some(&serde_json::to_string(&response).unwrap_or_default()))
+        .payment_callback(&payment_intent_id, &response.status, Some(&serde_json::to_string(&response).unwrap_or_default()))
         .await?;
 
     Ok(Json(ApiResponse::ok(response)))
 }
 
 // ─── Queue handlers ────────────────────────────────────────────────────────────
+
+pub async fn leave_queue(
+    State(state): State<AppState>,
+    Path(queue_id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
+    let user_id = get_user_id(&headers)?;
+
+    state
+        .queue_svc
+        .leave_queue(&queue_id, &user_id)
+        .await?;
+
+    Ok(Json(ApiResponse::ok(())))
+}
 
 pub async fn join_queue(
     State(state): State<AppState>,
@@ -419,8 +435,10 @@ pub async fn create_show(
         show_name: req.show_name.clone(),
         theatre_name: req.theatre_name.clone(),
         screen_number: req.screen_number,
-        start_time: req.start_time,
-        end_time: req.end_time,
+        start_time: chrono::DateTime::from_timestamp(req.start_time, 0)
+            .ok_or_else(|| common::AppError::ValidationError("invalid start_time".to_string()))?,
+        end_time: chrono::DateTime::from_timestamp(req.end_time, 0)
+            .ok_or_else(|| common::AppError::ValidationError("invalid end_time".to_string()))?,
         price_per_seat: req.price_per_seat,
         seat_layout: service::show::SeatLayoutRequest {
             rows: req

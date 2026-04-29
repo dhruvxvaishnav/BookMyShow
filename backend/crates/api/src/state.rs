@@ -1,6 +1,6 @@
 use common::AppConfig;
 use service::{
-    BookingService, PaymentService, QueueService, SeatLockingService, ShowService,
+    QueueService, SeatLockingService, ShowService,
 };
 use service::booking_service::BookingServiceTrait;
 use service::payment_service::PaymentServiceTrait;

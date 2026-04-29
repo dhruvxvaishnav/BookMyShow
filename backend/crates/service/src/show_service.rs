@@ -9,8 +9,9 @@ use super::show::CreateShowRequest;
 /// Service for show and seat management (admin-facing).
 #[derive(Clone)]
 pub struct ShowService {
-    show_repo: Arc<dyn ShowRepository>,
+    pub show_repo: Arc<dyn ShowRepository>,
     seat_repo: Arc<dyn SeatRepository>,
+    #[allow(dead_code)]
     cfg: AppConfig,
 }
 

@@ -1,8 +1,7 @@
-use async_trait::async_trait;
 use chrono::{Duration, Utc};
 use common::{AppConfig, AppError};
 use domain::{
-    Booking, BookingStatus, LockStatus, Seat, SeatLock, SeatStatus, User,
+    Booking, BookingStatus, LockStatus, SeatLock, SeatStatus,
 };
 use repository::{
     BookingRepository, SeatLockRepository, SeatRepository, ShowRepository, UserRepository,
