@@ -30,6 +30,7 @@ pub fn create_router(state: AppState) -> Router {
 
         // ── Payments ──────────────────────────────────────────────────────────
         .route("/payments/:payment_id", get(handlers::get_payment))
+        .route("/payments/:payment_id/refund", post(handlers::refund_payment))
         .route("/payments/callback/:payment_intent_id", post(handlers::payment_callback))
 
         // ── Queue ─────────────────────────────────────────────────────────────
@@ -41,6 +42,7 @@ pub fn create_router(state: AppState) -> Router {
 
         // ── Admin ─────────────────────────────────────────────────────────────
         .route("/admin/shows", post(handlers::create_show))
+        .route("/admin/shows/:show_id", delete(handlers::cancel_show))
 
         // Attach app state
         .with_state(state)

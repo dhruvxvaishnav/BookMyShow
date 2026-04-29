@@ -36,6 +36,11 @@ pub trait BookingServiceTrait: Send + Sync {
         &self,
         user_id: &str,
     ) -> Result<Vec<Booking>, common::AppError>;
+
+    async fn get_show_bookings(
+        &self,
+        show_id: &str,
+    ) -> Result<Vec<Booking>, common::AppError>;
 }
 
 pub struct BookingService {
@@ -191,5 +196,12 @@ impl BookingServiceTrait for BookingService {
         user_id: &str,
     ) -> Result<Vec<Booking>, common::AppError> {
         self.booking_repo.find_by_user(user_id).await
+    }
+
+    async fn get_show_bookings(
+        &self,
+        show_id: &str,
+    ) -> Result<Vec<Booking>, common::AppError> {
+        self.booking_repo.find_by_show(show_id).await
     }
 }

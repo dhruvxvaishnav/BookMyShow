@@ -17,6 +17,9 @@ use std::sync::Arc;
 
 /// Creates a fresh AppState with fresh in-memory repos.
 async fn make_state() -> crate::AppState {
+    let mut cfg = AppConfig::default();
+    cfg.payment.mock_gateway_failure_rate = 0.0;
+
     let user_repo: Arc<dyn UserRepository> = Arc::new({
         let repo = InMemoryUserRepository::new();
         repo.seed_test_user().await;
@@ -28,6 +31,7 @@ async fn make_state() -> crate::AppState {
     let payment_repo: Arc<dyn PaymentRepository> = Arc::new(InMemoryPaymentRepository::new());
     let seat_lock_repo: Arc<dyn SeatLockRepository> = Arc::new(InMemorySeatLockRepository::new());
     let queue_repo: Arc<dyn QueueRepository> = Arc::new(InMemoryQueueRepository::new());
+    let rate_limiter = crate::rate_limiter::RateLimiter::new();
 
     let seat_locking_svc = Arc::new(SeatLockingService::new(
         Arc::clone(&show_repo),
@@ -35,31 +39,31 @@ async fn make_state() -> crate::AppState {
         Arc::clone(&booking_repo),
         Arc::clone(&seat_lock_repo),
         Arc::clone(&user_repo),
-        AppConfig::default(),
+        cfg.clone(),
     ));
     let booking_svc = Arc::new(BookingService::new(
         Arc::clone(&booking_repo),
         Arc::clone(&seat_repo),
         Arc::clone(&payment_repo),
-        AppConfig::default(),
+        cfg.clone(),
     ));
     let payment_svc = Arc::new(PaymentService::new(
         Arc::clone(&payment_repo),
         Arc::clone(&booking_repo),
         Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
-        AppConfig::default(),
+        cfg.clone(),
     ));
     let show_svc = Arc::new(ShowService::new(
         Arc::clone(&show_repo),
         Arc::clone(&seat_repo),
-        AppConfig::default(),
+        cfg.clone(),
     ));
     let queue_svc = Arc::new(QueueService::new(
         Arc::clone(&queue_repo),
         Arc::clone(&seat_repo),
         Arc::clone(&seat_lock_repo),
         Arc::clone(&seat_locking_svc),
-        AppConfig::default(),
+        cfg.clone(),
     ));
 
     crate::AppState::new(
@@ -68,7 +72,8 @@ async fn make_state() -> crate::AppState {
         payment_svc as Arc<dyn PaymentServiceTrait>,
         show_svc,
         queue_svc,
-        AppConfig::default(),
+        rate_limiter,
+        cfg,
     )
 }
 
@@ -306,4 +311,126 @@ async fn test_payment_failure_releases_seats() {
     resp.assert_status(axum::http::StatusCode::OK);
     let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
     assert_eq!(body["data"]["status"].as_str().unwrap().to_lowercase(), "cancelled");
+}
+
+#[tokio::test]
+async fn test_payment_idempotency() {
+    let app = crate::create_router(make_state().await);
+    let client = axum_test::TestServer::new(app).unwrap();
+
+    let show_id = create_show(&client, "Idempotency Test").await;
+    let seat_ids = get_seat_ids(&client, &show_id, 1).await;
+
+    let resp = client
+        .post(&format!("/shows/{show_id}/seats/lock"))
+        .add_header(&user_hdr().0, &user_hdr().1)
+        .json(&serde_json::json!({ "seat_ids": seat_ids }))
+        .await;
+    resp.assert_status(axum::http::StatusCode::CREATED);
+    let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
+    let booking_id = body["data"]["booking_id"].as_str().unwrap().to_string();
+
+    let key = "idemp-key-123";
+
+    // Request 1
+    let resp1 = client
+        .post(&format!("/bookings/{booking_id}/payment/initiate"))
+        .add_header(&user_hdr().0, &user_hdr().1)
+        .add_header(
+            axum::http::HeaderName::from_static("idempotency-key"),
+            axum::http::HeaderValue::from_static(key),
+        )
+        .await;
+    resp1.assert_status(axum::http::StatusCode::OK);
+    let b1: serde_json::Value = serde_json::from_str(resp1.text().as_str()).unwrap();
+    let pid1 = b1["data"]["payment_id"].as_str().unwrap().to_string();
+
+    // Request 2 (same key)
+    let resp2 = client
+        .post(&format!("/bookings/{booking_id}/payment/initiate"))
+        .add_header(&user_hdr().0, &user_hdr().1)
+        .add_header(
+            axum::http::HeaderName::from_static("idempotency-key"),
+            axum::http::HeaderValue::from_static(key),
+        )
+        .await;
+    resp2.assert_status(axum::http::StatusCode::OK);
+    let b2: serde_json::Value = serde_json::from_str(resp2.text().as_str()).unwrap();
+    let pid2 = b2["data"]["payment_id"].as_str().unwrap().to_string();
+
+    // Must be same payment ID
+    assert_eq!(pid1, pid2);
+}
+
+#[tokio::test]
+async fn test_admin_cancel_show() {
+    let app = crate::create_router(make_state().await);
+    let client = axum_test::TestServer::new(app).unwrap();
+
+    let show_id = create_show(&client, "Cancel Show Test").await;
+
+    // Delete show
+    let resp = client
+        .delete(&format!("/admin/shows/{show_id}"))
+        .add_header(&admin_hdr().0, &admin_hdr().1)
+        .await;
+    resp.assert_status(axum::http::StatusCode::OK);
+
+    // Verify show is gone
+    let resp = client.get(&format!("/shows/{show_id}")).await;
+    resp.assert_status(axum::http::StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn test_admin_refund_payment() {
+    let app = crate::create_router(make_state().await);
+    let client = axum_test::TestServer::new(app).unwrap();
+
+    let show_id = create_show(&client, "Refund Test").await;
+    let seat_ids = get_seat_ids(&client, &show_id, 2).await;
+
+    let resp = client
+        .post(&format!("/shows/{show_id}/seats/lock"))
+        .add_header(&user_hdr().0, &user_hdr().1)
+        .json(&serde_json::json!({ "seat_ids": seat_ids }))
+        .await;
+    let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
+    let booking_id = body["data"]["booking_id"].as_str().unwrap().to_string();
+
+    let resp = client
+        .post(&format!("/bookings/{booking_id}/payment/initiate"))
+        .add_header(&user_hdr().0, &user_hdr().1)
+        .await;
+    let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
+    let payment_id = body["data"]["payment_id"].as_str().unwrap().to_string();
+    let payment_intent_id = body["data"]["payment_intent_id"].as_str().unwrap().to_string();
+    let amount = body["data"]["amount"].as_f64().unwrap();
+
+    // Pay
+    let resp = client
+        .post("/mock-gateway/pay")
+        .json(&serde_json::json!({
+            "payment_intent_id": payment_intent_id,
+            "amount": amount,
+            "simulate_failure": false,
+            "simulate_delay_ms": 0
+        }))
+        .await;
+    resp.assert_status(axum::http::StatusCode::OK);
+
+    // Refund
+    let resp = client
+        .post(&format!("/payments/{payment_id}/refund"))
+        .add_header(&admin_hdr().0, &admin_hdr().1)
+        .await;
+    resp.assert_status(axum::http::StatusCode::OK);
+
+    // Verify refund
+    let resp = client
+        .get(&format!("/payments/{payment_id}"))
+        .add_header(&user_hdr().0, &user_hdr().1)
+        .await;
+    resp.assert_status(axum::http::StatusCode::OK);
+    let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
+    assert_eq!(body["data"]["status"].as_str().unwrap().to_lowercase(), "refunded");
 }

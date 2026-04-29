@@ -38,4 +38,10 @@ impl ShowRepository for InMemoryShowRepository {
         let r = self.shows.read().await;
         Ok(r.contains_key(show_id))
     }
+
+    async fn delete(&self, show_id: &str) -> Result<(), AppError> {
+        let mut w = self.shows.write().await;
+        w.remove(show_id);
+        Ok(())
+    }
 }

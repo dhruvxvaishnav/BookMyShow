@@ -98,6 +98,18 @@ impl ShowService {
         self.show_repo.find_by_id(show_id).await
     }
 
+    /// Cancel a show and delete it. (Bookings will be cancelled by the handler)
+    pub async fn cancel_show(&self, show_id: &str) -> Result<(), common::AppError> {
+        let _show = self
+            .show_repo
+            .find_by_id(show_id)
+            .await?
+            .ok_or_else(|| common::AppError::ShowNotFound(show_id.to_string()))?;
+
+        self.show_repo.delete(show_id).await?;
+        Ok(())
+    }
+
     /// Get all seats for a show with current status.
     pub async fn get_seat_layout(
         &self,

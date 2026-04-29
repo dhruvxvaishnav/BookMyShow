@@ -4,6 +4,7 @@ use tokio::time::{interval, Duration};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use api::routes::create_router;
+use api::rate_limiter::RateLimiter;
 use common::AppConfig;
 use repository::{
     BookingRepository, PaymentRepository, QueueRepository, SeatLockRepository,
@@ -95,18 +96,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ));
 
     // ── 5. Build app state and router ──────────────────────────────────────
+    let rate_limiter = RateLimiter::new();
+
     let state = AppState::new(
         Arc::clone(&seat_locking_svc),
         Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
         Arc::clone(&payment_svc) as Arc<dyn PaymentServiceTrait>,
         Arc::clone(&show_svc),
         Arc::clone(&queue_svc),
+        rate_limiter,
         cfg.clone(),
     );
 
     // ── 6. Spawn background tasks ──────────────────────────────────────────
     let lock_svc = state.seat_locking_svc.clone();
     let queue_svc = state.queue_svc.clone();
+    let payment_svc = state.payment_svc.clone();
     let app = create_router(state);
 
     // Lock expiration task (every 10s)
@@ -116,6 +121,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ticker.tick().await;
             if let Err(e) = lock_svc.process_expired_locks().await {
                 tracing::error!(error = %e, "lock expiration task error");
+            }
+        }
+    });
+
+    // Payment timeout task (every 60s)
+    tokio::spawn(async move {
+        let mut ticker = interval(Duration::from_secs(60));
+        loop {
+            ticker.tick().await;
+            if let Err(e) = payment_svc.process_expired_payments().await {
+                tracing::error!(error = %e, "payment timeout task error");
             }
         }
     });

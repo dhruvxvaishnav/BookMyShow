@@ -18,6 +18,7 @@ pub trait PaymentServiceTrait: Send + Sync {
         &self,
         booking_id: &str,
         user_id: &str,
+        idempotency_key: Option<String>,
     ) -> Result<PaymentInitiated, common::AppError>;
 
     /// Handle payment gateway callback. This is called by the gateway (or mock)
@@ -40,6 +41,15 @@ pub trait PaymentServiceTrait: Send + Sync {
         &self,
         req: MockPaymentRequest,
     ) -> Result<MockPaymentResponse, common::AppError>;
+
+    /// Issue a refund for a payment.
+    async fn refund_payment(
+        &self,
+        payment_id: &str,
+    ) -> Result<(), common::AppError>;
+
+    /// Background task to process expired pending payments.
+    async fn process_expired_payments(&self) -> Result<(), common::AppError>;
 }
 
 pub struct PaymentService {
@@ -71,14 +81,27 @@ impl PaymentServiceTrait for PaymentService {
         &self,
         booking_id: &str,
         user_id: &str,
+        idempotency_key: Option<String>,
     ) -> Result<PaymentInitiated, common::AppError> {
+        // If idempotency key is provided, check if payment already exists for this key
+        if let Some(key) = &idempotency_key {
+            if let Some(existing) = self.payment_repo.find_by_idempotency_key(key).await? {
+                return Ok(PaymentInitiated {
+                    payment_id: existing.payment_id,
+                    payment_intent_id: existing.payment_intent_id,
+                    amount: existing.amount,
+                    gateway_name: existing.gateway_name,
+                });
+            }
+        }
+
         let booking = self
             .booking_repo
             .find_by_id(booking_id)
             .await?
             .ok_or_else(|| common::AppError::BookingNotFound(booking_id.to_string()))?;
 
-        // Check idempotency: if payment already exists for this booking, return it
+        // Check legacy idempotency: if payment already exists for this booking, return it
         if let Some(existing) = self.payment_repo.find_by_booking(booking_id).await? {
             return Ok(PaymentInitiated {
                 payment_id: existing.payment_id,
@@ -106,6 +129,7 @@ impl PaymentServiceTrait for PaymentService {
             user_id.to_string(),
             booking.total_amount,
             "mock".to_string(),
+            idempotency_key,
         );
 
         self.payment_repo.save(payment).await?;
@@ -247,6 +271,56 @@ impl PaymentServiceTrait for PaymentService {
             status,
             gateway_reference: format!("GW-{}", Uuid::new_v4()),
         })
+    }
+
+    async fn refund_payment(
+        &self,
+        payment_id: &str,
+    ) -> Result<(), common::AppError> {
+        let mut payment = self
+            .payment_repo
+            .find_by_id(payment_id)
+            .await?
+            .ok_or_else(|| common::AppError::PaymentNotFound(payment_id.to_string()))?;
+
+        if payment.status != PaymentStatus::Success {
+            return Err(common::AppError::ValidationError(
+                "Only successful payments can be refunded".to_string(),
+            ));
+        }
+
+        payment.status = PaymentStatus::Refunded;
+        self.payment_repo.save(payment.clone()).await?;
+
+        // Release seats if booking exists
+        if let Some(booking) = self.booking_repo.find_by_payment_id(payment_id).await? {
+            // This is simplified. In a real system, we might want a BookingService
+            // method to handle refunds properly.
+            let _ = self.booking_svc.cancel_booking(&booking.booking_id, &booking.user_id).await;
+        }
+
+        tracing::info!(payment_id = %payment_id, "payment refunded");
+        Ok(())
+    }
+
+    async fn process_expired_payments(&self) -> Result<(), common::AppError> {
+        let timeout_secs = self.cfg.payment.timeout_seconds as i64;
+        let before = Utc::now() - chrono::Duration::seconds(timeout_secs);
+
+        let expired = self.payment_repo.find_expired_pending(before).await?;
+        for mut payment in expired {
+            payment.status = PaymentStatus::Failed;
+            payment.failed_at = Some(Utc::now());
+            self.payment_repo.save(payment.clone()).await?;
+
+            tracing::info!(payment_id = %payment.payment_id, "payment expired and marked as failed");
+
+            // Also trigger cancellation of booking if applicable
+            if let Some(booking) = self.booking_repo.find_by_id(&payment.booking_id).await? {
+                let _ = self.booking_svc.cancel_booking(&booking.booking_id, &booking.user_id).await;
+            }
+        }
+        Ok(())
     }
 }
 

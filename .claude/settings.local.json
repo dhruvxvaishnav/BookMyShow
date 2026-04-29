@@ -3,7 +3,11 @@
     "allow": [
       "Bash(cargo build:*)",
       "Bash(find /c/Users/admin/Desktop/BookMyShow/backend/crates -type f -name *.rs)",
-      "Bash(cargo test:*)"
+      "Bash(cargo test:*)",
+      "Bash(find C:/Users/admin/Desktop/BookMyShow/backend -name *.md -type f)",
+      "Bash(for i:*)",
+      "Bash(do cargo:*)",
+      "Bash(done)"
     ]
   }
 }

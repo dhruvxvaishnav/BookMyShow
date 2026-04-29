@@ -48,4 +48,20 @@ impl PaymentRepository for InMemoryPaymentRepository {
         let r = self.payments.read().await;
         Ok(r.values().filter(|p| p.user_id == user_id).cloned().collect())
     }
+
+    async fn find_by_idempotency_key(&self, key: &str) -> Result<Option<Payment>, AppError> {
+        let r = self.payments.read().await;
+        Ok(r.values().find(|p| p.idempotency_key.as_deref() == Some(key)).cloned())
+    }
+
+    async fn find_expired_pending(
+        &self,
+        before: chrono::DateTime<chrono::Utc>,
+    ) -> Result<Vec<Payment>, AppError> {
+        let r = self.payments.read().await;
+        Ok(r.values()
+            .filter(|p| p.status == domain::PaymentStatus::Pending && p.created_at < before)
+            .cloned()
+            .collect())
+    }
 }

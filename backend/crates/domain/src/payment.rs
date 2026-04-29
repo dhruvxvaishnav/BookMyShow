@@ -19,6 +19,8 @@ pub struct Payment {
     /// Raw gateway response payload (JSON string).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gateway_response: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub idempotency_key: Option<String>,
     #[serde(with = "chrono::serde::ts_seconds")]
     pub created_at: DateTime<Utc>,
     /// Set when gateway confirms success.
@@ -56,6 +58,7 @@ mod opt_ts_seconds {
 }
 
 impl Payment {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         payment_id: String,
         payment_intent_id: String,
@@ -63,6 +66,7 @@ impl Payment {
         user_id: String,
         amount: f64,
         gateway_name: String,
+        idempotency_key: Option<String>,
     ) -> Self {
         Self {
             payment_id,
@@ -74,6 +78,7 @@ impl Payment {
             status: PaymentStatus::Pending,
             gateway_name,
             gateway_response: None,
+            idempotency_key,
             created_at: Utc::now(),
             confirmed_at: None,
             failed_at: None,

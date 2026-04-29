@@ -12,4 +12,9 @@ pub trait PaymentRepository: Send + Sync {
     ) -> Result<Option<Payment>, AppError>;
     async fn find_by_booking(&self, booking_id: &str) -> Result<Option<Payment>, AppError>;
     async fn find_by_user(&self, user_id: &str) -> Result<Vec<Payment>, AppError>;
+    async fn find_by_idempotency_key(&self, key: &str) -> Result<Option<Payment>, AppError>;
+    async fn find_expired_pending(
+        &self,
+        before: chrono::DateTime<chrono::Utc>,
+    ) -> Result<Vec<Payment>, AppError>;
 }

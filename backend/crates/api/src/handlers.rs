@@ -36,10 +36,13 @@ fn require_admin(token: Option<String>) -> Result<(), common::AppError> {
 
 // ─── Health ────────────────────────────────────────────────────────────────────
 
+static START_TIME: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
+
 pub async fn health() -> Json<ApiResponse<HealthResponse>> {
+    let uptime = START_TIME.get_or_init(std::time::Instant::now).elapsed().as_secs();
     Json(ApiResponse::ok(HealthResponse {
         status: "ok".to_string(),
-        uptime_seconds: 0, // Updated in main.rs via static
+        uptime_seconds: uptime,
     }))
 }
 
@@ -153,6 +156,13 @@ pub async fn lock_seats(
 ) -> Result<(axum::http::StatusCode, Json<ApiResponse<LockSeatsResponse>>), crate::impl_from_response::ApiError> {
     let user_id = get_user_id(&headers)?;
 
+    // Rate limit: 5 lock requests per minute per user
+    let rate_key = format!("lock:{}", user_id);
+    let lock_limit = state.cfg.rate_limit.lock_requests_per_min;
+    if state.rate_limiter.check(&rate_key, lock_limit).await.is_err() {
+        return Err(common::AppError::RateLimitExceeded.into());
+    }
+
     let result = state
         .seat_locking_svc
         .lock_seats(&show_id, req.seat_ids, &user_id)
@@ -177,6 +187,13 @@ pub async fn extend_lock(
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<LockSeatsResponse>>, crate::impl_from_response::ApiError> {
     let user_id = get_user_id(&headers)?;
+
+    // Rate limit: 5 lock extension requests per minute per user
+    let rate_key = format!("lock:{}", user_id);
+    let lock_limit = state.cfg.rate_limit.lock_requests_per_min;
+    if state.rate_limiter.check(&rate_key, lock_limit).await.is_err() {
+        return Err(common::AppError::RateLimitExceeded.into());
+    }
 
     let result = state
         .seat_locking_svc
@@ -291,10 +308,21 @@ pub async fn initiate_payment(
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<PaymentInitiatedResponse>>, crate::impl_from_response::ApiError> {
     let user_id = get_user_id(&headers)?;
+    let idempotency_key = headers
+        .get("Idempotency-Key")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+
+    // Rate limit: 3 payment initiation requests per minute per user
+    let rate_key = format!("payment:{}", user_id);
+    let payment_limit = state.cfg.rate_limit.payment_requests_per_min;
+    if state.rate_limiter.check(&rate_key, payment_limit).await.is_err() {
+        return Err(common::AppError::RateLimitExceeded.into());
+    }
 
     let result = state
         .payment_svc
-        .initiate_payment(&booking_id, &user_id)
+        .initiate_payment(&booking_id, &user_id, idempotency_key)
         .await?;
 
     Ok(Json(ApiResponse::ok(PaymentInitiatedResponse {
@@ -471,4 +499,45 @@ pub async fn create_show(
             total_seats: show.total_seats,
         })),
     ))
+}
+
+// ── Admin Cancel Show ─────────────────────────────────────────────────────────
+
+pub async fn cancel_show(
+    State(state): State<AppState>,
+    Path(show_id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
+    require_admin(get_admin_token(&headers))?;
+
+    // Cancel show
+    state.show_svc.cancel_show(&show_id).await?;
+
+    // Refund all bookings for the show
+    let bookings = state.booking_svc.get_show_bookings(&show_id).await?;
+    for booking in bookings {
+        if booking.status == domain::BookingStatus::Success {
+            if let Some(payment_id) = &booking.payment_id {
+                let _ = state.payment_svc.refund_payment(payment_id).await;
+            }
+        }
+        // Also cancel it
+        let _ = state.booking_svc.cancel_booking(&booking.booking_id, &booking.user_id).await;
+    }
+
+    Ok(Json(ApiResponse::ok(())))
+}
+
+// ── Admin Refund Payment ──────────────────────────────────────────────────────
+
+pub async fn refund_payment(
+    State(state): State<AppState>,
+    Path(payment_id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
+    require_admin(get_admin_token(&headers))?;
+
+    state.payment_svc.refund_payment(&payment_id).await?;
+
+    Ok(Json(ApiResponse::ok(())))
 }
