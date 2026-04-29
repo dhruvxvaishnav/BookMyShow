@@ -60,6 +60,11 @@ impl BookingRepository for InMemoryBookingRepository {
             .cloned())
     }
 
+    async fn find_all(&self) -> Result<Vec<Booking>, AppError> {
+        let r = self.bookings.read().await;
+        Ok(r.values().cloned().collect())
+    }
+
     async fn find_expired(&self, grace_period_secs: i64) -> Result<Vec<Booking>, AppError> {
         let r = self.bookings.read().await;
         let now = Utc::now();

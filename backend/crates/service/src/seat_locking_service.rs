@@ -9,7 +9,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use super::seat_locking::LockResult;
+use super::seat_locking::{LockResult, OverrideResult};
 
 /// Core seat locking service. Implements per-show Mutex and double-checked locking
 /// to guarantee that exactly one user can lock a given seat at a time.
@@ -407,6 +407,74 @@ impl SeatLockingService {
 
         tracing::warn!(lock_id = %lock_id, "lock expired and seats released");
         Ok(())
+    }
+
+    /// Force-release a locked seat (admin operation). Works regardless of who holds the lock.
+    /// Returns an error if the seat is not in a Locked state.
+    pub async fn admin_override_seat(
+        &self,
+        seat_id: &str,
+        reason: &str,
+    ) -> Result<OverrideResult, AppError> {
+        let seat = self
+            .seat_repo
+            .find_by_id(seat_id)
+            .await?
+            .ok_or_else(|| AppError::SeatNotFound(seat_id.to_string()))?;
+
+        if !matches!(seat.status, SeatStatus::Locked) {
+            return Err(AppError::ValidationError(format!(
+                "seat {} is not locked (current status: {})",
+                seat_id, seat.status
+            )));
+        }
+
+        let released_lock_id = seat.lock_id.clone();
+        let seat_number = seat.seat_number.clone();
+
+        // Acquire per-show mutex so no concurrent lock attempt races us
+        let show_lock = self.get_show_lock(&seat.show_id).await;
+        let _guard = show_lock.write().await;
+
+        self.seat_repo.release_seat(seat_id).await?;
+
+        // Mark the associated SeatLock as Released if it exists
+        if let Some(ref lock_id) = released_lock_id {
+            if let Ok(Some(_)) = self.seat_lock_repo.find_by_id(lock_id).await {
+                self.seat_lock_repo
+                    .update_status(lock_id, LockStatus::Released)
+                    .await?;
+            }
+
+            // Mark the associated Booking as Cancelled
+            let bookings = self
+                .booking_repo
+                .find_by_status(BookingStatus::Pending)
+                .await?;
+            for mut booking in bookings {
+                if booking.lock_id.as_deref() == Some(lock_id) {
+                    booking.status = BookingStatus::Cancelled;
+                    booking.cancelled_at = Some(Utc::now());
+                    self.booking_repo.save(booking).await?;
+                }
+            }
+        }
+
+        tracing::warn!(
+            seat_id = %seat_id,
+            seat_number = %seat_number,
+            lock_id = ?released_lock_id,
+            reason = %reason,
+            "admin force-released locked seat"
+        );
+
+        Ok(OverrideResult {
+            seat_id: seat_id.to_string(),
+            seat_number,
+            previous_status: "locked".to_string(),
+            new_status: "available".to_string(),
+            released_lock_id,
+        })
     }
 
     /// Get or create the per-show Mutex guard.

@@ -574,6 +574,89 @@ pub async fn cancel_show(
     Ok(Json(ApiResponse::ok(())))
 }
 
+// ── Admin: List All Bookings ──────────────────────────────────────────────────
+
+pub async fn admin_list_bookings(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<ApiResponse<Vec<BookingResponse>>>, crate::impl_from_response::ApiError> {
+    require_admin(get_admin_token(&headers))?;
+
+    let bookings = state.booking_svc.get_all_bookings().await?;
+
+    let responses: Vec<BookingResponse> = bookings
+        .into_iter()
+        .map(|b| BookingResponse {
+            booking_id: b.booking_id,
+            user_id: b.user_id,
+            show_id: b.show_id,
+            seat_ids: b.seat_ids,
+            status: b.status.to_string(),
+            total_amount: b.total_amount,
+            payment_id: b.payment_id,
+            created_at: b.created_at.timestamp(),
+            expires_at: b.expires_at.timestamp(),
+            confirmed_at: b.confirmed_at.map(|dt| dt.timestamp()),
+            cancelled_at: b.cancelled_at.map(|dt| dt.timestamp()),
+        })
+        .collect();
+
+    Ok(Json(ApiResponse::ok(responses)))
+}
+
+// ── Admin: Show Analytics ─────────────────────────────────────────────────────
+
+pub async fn admin_show_analytics(
+    State(state): State<AppState>,
+    Path(show_id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Json<ApiResponse<ShowAnalyticsResponse>>, crate::impl_from_response::ApiError> {
+    require_admin(get_admin_token(&headers))?;
+
+    let analytics = state.show_svc.get_show_analytics(&show_id).await?;
+
+    Ok(Json(ApiResponse::ok(ShowAnalyticsResponse {
+        show_id: analytics.show_id,
+        show_name: analytics.show_name,
+        total_seats: analytics.total_seats,
+        available_seats: analytics.available_seats,
+        locked_seats: analytics.locked_seats,
+        booked_seats: analytics.booked_seats,
+        occupancy_rate: analytics.occupancy_rate,
+        revenue: analytics.revenue,
+    })))
+}
+
+// ── Admin: Manual Seat Override ───────────────────────────────────────────────
+
+pub async fn admin_override_seat(
+    State(state): State<AppState>,
+    Path((_show_id, seat_id)): Path<(String, String)>,
+    headers: HeaderMap,
+    Json(req): Json<SeatOverrideRequest>,
+) -> Result<Json<ApiResponse<SeatOverrideResponse>>, crate::impl_from_response::ApiError> {
+    require_admin(get_admin_token(&headers))?;
+
+    let reason = if req.reason.is_empty() {
+        "admin override".to_string()
+    } else {
+        req.reason
+    };
+
+    let result = state
+        .seat_locking_svc
+        .admin_override_seat(&seat_id, &reason)
+        .await?;
+
+    Ok(Json(ApiResponse::ok(SeatOverrideResponse {
+        seat_id: result.seat_id,
+        seat_number: result.seat_number,
+        previous_status: result.previous_status,
+        new_status: result.new_status,
+        released_lock_id: result.released_lock_id,
+    })))
+}
+
 // ── Admin Refund Payment ──────────────────────────────────────────────────────
 
 pub async fn refund_payment(

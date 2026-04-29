@@ -32,10 +32,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filter =
         EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&cfg.app.log_level));
 
-    tracing_subscriber::registry()
-        .with(filter)
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // LOG_FORMAT=text switches to human-readable output (useful in dev).
+    // Default is JSON for production / structured log ingestion.
+    if std::env::var("LOG_FORMAT").as_deref() == Ok("text") {
+        tracing_subscriber::registry()
+            .with(filter)
+            .with(tracing_subscriber::fmt::layer())
+            .init();
+    } else {
+        tracing_subscriber::registry()
+            .with(filter)
+            .with(tracing_subscriber::fmt::layer().json())
+            .init();
+    }
 
     tracing::info!(
         host = %cfg.app.host,
@@ -82,6 +91,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let show_svc = Arc::new(ShowService::new(
         Arc::clone(&show_repo),
         Arc::clone(&seat_repo),
+        Arc::clone(&booking_repo),
         cfg.clone(),
     ));
 

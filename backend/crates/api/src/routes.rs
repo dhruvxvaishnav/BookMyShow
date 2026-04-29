@@ -55,6 +55,15 @@ pub fn create_router(state: AppState) -> Router {
         // ── Admin ─────────────────────────────────────────────────────────────
         .route("/admin/shows", post(handlers::create_show))
         .route("/admin/shows/:show_id", delete(handlers::cancel_show))
+        .route(
+            "/admin/shows/:show_id/analytics",
+            get(handlers::admin_show_analytics),
+        )
+        .route(
+            "/admin/shows/:show_id/seats/:seat_id/override",
+            post(handlers::admin_override_seat),
+        )
+        .route("/admin/bookings", get(handlers::admin_list_bookings))
         // Attach app state
         .with_state(state)
         // Add tracing middleware

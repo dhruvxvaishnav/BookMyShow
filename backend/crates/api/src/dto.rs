@@ -155,3 +155,33 @@ pub struct HealthResponse {
     pub status: String,
     pub uptime_seconds: u64,
 }
+
+/// Admin: show analytics response.
+#[derive(Debug, Clone, Serialize)]
+pub struct ShowAnalyticsResponse {
+    pub show_id: String,
+    pub show_name: String,
+    pub total_seats: u32,
+    pub available_seats: u32,
+    pub locked_seats: u32,
+    pub booked_seats: u32,
+    pub occupancy_rate: f64,
+    pub revenue: f64,
+}
+
+/// Admin: seat override request.
+#[derive(Debug, Clone, Deserialize)]
+pub struct SeatOverrideRequest {
+    #[serde(default)]
+    pub reason: String,
+}
+
+/// Admin: seat override response.
+#[derive(Debug, Clone, Serialize)]
+pub struct SeatOverrideResponse {
+    pub seat_id: String,
+    pub seat_number: String,
+    pub previous_status: String,
+    pub new_status: String,
+    pub released_lock_id: Option<String>,
+}

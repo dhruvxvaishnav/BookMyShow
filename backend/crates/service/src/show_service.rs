@@ -1,6 +1,6 @@
 use common::AppConfig;
-use domain::{Seat, SeatType, Show};
-use repository::{SeatRepository, ShowRepository};
+use domain::{Booking, BookingStatus, Seat, SeatType, Show};
+use repository::{BookingRepository, SeatRepository, ShowRepository};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -11,6 +11,7 @@ use super::show::CreateShowRequest;
 pub struct ShowService {
     pub show_repo: Arc<dyn ShowRepository>,
     seat_repo: Arc<dyn SeatRepository>,
+    booking_repo: Arc<dyn BookingRepository>,
     #[allow(dead_code)]
     cfg: AppConfig,
 }
@@ -19,11 +20,13 @@ impl ShowService {
     pub fn new(
         show_repo: Arc<dyn ShowRepository>,
         seat_repo: Arc<dyn SeatRepository>,
+        booking_repo: Arc<dyn BookingRepository>,
         cfg: AppConfig,
     ) -> Self {
         Self {
             show_repo,
             seat_repo,
+            booking_repo,
             cfg,
         }
     }
@@ -146,6 +149,57 @@ impl ShowService {
             booked,
         })
     }
+
+    /// Compute occupancy and revenue analytics for a show.
+    pub async fn get_show_analytics(
+        &self,
+        show_id: &str,
+    ) -> Result<ShowAnalytics, common::AppError> {
+        let show = self
+            .show_repo
+            .find_by_id(show_id)
+            .await?
+            .ok_or_else(|| common::AppError::ShowNotFound(show_id.to_string()))?;
+
+        let available = self
+            .seat_repo
+            .count_by_show_and_status(show_id, domain::SeatStatus::Available)
+            .await?;
+        let locked = self
+            .seat_repo
+            .count_by_show_and_status(show_id, domain::SeatStatus::Locked)
+            .await?;
+        let booked = self
+            .seat_repo
+            .count_by_show_and_status(show_id, domain::SeatStatus::Booked)
+            .await?;
+
+        let total = show.total_seats;
+        let occupancy_rate = if total > 0 {
+            (booked as f64 / total as f64) * 100.0
+        } else {
+            0.0
+        };
+
+        // Revenue = sum of total_amount for all confirmed (Success) bookings
+        let bookings: Vec<Booking> = self.booking_repo.find_by_show(show_id).await?;
+        let revenue: f64 = bookings
+            .iter()
+            .filter(|b| b.status == BookingStatus::Success)
+            .map(|b| b.total_amount)
+            .sum();
+
+        Ok(ShowAnalytics {
+            show_id: show_id.to_string(),
+            show_name: show.show_name,
+            total_seats: total,
+            available_seats: available,
+            locked_seats: locked,
+            booked_seats: booked,
+            occupancy_rate,
+            revenue,
+        })
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -154,4 +208,16 @@ pub struct ShowAvailability {
     pub available: u32,
     pub locked: u32,
     pub booked: u32,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ShowAnalytics {
+    pub show_id: String,
+    pub show_name: String,
+    pub total_seats: u32,
+    pub available_seats: u32,
+    pub locked_seats: u32,
+    pub booked_seats: u32,
+    pub occupancy_rate: f64,
+    pub revenue: f64,
 }

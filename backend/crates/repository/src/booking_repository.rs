@@ -11,4 +11,5 @@ pub trait BookingRepository: Send + Sync {
     async fn find_by_status(&self, status: BookingStatus) -> Result<Vec<Booking>, AppError>;
     async fn find_by_payment_id(&self, payment_id: &str) -> Result<Option<Booking>, AppError>;
     async fn find_expired(&self, grace_period_secs: i64) -> Result<Vec<Booking>, AppError>;
+    async fn find_all(&self) -> Result<Vec<Booking>, AppError>;
 }

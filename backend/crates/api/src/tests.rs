@@ -56,6 +56,7 @@ async fn make_state() -> crate::AppState {
     let show_svc = Arc::new(ShowService::new(
         Arc::clone(&show_repo),
         Arc::clone(&seat_repo),
+        Arc::clone(&booking_repo),
         cfg.clone(),
     ));
     let queue_svc = Arc::new(QueueService::new(
