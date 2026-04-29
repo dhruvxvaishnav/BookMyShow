@@ -19,28 +19,16 @@ pub trait BookingServiceTrait: Send + Sync {
     ) -> Result<BookingConfirmed, common::AppError>;
 
     /// Cancel a booking (before payment).
-    async fn cancel_booking(
-        &self,
-        booking_id: &str,
-        user_id: &str,
-    ) -> Result<(), common::AppError>;
+    async fn cancel_booking(&self, booking_id: &str, user_id: &str)
+    -> Result<(), common::AppError>;
 
     /// Get a booking by ID.
-    async fn get_booking(
-        &self,
-        booking_id: &str,
-    ) -> Result<Option<Booking>, common::AppError>;
+    async fn get_booking(&self, booking_id: &str) -> Result<Option<Booking>, common::AppError>;
 
     /// List all bookings for a user.
-    async fn get_user_bookings(
-        &self,
-        user_id: &str,
-    ) -> Result<Vec<Booking>, common::AppError>;
+    async fn get_user_bookings(&self, user_id: &str) -> Result<Vec<Booking>, common::AppError>;
 
-    async fn get_show_bookings(
-        &self,
-        show_id: &str,
-    ) -> Result<Vec<Booking>, common::AppError>;
+    async fn get_show_bookings(&self, show_id: &str) -> Result<Vec<Booking>, common::AppError>;
 }
 
 pub struct BookingService {
@@ -99,14 +87,19 @@ impl BookingServiceTrait for BookingService {
             booking.status,
             BookingStatus::Pending | BookingStatus::PaymentPending
         ) {
-            return Err(common::AppError::BookingAlreadyProcessed(booking_id.to_string()));
+            return Err(common::AppError::BookingAlreadyProcessed(
+                booking_id.to_string(),
+            ));
         }
 
         // Verify lock hasn't hard-expired (past grace period)
         let now = Utc::now();
-        let grace_end = booking.expires_at + chrono::Duration::seconds(self.cfg.seat_lock.grace_period_seconds as i64);
+        let grace_end = booking.expires_at
+            + chrono::Duration::seconds(self.cfg.seat_lock.grace_period_seconds as i64);
         if now > grace_end {
-            return Err(common::AppError::LockExpired(booking.lock_id.clone().unwrap_or_default()));
+            return Err(common::AppError::LockExpired(
+                booking.lock_id.clone().unwrap_or_default(),
+            ));
         }
 
         // Re-verify all seats are still Locked by this user
@@ -118,7 +111,9 @@ impl BookingServiceTrait for BookingService {
             if seat.status == SeatStatus::Locked
                 && seat.lock_id.as_ref() == booking.lock_id.as_ref()
             {
-                self.seat_repo.book_seat(&seat.seat_id, &booking.user_id).await?;
+                self.seat_repo
+                    .book_seat(&seat.seat_id, &booking.user_id)
+                    .await?;
                 confirmed_seats.push(seat.seat_id.clone());
             } else {
                 failed_seats.push(seat.seat_id.clone());
@@ -170,7 +165,9 @@ impl BookingServiceTrait for BookingService {
         }
 
         if !booking.is_lockable() {
-            return Err(common::AppError::BookingAlreadyProcessed(booking_id.to_string()));
+            return Err(common::AppError::BookingAlreadyProcessed(
+                booking_id.to_string(),
+            ));
         }
 
         // Release all seats
@@ -191,17 +188,11 @@ impl BookingServiceTrait for BookingService {
         self.booking_repo.find_by_id(booking_id).await
     }
 
-    async fn get_user_bookings(
-        &self,
-        user_id: &str,
-    ) -> Result<Vec<Booking>, common::AppError> {
+    async fn get_user_bookings(&self, user_id: &str) -> Result<Vec<Booking>, common::AppError> {
         self.booking_repo.find_by_user(user_id).await
     }
 
-    async fn get_show_bookings(
-        &self,
-        show_id: &str,
-    ) -> Result<Vec<Booking>, common::AppError> {
+    async fn get_show_bookings(&self, show_id: &str) -> Result<Vec<Booking>, common::AppError> {
         self.booking_repo.find_by_show(show_id).await
     }
 }

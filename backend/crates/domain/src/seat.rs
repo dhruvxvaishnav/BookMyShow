@@ -1,6 +1,6 @@
+use super::{SeatStatus, SeatType, User};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use super::{SeatStatus, SeatType, User};
 
 /// Represents a single seat within a show.
 #[derive(Debug, Clone, Serialize, Deserialize)]

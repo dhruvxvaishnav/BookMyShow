@@ -1,9 +1,7 @@
 use common::AppConfig;
-use service::{
-    QueueService, SeatLockingService, ShowService,
-};
 use service::booking_service::BookingServiceTrait;
 use service::payment_service::PaymentServiceTrait;
+use service::{QueueService, SeatLockingService, ShowService};
 use std::sync::Arc;
 
 use super::rate_limiter::RateLimiter;

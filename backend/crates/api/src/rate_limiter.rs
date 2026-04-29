@@ -1,16 +1,14 @@
 use std::collections::VecDeque;
-use std::time::{Duration, Instant};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use tokio::sync::RwLock;
 
-/// Maximum tracked timestamps per rate-limit entry.
 const WINDOW_SIZE: usize = 120;
 
 /// A rate-limit bucket for a single key.
 #[derive(Debug, Clone)]
 struct RateLimitEntry {
-    /// Rolling window of recent request timestamps.
     timestamps: VecDeque<Instant>,
 }
 
@@ -21,7 +19,6 @@ impl RateLimitEntry {
         }
     }
 
-    /// Add a timestamp and prune old entries outside the 1-minute window.
     fn record(&mut self, now: Instant) {
         self.timestamps.push_back(now);
         self.prune(now);
@@ -41,11 +38,9 @@ impl RateLimitEntry {
     }
 }
 
-/// Thread-safe in-memory rate limiter.
 #[derive(Clone)]
 pub struct RateLimiter {
     store: Arc<RwLock<std::collections::HashMap<String, RateLimitEntry>>>,
-    /// How often to prune the store (every 60s).
     _cleanup_interval: Duration,
 }
 
@@ -57,13 +52,14 @@ impl RateLimiter {
         }
     }
 
-    /// Check and record a request. Returns Ok(remaining) on pass, Err on limit exceeded.
     pub async fn check(&self, key: &str, limit: usize) -> Result<usize, ()> {
         let now = Instant::now();
 
         let count = {
             let mut store = self.store.write().await;
-            let entry = store.entry(key.to_string()).or_insert_with(RateLimitEntry::new);
+            let entry = store
+                .entry(key.to_string())
+                .or_insert_with(RateLimitEntry::new);
             entry.record(now);
             entry.count()
         };

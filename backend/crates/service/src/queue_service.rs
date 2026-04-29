@@ -108,7 +108,10 @@ impl QueueService {
 
     /// Process the next waiting entry in a show's queue.
     /// Called by the background queue processor task.
-    pub async fn process_next(&self, show_id: &str) -> Result<Option<QueueStatusResult>, common::AppError> {
+    pub async fn process_next(
+        &self,
+        show_id: &str,
+    ) -> Result<Option<QueueStatusResult>, common::AppError> {
         let waiting = self.queue_repo.find_waiting_by_show(show_id).await?;
 
         let entry = match waiting.into_iter().next() {
@@ -122,26 +125,33 @@ impl QueueService {
             .await?;
 
         // Attempt lock
-        let lock_result = self.locking_svc
-            .lock_seats(&entry.show_id, entry.requested_seat_ids.clone(), &entry.user_id)
+        let lock_result = self
+            .locking_svc
+            .lock_seats(
+                &entry.show_id,
+                entry.requested_seat_ids.clone(),
+                &entry.user_id,
+            )
             .await;
 
         match lock_result {
             Ok(lock) => {
                 let position = entry.position;
-                self.queue_repo.save(domain::QueueEntry {
-                    status: QueueStatus::Locked,
-                    processed_at: Some(chrono::Utc::now()),
-                    booking_id: Some(lock.booking_id.clone()),
-                    lock_id: Some(lock.lock_id.clone()),
-                    queue_id: entry.queue_id,
-                    user_id: entry.user_id,
-                    show_id: entry.show_id,
-                    requested_seat_ids: entry.requested_seat_ids,
-                    created_at: entry.created_at,
-                    conflict_seats: None,
-                    position: entry.position,
-                }).await?;
+                self.queue_repo
+                    .save(domain::QueueEntry {
+                        status: QueueStatus::Locked,
+                        processed_at: Some(chrono::Utc::now()),
+                        booking_id: Some(lock.booking_id.clone()),
+                        lock_id: Some(lock.lock_id.clone()),
+                        queue_id: entry.queue_id,
+                        user_id: entry.user_id,
+                        show_id: entry.show_id,
+                        requested_seat_ids: entry.requested_seat_ids,
+                        created_at: entry.created_at,
+                        conflict_seats: None,
+                        position: entry.position,
+                    })
+                    .await?;
 
                 Ok(Some(QueueStatusResult {
                     queue_id: lock.lock_id.clone(),
@@ -162,19 +172,21 @@ impl QueueService {
                 let user_id = entry.user_id.clone();
                 let position = entry.position;
 
-                self.queue_repo.save(domain::QueueEntry {
-                    status: QueueStatus::Conflict,
-                    processed_at: Some(chrono::Utc::now()),
-                    conflict_seats: conflict_seats.clone(),
-                    queue_id: entry.queue_id,
-                    user_id: entry.user_id,
-                    show_id: entry.show_id,
-                    requested_seat_ids: entry.requested_seat_ids,
-                    created_at: entry.created_at,
-                    booking_id: None,
-                    lock_id: None,
-                    position: entry.position,
-                }).await?;
+                self.queue_repo
+                    .save(domain::QueueEntry {
+                        status: QueueStatus::Conflict,
+                        processed_at: Some(chrono::Utc::now()),
+                        conflict_seats: conflict_seats.clone(),
+                        queue_id: entry.queue_id,
+                        user_id: entry.user_id,
+                        show_id: entry.show_id,
+                        requested_seat_ids: entry.requested_seat_ids,
+                        created_at: entry.created_at,
+                        booking_id: None,
+                        lock_id: None,
+                        position: entry.position,
+                    })
+                    .await?;
 
                 tracing::info!(
                     queue_id = %queue_id,

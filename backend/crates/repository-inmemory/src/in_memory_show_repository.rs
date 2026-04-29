@@ -12,7 +12,9 @@ pub struct InMemoryShowRepository {
 
 impl InMemoryShowRepository {
     pub fn new() -> Self {
-        Self { shows: RwLock::new(HashMap::new()) }
+        Self {
+            shows: RwLock::new(HashMap::new()),
+        }
     }
 }
 

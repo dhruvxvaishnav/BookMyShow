@@ -12,7 +12,9 @@ pub struct InMemoryUserRepository {
 
 impl InMemoryUserRepository {
     pub fn new() -> Self {
-        Self { users: RwLock::new(HashMap::new()) }
+        Self {
+            users: RwLock::new(HashMap::new()),
+        }
     }
 
     /// Pre-seed with a test user for development.

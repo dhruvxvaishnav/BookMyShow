@@ -1,7 +1,7 @@
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::HeaderMap,
-    Json,
 };
 use common::error::ApiResponse;
 use serde::Deserialize;
@@ -29,7 +29,9 @@ fn get_admin_token(headers: &HeaderMap) -> Option<String> {
 fn require_admin(token: Option<String>) -> Result<(), common::AppError> {
     let expected = std::env::var("ADMIN_TOKEN").unwrap_or_else(|_| "admin-secret".to_string());
     if token.as_ref() != Some(&expected) {
-        return Err(common::AppError::ValidationError("Invalid admin token".to_string()));
+        return Err(common::AppError::ValidationError(
+            "Invalid admin token".to_string(),
+        ));
     }
     Ok(())
 }
@@ -39,7 +41,10 @@ fn require_admin(token: Option<String>) -> Result<(), common::AppError> {
 static START_TIME: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
 
 pub async fn health() -> Json<ApiResponse<HealthResponse>> {
-    let uptime = START_TIME.get_or_init(std::time::Instant::now).elapsed().as_secs();
+    let uptime = START_TIME
+        .get_or_init(std::time::Instant::now)
+        .elapsed()
+        .as_secs();
     Json(ApiResponse::ok(HealthResponse {
         status: "ok".to_string(),
         uptime_seconds: uptime,
@@ -100,8 +105,12 @@ pub struct SeatPageQuery {
     pub limit: u32,
 }
 
-fn default_page() -> u32 { 1 }
-fn default_limit() -> u32 { 100 }
+fn default_page() -> u32 {
+    1
+}
+fn default_limit() -> u32 {
+    100
+}
 
 pub async fn get_seat_layout(
     State(state): State<AppState>,
@@ -153,13 +162,21 @@ pub async fn lock_seats(
     Path(show_id): Path<String>,
     headers: HeaderMap,
     Json(req): Json<LockSeatsRequest>,
-) -> Result<(axum::http::StatusCode, Json<ApiResponse<LockSeatsResponse>>), crate::impl_from_response::ApiError> {
+) -> Result<
+    (axum::http::StatusCode, Json<ApiResponse<LockSeatsResponse>>),
+    crate::impl_from_response::ApiError,
+> {
     let user_id = get_user_id(&headers)?;
 
     // Rate limit: 5 lock requests per minute per user
     let rate_key = format!("lock:{}", user_id);
     let lock_limit = state.cfg.rate_limit.lock_requests_per_min;
-    if state.rate_limiter.check(&rate_key, lock_limit).await.is_err() {
+    if state
+        .rate_limiter
+        .check(&rate_key, lock_limit)
+        .await
+        .is_err()
+    {
         return Err(common::AppError::RateLimitExceeded.into());
     }
 
@@ -178,7 +195,10 @@ pub async fn lock_seats(
         status: result.status,
     };
 
-    Ok((axum::http::StatusCode::CREATED, Json(ApiResponse::ok(response))))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ApiResponse::ok(response)),
+    ))
 }
 
 pub async fn extend_lock(
@@ -191,7 +211,12 @@ pub async fn extend_lock(
     // Rate limit: 5 lock extension requests per minute per user
     let rate_key = format!("lock:{}", user_id);
     let lock_limit = state.cfg.rate_limit.lock_requests_per_min;
-    if state.rate_limiter.check(&rate_key, lock_limit).await.is_err() {
+    if state
+        .rate_limiter
+        .check(&rate_key, lock_limit)
+        .await
+        .is_err()
+    {
         return Err(common::AppError::RateLimitExceeded.into());
     }
 
@@ -316,7 +341,12 @@ pub async fn initiate_payment(
     // Rate limit: 3 payment initiation requests per minute per user
     let rate_key = format!("payment:{}", user_id);
     let payment_limit = state.cfg.rate_limit.payment_requests_per_min;
-    if state.rate_limiter.check(&rate_key, payment_limit).await.is_err() {
+    if state
+        .rate_limiter
+        .check(&rate_key, payment_limit)
+        .await
+        .is_err()
+    {
         return Err(common::AppError::RateLimitExceeded.into());
     }
 
@@ -378,7 +408,10 @@ pub async fn get_payment(
 pub async fn mock_gateway_pay(
     State(state): State<AppState>,
     Json(req): Json<service::payment::MockPaymentRequest>,
-) -> Result<Json<ApiResponse<service::payment::MockPaymentResponse>>, crate::impl_from_response::ApiError> {
+) -> Result<
+    Json<ApiResponse<service::payment::MockPaymentResponse>>,
+    crate::impl_from_response::ApiError,
+> {
     let payment_intent_id = req.payment_intent_id.clone();
     let response = state.payment_svc.mock_gateway_pay(req).await?;
 
@@ -386,7 +419,11 @@ pub async fn mock_gateway_pay(
     // This bridges the mock gateway back into our service layer
     state
         .payment_svc
-        .payment_callback(&payment_intent_id, &response.status, Some(&serde_json::to_string(&response).unwrap_or_default()))
+        .payment_callback(
+            &payment_intent_id,
+            &response.status,
+            Some(&serde_json::to_string(&response).unwrap_or_default()),
+        )
         .await?;
 
     Ok(Json(ApiResponse::ok(response)))
@@ -401,10 +438,7 @@ pub async fn leave_queue(
 ) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
     let user_id = get_user_id(&headers)?;
 
-    state
-        .queue_svc
-        .leave_queue(&queue_id, &user_id)
-        .await?;
+    state.queue_svc.leave_queue(&queue_id, &user_id).await?;
 
     Ok(Json(ApiResponse::ok(())))
 }
@@ -414,7 +448,10 @@ pub async fn join_queue(
     Path(show_id): Path<String>,
     headers: HeaderMap,
     Json(req): Json<JoinQueueRequest>,
-) -> Result<(axum::http::StatusCode, Json<ApiResponse<QueueJoinResponse>>), crate::impl_from_response::ApiError> {
+) -> Result<
+    (axum::http::StatusCode, Json<ApiResponse<QueueJoinResponse>>),
+    crate::impl_from_response::ApiError,
+> {
     let user_id = get_user_id(&headers)?;
 
     let result = state
@@ -422,12 +459,15 @@ pub async fn join_queue(
         .join_queue(&show_id, &user_id, req.seat_ids)
         .await?;
 
-    Ok((axum::http::StatusCode::ACCEPTED, Json(ApiResponse::ok(QueueJoinResponse {
-        queue_id: result.queue_id,
-        show_id: result.show_id,
-        position: result.position,
-        status: result.status,
-    }))))
+    Ok((
+        axum::http::StatusCode::ACCEPTED,
+        Json(ApiResponse::ok(QueueJoinResponse {
+            queue_id: result.queue_id,
+            show_id: result.show_id,
+            position: result.position,
+            status: result.status,
+        })),
+    ))
 }
 
 pub async fn get_queue_status(
@@ -456,7 +496,10 @@ pub async fn create_show(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<CreateShowRequestDto>,
-) -> Result<(axum::http::StatusCode, Json<ApiResponse<ShowResponse>>), crate::impl_from_response::ApiError> {
+) -> Result<
+    (axum::http::StatusCode, Json<ApiResponse<ShowResponse>>),
+    crate::impl_from_response::ApiError,
+> {
     require_admin(get_admin_token(&headers))?;
 
     let svc_req = service::show::CreateShowRequest {
@@ -522,7 +565,10 @@ pub async fn cancel_show(
             }
         }
         // Also cancel it
-        let _ = state.booking_svc.cancel_booking(&booking.booking_id, &booking.user_id).await;
+        let _ = state
+            .booking_svc
+            .cancel_booking(&booking.booking_id, &booking.user_id)
+            .await;
     }
 
     Ok(Json(ApiResponse::ok(())))

@@ -6,8 +6,8 @@ use repository::{BookingRepository, PaymentRepository};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use super::payment::{PaymentInitiated, MockPaymentRequest, MockPaymentResponse};
 use super::booking_service::BookingServiceTrait;
+use super::payment::{MockPaymentRequest, MockPaymentResponse, PaymentInitiated};
 
 #[async_trait]
 pub trait PaymentServiceTrait: Send + Sync {
@@ -31,10 +31,7 @@ pub trait PaymentServiceTrait: Send + Sync {
     ) -> Result<(), common::AppError>;
 
     /// Get payment status.
-    async fn get_payment(
-        &self,
-        payment_id: &str,
-    ) -> Result<Option<Payment>, common::AppError>;
+    async fn get_payment(&self, payment_id: &str) -> Result<Option<Payment>, common::AppError>;
 
     /// Trigger a mock gateway payment (simulates the gateway processing).
     async fn mock_gateway_pay(
@@ -43,10 +40,7 @@ pub trait PaymentServiceTrait: Send + Sync {
     ) -> Result<MockPaymentResponse, common::AppError>;
 
     /// Issue a refund for a payment.
-    async fn refund_payment(
-        &self,
-        payment_id: &str,
-    ) -> Result<(), common::AppError>;
+    async fn refund_payment(&self, payment_id: &str) -> Result<(), common::AppError>;
 
     /// Background task to process expired pending payments.
     async fn process_expired_payments(&self) -> Result<(), common::AppError>;
@@ -112,7 +106,9 @@ impl PaymentServiceTrait for PaymentService {
         }
 
         if !booking.can_pay() {
-            return Err(common::AppError::BookingAlreadyProcessed(booking_id.to_string()));
+            return Err(common::AppError::BookingAlreadyProcessed(
+                booking_id.to_string(),
+            ));
         }
 
         if booking.user_id != user_id {
@@ -273,10 +269,7 @@ impl PaymentServiceTrait for PaymentService {
         })
     }
 
-    async fn refund_payment(
-        &self,
-        payment_id: &str,
-    ) -> Result<(), common::AppError> {
+    async fn refund_payment(&self, payment_id: &str) -> Result<(), common::AppError> {
         let mut payment = self
             .payment_repo
             .find_by_id(payment_id)
@@ -296,7 +289,10 @@ impl PaymentServiceTrait for PaymentService {
         if let Some(booking) = self.booking_repo.find_by_payment_id(payment_id).await? {
             // This is simplified. In a real system, we might want a BookingService
             // method to handle refunds properly.
-            let _ = self.booking_svc.cancel_booking(&booking.booking_id, &booking.user_id).await;
+            let _ = self
+                .booking_svc
+                .cancel_booking(&booking.booking_id, &booking.user_id)
+                .await;
         }
 
         tracing::info!(payment_id = %payment_id, "payment refunded");
@@ -317,7 +313,10 @@ impl PaymentServiceTrait for PaymentService {
 
             // Also trigger cancellation of booking if applicable
             if let Some(booking) = self.booking_repo.find_by_id(&payment.booking_id).await? {
-                let _ = self.booking_svc.cancel_booking(&booking.booking_id, &booking.user_id).await;
+                let _ = self
+                    .booking_svc
+                    .cancel_booking(&booking.booking_id, &booking.user_id)
+                    .await;
             }
         }
         Ok(())

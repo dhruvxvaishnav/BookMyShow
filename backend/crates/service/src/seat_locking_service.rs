@@ -1,8 +1,6 @@
 use chrono::{Duration, Utc};
 use common::{AppConfig, AppError};
-use domain::{
-    Booking, BookingStatus, LockStatus, SeatLock, SeatStatus,
-};
+use domain::{Booking, BookingStatus, LockStatus, SeatLock, SeatStatus};
 use repository::{
     BookingRepository, SeatLockRepository, SeatRepository, ShowRepository, UserRepository,
 };
@@ -89,8 +87,12 @@ impl SeatLockingService {
         // Fetch and validate all seats
         let seats = self.seat_repo.find_by_ids(&seat_ids).await?;
         if seats.len() != seat_ids.len() {
-            let found_ids: std::collections::HashSet<_> = seats.iter().map(|s| &s.seat_id).collect();
-            let missing: Vec<_> = seat_ids.iter().filter(|id| !found_ids.contains(id)).collect();
+            let found_ids: std::collections::HashSet<_> =
+                seats.iter().map(|s| &s.seat_id).collect();
+            let missing: Vec<_> = seat_ids
+                .iter()
+                .filter(|id| !found_ids.contains(id))
+                .collect();
             return Err(AppError::SeatNotFound((*missing.first().unwrap()).clone()));
         }
 
@@ -272,7 +274,10 @@ impl SeatLockingService {
 
         let show = self.show_repo.find_by_id(&show_id_clone).await?.unwrap();
         let seats = self.seat_repo.find_by_ids(&seat_ids_clone).await?;
-        let total_amount: f64 = seats.iter().map(|s| s.effective_price(show.price_per_seat)).sum();
+        let total_amount: f64 = seats
+            .iter()
+            .map(|s| s.effective_price(show.price_per_seat))
+            .sum();
 
         Ok(LockResult {
             lock_id: lock_id.clone(),
@@ -286,11 +291,7 @@ impl SeatLockingService {
     }
 
     /// Release a lock (user cancellation).
-    pub async fn release_lock(
-        &self,
-        booking_id: &str,
-        user_id: &str,
-    ) -> Result<(), AppError> {
+    pub async fn release_lock(&self, booking_id: &str, user_id: &str) -> Result<(), AppError> {
         let booking = self
             .booking_repo
             .find_by_id(booking_id)
@@ -392,7 +393,10 @@ impl SeatLockingService {
             .await?;
 
         // Mark associated booking as Expired
-        let bookings = self.booking_repo.find_by_status(BookingStatus::Pending).await?;
+        let bookings = self
+            .booking_repo
+            .find_by_status(BookingStatus::Pending)
+            .await?;
         for mut booking in bookings {
             if booking.lock_id.as_ref() == Some(&lock_id.to_string()) {
                 booking.status = BookingStatus::Expired;
@@ -424,12 +428,12 @@ impl SeatLockingService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::TimeZone;
     use domain::{Seat, SeatStatus, SeatType, Show};
     use repository_inmemory::{
         InMemoryBookingRepository, InMemorySeatLockRepository, InMemorySeatRepository,
         InMemoryShowRepository, InMemoryUserRepository,
     };
-    use chrono::TimeZone;
 
     fn make_test_show(id: &str) -> Show {
         Show::new(
@@ -478,7 +482,11 @@ mod tests {
         let seat = make_seat("A1", "show-1", SeatStatus::Available);
         seat_repo.save(seat).await.unwrap();
 
-        let user = domain::User::new("user-1".to_string(), "Alice".to_string(), "alice@test.com".to_string());
+        let user = domain::User::new(
+            "user-1".to_string(),
+            "Alice".to_string(),
+            "alice@test.com".to_string(),
+        );
         user_repo.save(user).await.unwrap();
 
         let svc = SeatLockingService::new(
@@ -515,10 +523,18 @@ mod tests {
 
         // Seat is already locked by user-1
         let mut seat = make_seat("A1", "show-1", SeatStatus::Locked);
-        seat.locked_by = Some(domain::User::new("user-1".to_string(), "Bob".to_string(), "bob@test.com".to_string()));
+        seat.locked_by = Some(domain::User::new(
+            "user-1".to_string(),
+            "Bob".to_string(),
+            "bob@test.com".to_string(),
+        ));
         seat_repo.save(seat).await.unwrap();
 
-        let user2 = domain::User::new("user-2".to_string(), "Alice".to_string(), "alice@test.com".to_string());
+        let user2 = domain::User::new(
+            "user-2".to_string(),
+            "Alice".to_string(),
+            "alice@test.com".to_string(),
+        );
         user_repo.save(user2).await.unwrap();
 
         let svc = SeatLockingService::new(
@@ -557,7 +573,11 @@ mod tests {
             seat_repo.save(seat).await.unwrap();
         }
 
-        let user = domain::User::new("user-1".to_string(), "Alice".to_string(), "alice@test.com".to_string());
+        let user = domain::User::new(
+            "user-1".to_string(),
+            "Alice".to_string(),
+            "alice@test.com".to_string(),
+        );
         user_repo.save(user).await.unwrap();
 
         let svc = SeatLockingService::new(
@@ -570,7 +590,11 @@ mod tests {
         );
 
         let result = svc
-            .lock_seats("show-1", vec!["A1".to_string(), "A2".to_string(), "A3".to_string()], "user-1")
+            .lock_seats(
+                "show-1",
+                vec!["A1".to_string(), "A2".to_string(), "A3".to_string()],
+                "user-1",
+            )
             .await
             .unwrap();
 
@@ -578,12 +602,20 @@ mod tests {
         assert_eq!(result.total_amount, 750.0); // 3 × 250
 
         for i in 1..=3u32 {
-            let seat = seat_repo.find_by_id(&format!("A{i}")).await.unwrap().unwrap();
+            let seat = seat_repo
+                .find_by_id(&format!("A{i}"))
+                .await
+                .unwrap()
+                .unwrap();
             assert_eq!(seat.status, SeatStatus::Locked);
         }
         // Unlocked seats remain available
         for i in 4..=5u32 {
-            let seat = seat_repo.find_by_id(&format!("A{i}")).await.unwrap().unwrap();
+            let seat = seat_repo
+                .find_by_id(&format!("A{i}"))
+                .await
+                .unwrap()
+                .unwrap();
             assert_eq!(seat.status, SeatStatus::Available);
         }
     }
@@ -602,8 +634,16 @@ mod tests {
         let seat = make_seat("A1", "show-1", SeatStatus::Available);
         seat_repo.save(seat).await.unwrap();
 
-        let user1 = domain::User::new("user-1".to_string(), "Alice".to_string(), "alice@test.com".to_string());
-        let user2 = domain::User::new("user-2".to_string(), "Bob".to_string(), "bob@test.com".to_string());
+        let user1 = domain::User::new(
+            "user-1".to_string(),
+            "Alice".to_string(),
+            "alice@test.com".to_string(),
+        );
+        let user2 = domain::User::new(
+            "user-2".to_string(),
+            "Bob".to_string(),
+            "bob@test.com".to_string(),
+        );
         user_repo.save(user1).await.unwrap();
         user_repo.save(user2).await.unwrap();
 
@@ -622,18 +662,26 @@ mod tests {
             let user_id = if i % 2 == 0 { "user-1" } else { "user-2" };
             let svc = svc.clone();
             handles.push(tokio::spawn(async move {
-                svc.lock_seats("show-1", vec!["A1".to_string()], user_id).await
+                svc.lock_seats("show-1", vec!["A1".to_string()], user_id)
+                    .await
             }));
         }
 
-        let results: Vec<Result<LockResult, AppError>> =
-            futures::future::join_all(handles).await.into_iter().map(|r| r.unwrap()).collect();
+        let results: Vec<Result<LockResult, AppError>> = futures::future::join_all(handles)
+            .await
+            .into_iter()
+            .map(|r| r.unwrap())
+            .collect();
 
         // Exactly ONE success
         let successes: Vec<_> = results.iter().filter(|r| r.is_ok()).collect();
         let failures: Vec<_> = results.iter().filter(|r| r.is_err()).collect();
 
-        assert_eq!(successes.len(), 1, "exactly one lock attempt should succeed");
+        assert_eq!(
+            successes.len(),
+            1,
+            "exactly one lock attempt should succeed"
+        );
         assert_eq!(failures.len(), 49, "all other attempts should fail");
     }
 
@@ -651,7 +699,11 @@ mod tests {
         let seat = make_seat("A1", "show-1", SeatStatus::Available);
         seat_repo.save(seat).await.unwrap();
 
-        let user = domain::User::new("user-1".to_string(), "Alice".to_string(), "alice@test.com".to_string());
+        let user = domain::User::new(
+            "user-1".to_string(),
+            "Alice".to_string(),
+            "alice@test.com".to_string(),
+        );
         user_repo.save(user).await.unwrap();
 
         let svc = SeatLockingService::new(
@@ -671,15 +723,24 @@ mod tests {
         let first_expires = lock_result.expires_at;
 
         // Extend once
-        let extended = svc.extend_lock(&lock_result.booking_id, "user-1").await.unwrap();
+        let extended = svc
+            .extend_lock(&lock_result.booking_id, "user-1")
+            .await
+            .unwrap();
         assert!(extended.expires_at > first_expires);
 
         // Extend again (max_extensions = 2 in default config)
-        let extended2 = svc.extend_lock(&lock_result.booking_id, "user-1").await.unwrap();
+        let extended2 = svc
+            .extend_lock(&lock_result.booking_id, "user-1")
+            .await
+            .unwrap();
         assert!(extended2.expires_at > extended.expires_at);
 
         // Third extension should fail
-        let err = svc.extend_lock(&lock_result.booking_id, "user-1").await.unwrap_err();
+        let err = svc
+            .extend_lock(&lock_result.booking_id, "user-1")
+            .await
+            .unwrap_err();
         assert!(matches!(err, AppError::LockMaxExtensionsReached));
     }
 
@@ -697,7 +758,11 @@ mod tests {
         let seat = make_seat("A1", "show-1", SeatStatus::Available);
         seat_repo.save(seat).await.unwrap();
 
-        let user = domain::User::new("user-1".to_string(), "Alice".to_string(), "alice@test.com".to_string());
+        let user = domain::User::new(
+            "user-1".to_string(),
+            "Alice".to_string(),
+            "alice@test.com".to_string(),
+        );
         user_repo.save(user).await.unwrap();
 
         let svc = SeatLockingService::new(
@@ -714,7 +779,9 @@ mod tests {
             .await
             .unwrap();
 
-        svc.release_lock(&lock_result.booking_id, "user-1").await.unwrap();
+        svc.release_lock(&lock_result.booking_id, "user-1")
+            .await
+            .unwrap();
 
         let seat = seat_repo.find_by_id("A1").await.unwrap().unwrap();
         assert_eq!(seat.status, SeatStatus::Available);

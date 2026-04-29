@@ -1,6 +1,6 @@
+use super::PaymentStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use super::PaymentStatus;
 
 /// Represents a payment associated with a booking.
 #[derive(Debug, Clone, Serialize, Deserialize)]

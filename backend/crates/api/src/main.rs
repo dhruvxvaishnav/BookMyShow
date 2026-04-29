@@ -1,14 +1,15 @@
 use std::sync::Arc;
 use std::time::Instant;
-use tokio::time::{interval, Duration};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tokio::time::{Duration, interval};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
-use api::routes::create_router;
 use api::rate_limiter::RateLimiter;
+use api::routes::create_router;
+use api::state::AppState;
 use common::AppConfig;
 use repository::{
-    BookingRepository, PaymentRepository, QueueRepository, SeatLockRepository,
-    SeatRepository, ShowRepository, UserRepository,
+    BookingRepository, PaymentRepository, QueueRepository, SeatLockRepository, SeatRepository,
+    ShowRepository, UserRepository,
 };
 use repository_inmemory::{
     InMemoryBookingRepository, InMemoryPaymentRepository, InMemoryQueueRepository,
@@ -16,12 +17,9 @@ use repository_inmemory::{
     InMemoryUserRepository,
 };
 use service::{
-    booking_service::BookingServiceTrait,
-    payment_service::PaymentServiceTrait,
-    BookingService, PaymentService,
-    QueueService, SeatLockingService, ShowService,
+    BookingService, PaymentService, QueueService, SeatLockingService, ShowService,
+    booking_service::BookingServiceTrait, payment_service::PaymentServiceTrait,
 };
-use api::state::AppState;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,8 +29,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cfg = AppConfig::load().expect("failed to load config");
 
     // ── 2. Initialise logging ─────────────────────────────────────────────
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new(&cfg.app.log_level));
+    let filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&cfg.app.log_level));
 
     tracing_subscriber::registry()
         .with(filter)

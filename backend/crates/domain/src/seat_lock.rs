@@ -1,6 +1,6 @@
+use super::LockStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use super::LockStatus;
 
 /// Represents a seat lock session — a temporary hold on one or more seats
 /// while a user proceeds through the payment flow.

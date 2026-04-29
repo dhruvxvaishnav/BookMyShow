@@ -111,10 +111,7 @@ impl ShowService {
     }
 
     /// Get all seats for a show with current status.
-    pub async fn get_seat_layout(
-        &self,
-        show_id: &str,
-    ) -> Result<Vec<Seat>, common::AppError> {
+    pub async fn get_seat_layout(&self, show_id: &str) -> Result<Vec<Seat>, common::AppError> {
         // Verify show exists
         self.show_repo
             .find_by_id(show_id)
@@ -129,9 +126,18 @@ impl ShowService {
         &self,
         show_id: &str,
     ) -> Result<ShowAvailability, common::AppError> {
-        let available = self.seat_repo.count_by_show_and_status(show_id, domain::SeatStatus::Available).await?;
-        let locked = self.seat_repo.count_by_show_and_status(show_id, domain::SeatStatus::Locked).await?;
-        let booked = self.seat_repo.count_by_show_and_status(show_id, domain::SeatStatus::Booked).await?;
+        let available = self
+            .seat_repo
+            .count_by_show_and_status(show_id, domain::SeatStatus::Available)
+            .await?;
+        let locked = self
+            .seat_repo
+            .count_by_show_and_status(show_id, domain::SeatStatus::Locked)
+            .await?;
+        let booked = self
+            .seat_repo
+            .count_by_show_and_status(show_id, domain::SeatStatus::Booked)
+            .await?;
 
         Ok(ShowAvailability {
             show_id: show_id.to_string(),

@@ -13,7 +13,9 @@ pub struct InMemorySeatLockRepository {
 
 impl InMemorySeatLockRepository {
     pub fn new() -> Self {
-        Self { locks: RwLock::new(HashMap::new()) }
+        Self {
+            locks: RwLock::new(HashMap::new()),
+        }
     }
 }
 

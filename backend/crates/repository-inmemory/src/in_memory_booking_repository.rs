@@ -13,7 +13,9 @@ pub struct InMemoryBookingRepository {
 
 impl InMemoryBookingRepository {
     pub fn new() -> Self {
-        Self { bookings: RwLock::new(HashMap::new()) }
+        Self {
+            bookings: RwLock::new(HashMap::new()),
+        }
     }
 }
 
@@ -32,12 +34,18 @@ impl BookingRepository for InMemoryBookingRepository {
 
     async fn find_by_user(&self, user_id: &str) -> Result<Vec<Booking>, AppError> {
         let r = self.bookings.read().await;
-        Ok(r.values().filter(|b| b.user_id == user_id).cloned().collect())
+        Ok(r.values()
+            .filter(|b| b.user_id == user_id)
+            .cloned()
+            .collect())
     }
 
     async fn find_by_show(&self, show_id: &str) -> Result<Vec<Booking>, AppError> {
         let r = self.bookings.read().await;
-        Ok(r.values().filter(|b| b.show_id == show_id).cloned().collect())
+        Ok(r.values()
+            .filter(|b| b.show_id == show_id)
+            .cloned()
+            .collect())
     }
 
     async fn find_by_status(&self, status: BookingStatus) -> Result<Vec<Booking>, AppError> {
@@ -47,7 +55,9 @@ impl BookingRepository for InMemoryBookingRepository {
 
     async fn find_by_payment_id(&self, payment_id: &str) -> Result<Option<Booking>, AppError> {
         let r = self.bookings.read().await;
-        Ok(r.values().find(|b| b.payment_id.as_deref() == Some(payment_id)).cloned())
+        Ok(r.values()
+            .find(|b| b.payment_id.as_deref() == Some(payment_id))
+            .cloned())
     }
 
     async fn find_expired(&self, grace_period_secs: i64) -> Result<Vec<Booking>, AppError> {
@@ -60,7 +70,9 @@ impl BookingRepository for InMemoryBookingRepository {
                 b.expires_at < cutoff
                     && matches!(
                         b.status,
-                        BookingStatus::Pending | BookingStatus::PaymentPending | BookingStatus::Queued
+                        BookingStatus::Pending
+                            | BookingStatus::PaymentPending
+                            | BookingStatus::Queued
                     )
             })
             .cloned()

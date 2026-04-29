@@ -21,6 +21,6 @@ pub struct MockPaymentRequest {
 /// DTO for mock gateway response.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MockPaymentResponse {
-    pub status: String,       // "SUCCESS" or "FAILED"
+    pub status: String, // "SUCCESS" or "FAILED"
     pub gateway_reference: String,
 }

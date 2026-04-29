@@ -1,6 +1,6 @@
+use super::{BookingStatus, Seat};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use super::{BookingStatus, Seat};
 
 /// Represents a user's intent to book one or more seats for a show.
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -12,7 +12,9 @@ pub struct InMemoryQueueRepository {
 
 impl InMemoryQueueRepository {
     pub fn new() -> Self {
-        Self { entries: RwLock::new(HashMap::new()) }
+        Self {
+            entries: RwLock::new(HashMap::new()),
+        }
     }
 }
 
@@ -46,7 +48,9 @@ impl QueueRepository for InMemoryQueueRepository {
         status: QueueStatus,
     ) -> Result<u32, AppError> {
         let r = self.entries.read().await;
-        Ok(r.values().filter(|e| e.show_id == show_id && e.status == status).count() as u32)
+        Ok(r.values()
+            .filter(|e| e.show_id == show_id && e.status == status)
+            .count() as u32)
     }
 
     async fn max_position(&self, show_id: &str) -> Result<u32, AppError> {
@@ -58,7 +62,11 @@ impl QueueRepository for InMemoryQueueRepository {
             .unwrap_or(0))
     }
 
-    async fn mark_processed(&self, queue_id: &str, status: QueueStatus) -> Result<QueueEntry, AppError> {
+    async fn mark_processed(
+        &self,
+        queue_id: &str,
+        status: QueueStatus,
+    ) -> Result<QueueEntry, AppError> {
         let mut w = self.entries.write().await;
         let entry = w
             .get_mut(queue_id)

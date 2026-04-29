@@ -13,7 +13,9 @@ pub struct InMemorySeatRepository {
 
 impl InMemorySeatRepository {
     pub fn new() -> Self {
-        Self { seats: RwLock::new(HashMap::new()) }
+        Self {
+            seats: RwLock::new(HashMap::new()),
+        }
     }
 
     /// Bulk insert seats (used when generating seat layout for a show).
@@ -41,12 +43,18 @@ impl SeatRepository for InMemorySeatRepository {
 
     async fn find_by_ids(&self, seat_ids: &[String]) -> Result<Vec<Seat>, AppError> {
         let r = self.seats.read().await;
-        Ok(seat_ids.iter().filter_map(|id| r.get(id).cloned()).collect())
+        Ok(seat_ids
+            .iter()
+            .filter_map(|id| r.get(id).cloned())
+            .collect())
     }
 
     async fn find_by_show(&self, show_id: &str) -> Result<Vec<Seat>, AppError> {
         let r = self.seats.read().await;
-        Ok(r.values().filter(|s| s.show_id == show_id).cloned().collect())
+        Ok(r.values()
+            .filter(|s| s.show_id == show_id)
+            .cloned()
+            .collect())
     }
 
     async fn find_by_show_and_status(
@@ -74,7 +82,11 @@ impl SeatRepository for InMemorySeatRepository {
             .ok_or_else(|| AppError::SeatNotFound(seat_id.to_string()))?;
 
         seat.status = SeatStatus::Locked;
-        seat.locked_by = Some(User::new(user_id.to_string(), user_id.to_string(), format!("{user_id}@test.local")));
+        seat.locked_by = Some(User::new(
+            user_id.to_string(),
+            user_id.to_string(),
+            format!("{user_id}@test.local"),
+        ));
         seat.locked_at = Some(Utc::now());
         seat.lock_expires_at = Some(expires_at);
         seat.lock_id = Some(lock_id.to_string());
@@ -104,7 +116,11 @@ impl SeatRepository for InMemorySeatRepository {
             .ok_or_else(|| AppError::SeatNotFound(seat_id.to_string()))?;
 
         seat.status = SeatStatus::Booked;
-        seat.booked_by = Some(User::new(user_id.to_string(), user_id.to_string(), format!("{user_id}@test.local")));
+        seat.booked_by = Some(User::new(
+            user_id.to_string(),
+            user_id.to_string(),
+            format!("{user_id}@test.local"),
+        ));
         // Clear lock fields
         seat.locked_by = None;
         seat.locked_at = None;
@@ -120,7 +136,9 @@ impl SeatRepository for InMemorySeatRepository {
         status: SeatStatus,
     ) -> Result<u32, AppError> {
         let r = self.seats.read().await;
-        Ok(r.values().filter(|s| s.show_id == show_id && s.status == status).count() as u32)
+        Ok(r.values()
+            .filter(|s| s.show_id == show_id && s.status == status)
+            .count() as u32)
     }
 
     async fn save_all(&self, seats: Vec<Seat>) -> Result<(), AppError> {

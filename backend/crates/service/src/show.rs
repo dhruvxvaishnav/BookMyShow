@@ -19,8 +19,8 @@ pub struct SeatLayoutRequest {
 /// DTO for a single row in the seat layout.
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct RowConfig {
-    pub row: String,        // e.g., "A", "B"
-    pub seats: u32,         // number of seats in this row
+    pub row: String, // e.g., "A", "B"
+    pub seats: u32,  // number of seats in this row
     #[serde(default)]
     pub seat_type: String, // "standard", "premium", "recliner"
 }

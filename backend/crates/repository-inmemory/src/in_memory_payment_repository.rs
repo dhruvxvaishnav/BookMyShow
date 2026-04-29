@@ -12,7 +12,9 @@ pub struct InMemoryPaymentRepository {
 
 impl InMemoryPaymentRepository {
     pub fn new() -> Self {
-        Self { payments: RwLock::new(HashMap::new()) }
+        Self {
+            payments: RwLock::new(HashMap::new()),
+        }
     }
 }
 
@@ -46,12 +48,17 @@ impl PaymentRepository for InMemoryPaymentRepository {
 
     async fn find_by_user(&self, user_id: &str) -> Result<Vec<Payment>, AppError> {
         let r = self.payments.read().await;
-        Ok(r.values().filter(|p| p.user_id == user_id).cloned().collect())
+        Ok(r.values()
+            .filter(|p| p.user_id == user_id)
+            .cloned()
+            .collect())
     }
 
     async fn find_by_idempotency_key(&self, key: &str) -> Result<Option<Payment>, AppError> {
         let r = self.payments.read().await;
-        Ok(r.values().find(|p| p.idempotency_key.as_deref() == Some(key)).cloned())
+        Ok(r.values()
+            .find(|p| p.idempotency_key.as_deref() == Some(key))
+            .cloned())
     }
 
     async fn find_expired_pending(

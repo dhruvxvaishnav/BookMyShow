@@ -132,7 +132,9 @@ impl AppConfig {
 
     /// Returns the global config. Panics if not initialised via `init()`.
     pub fn get() -> &'static Self {
-        CONFIG.get().expect("config not initialised — call AppConfig::init() first")
+        CONFIG
+            .get()
+            .expect("config not initialised — call AppConfig::init() first")
     }
 }
 

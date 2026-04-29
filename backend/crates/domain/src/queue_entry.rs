@@ -1,6 +1,6 @@
+use super::QueueStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use super::QueueStatus;
 
 /// Represents a user's entry in the per-show seat request queue.
 /// Used during high-traffic scenarios to order concurrent lock requests fairly.

@@ -1,8 +1,8 @@
 use axum::http::{HeaderName, HeaderValue};
 use common::AppConfig;
 use repository::{
-    BookingRepository, PaymentRepository, QueueRepository, SeatLockRepository,
-    SeatRepository, ShowRepository, UserRepository,
+    BookingRepository, PaymentRepository, QueueRepository, SeatLockRepository, SeatRepository,
+    ShowRepository, UserRepository,
 };
 use repository_inmemory::{
     InMemoryBookingRepository, InMemoryPaymentRepository, InMemoryQueueRepository,
@@ -10,8 +10,8 @@ use repository_inmemory::{
     InMemoryUserRepository,
 };
 use service::{
-    booking_service::BookingServiceTrait, payment_service::PaymentServiceTrait,
     BookingService, PaymentService, QueueService, SeatLockingService, ShowService,
+    booking_service::BookingServiceTrait, payment_service::PaymentServiceTrait,
 };
 use std::sync::Arc;
 
@@ -78,15 +78,24 @@ async fn make_state() -> crate::AppState {
 }
 
 fn user_hdr() -> (HeaderName, HeaderValue) {
-    (HeaderName::from_static("x-user-id"), HeaderValue::from_static("user-001"))
+    (
+        HeaderName::from_static("x-user-id"),
+        HeaderValue::from_static("user-001"),
+    )
 }
 
 fn admin_hdr() -> (HeaderName, HeaderValue) {
-    (HeaderName::from_static("x-admin-token"), HeaderValue::from_static("admin-secret"))
+    (
+        HeaderName::from_static("x-admin-token"),
+        HeaderValue::from_static("admin-secret"),
+    )
 }
 
 fn user2_hdr() -> (HeaderName, HeaderValue) {
-    (HeaderName::from_static("x-user-id"), HeaderValue::from_static("user-002"))
+    (
+        HeaderName::from_static("x-user-id"),
+        HeaderValue::from_static("user-002"),
+    )
 }
 
 /// Helper: create a show and return its show_id.
@@ -113,7 +122,11 @@ async fn get_seat_ids(client: &axum_test::TestServer, show_id: &str, count: usiz
     let resp = client.get(&format!("/shows/{}/seats", show_id)).await;
     let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
     let seats = body["data"]["seats"].as_array().unwrap();
-    seats.iter().take(count).map(|s| s["seat_id"].as_str().unwrap().to_string()).collect()
+    seats
+        .iter()
+        .take(count)
+        .map(|s| s["seat_id"].as_str().unwrap().to_string())
+        .collect()
 }
 
 #[tokio::test]
@@ -151,7 +164,10 @@ async fn test_lock_and_confirm_booking_flow() {
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
     let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
-    let payment_intent_id = body["data"]["payment_intent_id"].as_str().unwrap().to_string();
+    let payment_intent_id = body["data"]["payment_intent_id"]
+        .as_str()
+        .unwrap()
+        .to_string();
     let amount = body["data"]["amount"].as_f64().unwrap();
 
     let resp_gw = client
@@ -166,12 +182,16 @@ async fn test_lock_and_confirm_booking_flow() {
     resp_gw.assert_status(axum::http::StatusCode::OK);
 
     // Verify booking confirmed
-    let resp = client.get(&format!("/bookings/{booking_id}"))
+    let resp = client
+        .get(&format!("/bookings/{booking_id}"))
         .add_header(&user_hdr().0, &user_hdr().1)
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
     let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
-    assert_eq!(body["data"]["status"].as_str().unwrap().to_lowercase(), "success");
+    assert_eq!(
+        body["data"]["status"].as_str().unwrap().to_lowercase(),
+        "success"
+    );
     assert!(!body["data"]["confirmed_at"].is_null());
 }
 
@@ -198,12 +218,16 @@ async fn test_lock_then_cancel() {
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
 
-    let resp = client.get(&format!("/bookings/{booking_id}"))
+    let resp = client
+        .get(&format!("/bookings/{booking_id}"))
         .add_header(&user_hdr().0, &user_hdr().1)
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
     let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
-    assert_eq!(body["data"]["status"].as_str().unwrap().to_lowercase(), "cancelled");
+    assert_eq!(
+        body["data"]["status"].as_str().unwrap().to_lowercase(),
+        "cancelled"
+    );
 }
 
 #[tokio::test]
@@ -292,7 +316,10 @@ async fn test_payment_failure_releases_seats() {
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
     let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
-    let payment_intent_id = body["data"]["payment_intent_id"].as_str().unwrap().to_string();
+    let payment_intent_id = body["data"]["payment_intent_id"]
+        .as_str()
+        .unwrap()
+        .to_string();
     let amount = body["data"]["amount"].as_f64().unwrap();
 
     let _resp_gw = client
@@ -305,12 +332,16 @@ async fn test_payment_failure_releases_seats() {
         }))
         .await;
 
-    let resp = client.get(&format!("/bookings/{booking_id}"))
+    let resp = client
+        .get(&format!("/bookings/{booking_id}"))
         .add_header(&user_hdr().0, &user_hdr().1)
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
     let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
-    assert_eq!(body["data"]["status"].as_str().unwrap().to_lowercase(), "cancelled");
+    assert_eq!(
+        body["data"]["status"].as_str().unwrap().to_lowercase(),
+        "cancelled"
+    );
 }
 
 #[tokio::test]
@@ -403,7 +434,10 @@ async fn test_admin_refund_payment() {
         .await;
     let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
     let payment_id = body["data"]["payment_id"].as_str().unwrap().to_string();
-    let payment_intent_id = body["data"]["payment_intent_id"].as_str().unwrap().to_string();
+    let payment_intent_id = body["data"]["payment_intent_id"]
+        .as_str()
+        .unwrap()
+        .to_string();
     let amount = body["data"]["amount"].as_f64().unwrap();
 
     // Pay
@@ -432,5 +466,8 @@ async fn test_admin_refund_payment() {
         .await;
     resp.assert_status(axum::http::StatusCode::OK);
     let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
-    assert_eq!(body["data"]["status"].as_str().unwrap().to_lowercase(), "refunded");
+    assert_eq!(
+        body["data"]["status"].as_str().unwrap().to_lowercase(),
+        "refunded"
+    );
 }
