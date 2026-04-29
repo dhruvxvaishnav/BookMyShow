@@ -559,10 +559,12 @@ pub async fn cancel_show(
     // Refund all bookings for the show
     let bookings = state.booking_svc.get_show_bookings(&show_id).await?;
     for booking in bookings {
-        if booking.status == domain::BookingStatus::Success {
-            if let Some(payment_id) = &booking.payment_id {
-                let _ = state.payment_svc.refund_payment(payment_id).await;
-            }
+        if matches!(
+            booking.status,
+            domain::BookingStatus::Success | domain::BookingStatus::SuccessPartial
+        ) && let Some(payment_id) = &booking.payment_id
+        {
+            let _ = state.payment_svc.refund_payment(payment_id).await;
         }
         // Also cancel it
         let _ = state

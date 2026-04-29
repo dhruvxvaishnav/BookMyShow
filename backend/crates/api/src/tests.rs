@@ -1,13 +1,13 @@
 use axum::http::{HeaderName, HeaderValue};
 use common::AppConfig;
 use repository::{
-    BookingRepository, PaymentRepository, QueueRepository, SeatLockRepository, SeatRepository,
-    ShowRepository, UserRepository,
+    BookingRepository, CompensationLogRepository, PaymentRepository, QueueRepository,
+    SeatLockRepository, SeatRepository, ShowRepository, UserRepository,
 };
 use repository_inmemory::{
-    InMemoryBookingRepository, InMemoryPaymentRepository, InMemoryQueueRepository,
-    InMemorySeatLockRepository, InMemorySeatRepository, InMemoryShowRepository,
-    InMemoryUserRepository,
+    InMemoryBookingRepository, InMemoryCompensationLogRepository, InMemoryPaymentRepository,
+    InMemoryQueueRepository, InMemorySeatLockRepository, InMemorySeatRepository,
+    InMemoryShowRepository, InMemoryUserRepository,
 };
 use service::{
     BookingService, PaymentService, QueueService, SeatLockingService, ShowService,
@@ -31,6 +31,8 @@ async fn make_state() -> crate::AppState {
     let payment_repo: Arc<dyn PaymentRepository> = Arc::new(InMemoryPaymentRepository::new());
     let seat_lock_repo: Arc<dyn SeatLockRepository> = Arc::new(InMemorySeatLockRepository::new());
     let queue_repo: Arc<dyn QueueRepository> = Arc::new(InMemoryQueueRepository::new());
+    let compensation_log_repo: Arc<dyn CompensationLogRepository> =
+        Arc::new(InMemoryCompensationLogRepository::new());
     let rate_limiter = crate::rate_limiter::RateLimiter::new();
 
     let seat_locking_svc = Arc::new(SeatLockingService::new(
@@ -45,6 +47,7 @@ async fn make_state() -> crate::AppState {
         Arc::clone(&booking_repo),
         Arc::clone(&seat_repo),
         Arc::clone(&payment_repo),
+        Arc::clone(&compensation_log_repo),
         cfg.clone(),
     ));
     let payment_svc = Arc::new(PaymentService::new(
@@ -92,12 +95,6 @@ fn admin_hdr() -> (HeaderName, HeaderValue) {
     )
 }
 
-fn user2_hdr() -> (HeaderName, HeaderValue) {
-    (
-        HeaderName::from_static("x-user-id"),
-        HeaderValue::from_static("user-002"),
-    )
-}
 
 /// Helper: create a show and return its show_id.
 async fn create_show(client: &axum_test::TestServer, name: &str) -> String {

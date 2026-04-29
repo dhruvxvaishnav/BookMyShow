@@ -78,15 +78,15 @@ impl PaymentServiceTrait for PaymentService {
         idempotency_key: Option<String>,
     ) -> Result<PaymentInitiated, common::AppError> {
         // If idempotency key is provided, check if payment already exists for this key
-        if let Some(key) = &idempotency_key {
-            if let Some(existing) = self.payment_repo.find_by_idempotency_key(key).await? {
-                return Ok(PaymentInitiated {
-                    payment_id: existing.payment_id,
-                    payment_intent_id: existing.payment_intent_id,
-                    amount: existing.amount,
-                    gateway_name: existing.gateway_name,
-                });
-            }
+        if let Some(key) = &idempotency_key
+            && let Some(existing) = self.payment_repo.find_by_idempotency_key(key).await?
+        {
+            return Ok(PaymentInitiated {
+                payment_id: existing.payment_id,
+                payment_intent_id: existing.payment_intent_id,
+                amount: existing.amount,
+                gateway_name: existing.gateway_name,
+            });
         }
 
         let booking = self

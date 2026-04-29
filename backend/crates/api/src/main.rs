@@ -8,13 +8,13 @@ use api::routes::create_router;
 use api::state::AppState;
 use common::AppConfig;
 use repository::{
-    BookingRepository, PaymentRepository, QueueRepository, SeatLockRepository, SeatRepository,
-    ShowRepository, UserRepository,
+    BookingRepository, CompensationLogRepository, PaymentRepository, QueueRepository,
+    SeatLockRepository, SeatRepository, ShowRepository, UserRepository,
 };
 use repository_inmemory::{
-    InMemoryBookingRepository, InMemoryPaymentRepository, InMemoryQueueRepository,
-    InMemorySeatLockRepository, InMemorySeatRepository, InMemoryShowRepository,
-    InMemoryUserRepository,
+    InMemoryBookingRepository, InMemoryCompensationLogRepository, InMemoryPaymentRepository,
+    InMemoryQueueRepository, InMemorySeatLockRepository, InMemorySeatRepository,
+    InMemoryShowRepository, InMemoryUserRepository,
 };
 use service::{
     BookingService, PaymentService, QueueService, SeatLockingService, ShowService,
@@ -63,6 +63,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let payment_repo: Arc<dyn PaymentRepository> = Arc::new(InMemoryPaymentRepository::new());
     let seat_lock_repo: Arc<dyn SeatLockRepository> = Arc::new(InMemorySeatLockRepository::new());
     let queue_repo: Arc<dyn QueueRepository> = Arc::new(InMemoryQueueRepository::new());
+    let compensation_log_repo: Arc<dyn CompensationLogRepository> =
+        Arc::new(InMemoryCompensationLogRepository::new());
 
     // ── 4. Initialise services ─────────────────────────────────────────────
     let seat_locking_svc = Arc::new(SeatLockingService::new(
@@ -78,6 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&booking_repo),
         Arc::clone(&seat_repo),
         Arc::clone(&payment_repo),
+        Arc::clone(&compensation_log_repo),
         cfg.clone(),
     ));
 
@@ -133,9 +136,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    // Payment timeout task (every 60s)
+    // Payment timeout task (every 30s — per PRD §9.5)
     tokio::spawn(async move {
-        let mut ticker = interval(Duration::from_secs(60));
+        let mut ticker = interval(Duration::from_secs(30));
         loop {
             ticker.tick().await;
             if let Err(e) = payment_svc.process_expired_payments().await {

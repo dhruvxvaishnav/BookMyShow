@@ -32,7 +32,7 @@ impl RateLimitEntry {
 
     fn prune(&mut self, now: Instant) {
         let cutoff = now - Duration::from_secs(60);
-        while self.timestamps.front().map_or(false, |&t| t <= cutoff) {
+        while self.timestamps.front().is_some_and(|&t| t <= cutoff) {
             self.timestamps.pop_front();
         }
     }

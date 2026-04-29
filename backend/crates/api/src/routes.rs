@@ -8,7 +8,7 @@ use crate::handlers;
 use crate::state::AppState;
 
 pub fn create_router(state: AppState) -> Router {
-    let app = Router::new()
+    Router::new()
         // ── Health ────────────────────────────────────────────────────────────
         .route("/health", get(handlers::health))
         // ── Shows ─────────────────────────────────────────────────────────────
@@ -67,7 +67,5 @@ pub fn create_router(state: AppState) -> Router {
         // Attach app state
         .with_state(state)
         // Add tracing middleware
-        .layer(TraceLayer::new_for_http());
-
-    app
+        .layer(TraceLayer::new_for_http())
 }

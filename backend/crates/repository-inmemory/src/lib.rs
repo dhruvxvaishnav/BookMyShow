@@ -1,4 +1,5 @@
 pub mod in_memory_booking_repository;
+pub mod in_memory_compensation_log_repository;
 pub mod in_memory_payment_repository;
 pub mod in_memory_queue_repository;
 pub mod in_memory_seat_lock_repository;
@@ -7,6 +8,7 @@ pub mod in_memory_show_repository;
 pub mod in_memory_user_repository;
 
 pub use in_memory_booking_repository::InMemoryBookingRepository;
+pub use in_memory_compensation_log_repository::InMemoryCompensationLogRepository;
 pub use in_memory_payment_repository::InMemoryPaymentRepository;
 pub use in_memory_queue_repository::InMemoryQueueRepository;
 pub use in_memory_seat_lock_repository::InMemorySeatLockRepository;

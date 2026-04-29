@@ -24,6 +24,7 @@ pub struct Show {
 }
 
 impl Show {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         show_id: String,
         show_name: String,

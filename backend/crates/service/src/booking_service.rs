@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 use chrono::Utc;
 use common::AppConfig;
-use domain::{Booking, BookingStatus, SeatStatus};
-use repository::{BookingRepository, PaymentRepository, SeatRepository};
+use domain::{Booking, BookingStatus, CompensationLog, SeatStatus};
+use repository::{BookingRepository, CompensationLogRepository, PaymentRepository, SeatRepository};
 use std::sync::Arc;
+use uuid::Uuid;
 
 use super::booking::BookingConfirmed;
 
@@ -36,6 +37,7 @@ pub struct BookingService {
     booking_repo: Arc<dyn BookingRepository>,
     seat_repo: Arc<dyn SeatRepository>,
     payment_repo: Arc<dyn PaymentRepository>,
+    compensation_log_repo: Arc<dyn CompensationLogRepository>,
     cfg: AppConfig,
 }
 
@@ -44,12 +46,14 @@ impl BookingService {
         booking_repo: Arc<dyn BookingRepository>,
         seat_repo: Arc<dyn SeatRepository>,
         payment_repo: Arc<dyn PaymentRepository>,
+        compensation_log_repo: Arc<dyn CompensationLogRepository>,
         cfg: AppConfig,
     ) -> Self {
         Self {
             booking_repo,
             seat_repo,
             payment_repo,
+            compensation_log_repo,
             cfg,
         }
     }
@@ -125,7 +129,7 @@ impl BookingServiceTrait for BookingService {
         let new_status = if failed_seats.is_empty() {
             BookingStatus::Success
         } else {
-            BookingStatus::PaymentFailed // partial failure
+            BookingStatus::SuccessPartial
         };
 
         booking.status = new_status;
@@ -133,11 +137,38 @@ impl BookingServiceTrait for BookingService {
         booking.payment_id = Some(payment_id.to_string());
         self.booking_repo.save(booking.clone()).await?;
 
+        // If partial, record a CompensationLog for the failed seats
+        if !failed_seats.is_empty() {
+            let comp_log = CompensationLog::new(
+                Uuid::new_v4().to_string(),
+                booking.booking_id.clone(),
+                booking.show_id.clone(),
+                booking.user_id.clone(),
+                confirmed_seats.clone(),
+                failed_seats.clone(),
+                booking.total_amount,
+            );
+            if let Err(e) = self.compensation_log_repo.save(comp_log).await {
+                tracing::error!(
+                    booking_id = %booking_id,
+                    error = %e,
+                    "failed to save compensation log"
+                );
+            }
+            tracing::warn!(
+                booking_id = %booking_id,
+                confirmed = confirmed_seats.len(),
+                failed = failed_seats.len(),
+                "partial booking — compensation log created"
+            );
+        }
+
         tracing::info!(
             booking_id = %booking_id,
             payment_id = %payment_id,
             confirmed_seats = confirmed_seats.len(),
             failed_seats = failed_seats.len(),
+            status = %new_status,
             "booking confirmed"
         );
 

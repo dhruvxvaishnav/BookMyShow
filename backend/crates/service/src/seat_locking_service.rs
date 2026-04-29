@@ -374,16 +374,16 @@ impl SeatLockingService {
     async fn expire_lock(&self, lock_id: &str) -> Result<(), AppError> {
         let lock = self
             .seat_lock_repo
-            .find_by_id(&lock_id)
+            .find_by_id(lock_id)
             .await?
             .ok_or_else(|| AppError::LockNotFound(lock_id.to_string()))?;
 
         // Release all seats held by this lock
         for seat_id in &lock.seat_ids {
-            if let Ok(Some(seat)) = self.seat_repo.find_by_id(seat_id).await {
-                if seat.lock_id.as_ref() == Some(&lock_id.to_string()) {
-                    self.seat_repo.release_seat(seat_id).await?;
-                }
+            if let Ok(Some(seat)) = self.seat_repo.find_by_id(seat_id).await
+                && seat.lock_id.as_ref() == Some(&lock_id.to_string())
+            {
+                self.seat_repo.release_seat(seat_id).await?;
             }
         }
 

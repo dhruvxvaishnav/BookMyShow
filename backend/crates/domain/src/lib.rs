@@ -1,5 +1,6 @@
 pub mod booking;
 pub mod booking_status;
+pub mod compensation_log;
 pub mod lock_status;
 pub mod payment;
 pub mod payment_status;
@@ -14,6 +15,7 @@ pub mod user;
 
 pub use booking::Booking;
 pub use booking_status::BookingStatus;
+pub use compensation_log::CompensationLog;
 pub use lock_status::LockStatus;
 pub use payment::Payment;
 pub use payment_status::PaymentStatus;

@@ -183,9 +183,15 @@ impl ShowService {
 
         // Revenue = sum of total_amount for all confirmed (Success) bookings
         let bookings: Vec<Booking> = self.booking_repo.find_by_show(show_id).await?;
+        // SuccessPartial counts as revenue (failed portion tracked in CompensationLog)
         let revenue: f64 = bookings
             .iter()
-            .filter(|b| b.status == BookingStatus::Success)
+            .filter(|b| {
+                matches!(
+                    b.status,
+                    BookingStatus::Success | BookingStatus::SuccessPartial
+                )
+            })
             .map(|b| b.total_amount)
             .sum();
 

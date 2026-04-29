@@ -87,40 +87,34 @@ impl Default for AppConfig {
 impl AppConfig {
     /// Load configuration from config.toml, with optional env-var overrides.
     /// Env vars take precedence: e.g. `APP_PORT=9000 cargo run`
+    /// Falls back to compiled-in defaults if config.toml is absent or incomplete.
     pub fn load() -> Result<Self, ConfigError> {
-        let mut cfg = Config::builder()
-            .add_source(File::with_name("config"))
-            .build()
-            .unwrap_or_else(|_| {
-                // Fallback to default if config.toml is missing (useful during dev)
-                tracing::warn!("config.toml not found; using default configuration");
-                Config::builder().build().unwrap()
-            });
+        // config.toml is optional — missing file is not an error
+        let mut builder =
+            Config::builder().add_source(File::with_name("config").required(false));
 
-        // Environment variable overrides
-        if let Ok(port) = env::var("APP_PORT") {
-            let _ = cfg.set("app.port", port);
-        }
-        if let Ok(host) = env::var("APP_HOST") {
-            let _ = cfg.set("app.host", host);
-        }
-        if let Ok(level) = env::var("LOG_LEVEL") {
-            let _ = cfg.set("app.log_level", level);
-        }
-        if let Ok(ttl) = env::var("SEAT_LOCK_TTL_SECS") {
-            let _ = cfg.set("seat_lock.ttl_seconds", ttl);
-        }
-        if let Ok(max_ext) = env::var("SEAT_LOCK_MAX_EXTENSIONS") {
-            let _ = cfg.set("seat_lock.max_extensions", max_ext);
-        }
-        if let Ok(ext_secs) = env::var("SEAT_LOCK_EXTENSION_SECS") {
-            let _ = cfg.set("seat_lock.extension_seconds", ext_secs);
-        }
-        if let Ok(grace) = env::var("SEAT_LOCK_GRACE_PERIOD_SECS") {
-            let _ = cfg.set("seat_lock.grace_period_seconds", grace);
+        // Env-var overrides use set_override (builder API, not deprecated)
+        macro_rules! env_override {
+            ($key:literal, $var:literal) => {
+                if let Ok(v) = env::var($var) {
+                    builder = builder.set_override($key, v)?;
+                }
+            };
         }
 
-        cfg.try_deserialize()
+        env_override!("app.port", "APP_PORT");
+        env_override!("app.host", "APP_HOST");
+        env_override!("app.log_level", "LOG_LEVEL");
+        env_override!("seat_lock.ttl_seconds", "SEAT_LOCK_TTL_SECS");
+        env_override!("seat_lock.max_extensions", "SEAT_LOCK_MAX_EXTENSIONS");
+        env_override!("seat_lock.extension_seconds", "SEAT_LOCK_EXTENSION_SECS");
+        env_override!("seat_lock.grace_period_seconds", "SEAT_LOCK_GRACE_PERIOD_SECS");
+
+        // If deserialization fails (e.g. no config.toml and no env vars), use defaults
+        match builder.build()?.try_deserialize::<Self>() {
+            Ok(cfg) => Ok(cfg),
+            Err(_) => Ok(Self::default()),
+        }
     }
 
     /// Returns a globally initialised config instance.

@@ -9,8 +9,11 @@ pub enum BookingStatus {
     Pending,
     /// Payment has been initiated, awaiting gateway confirmation.
     PaymentPending,
-    /// Payment succeeded and seats are confirmed.
+    /// Payment succeeded and all seats are confirmed.
     Success,
+    /// Payment succeeded but some seats could not be confirmed (race/inconsistency).
+    /// Confirmed seats are booked; failed seats are recorded in CompensationLog.
+    SuccessPartial,
     /// Payment failed — seats have been released.
     PaymentFailed,
     /// Booking timed out before payment — seats released.
@@ -27,6 +30,7 @@ impl std::fmt::Display for BookingStatus {
             BookingStatus::Pending => write!(f, "pending"),
             BookingStatus::PaymentPending => write!(f, "payment_pending"),
             BookingStatus::Success => write!(f, "success"),
+            BookingStatus::SuccessPartial => write!(f, "success_partial"),
             BookingStatus::PaymentFailed => write!(f, "payment_failed"),
             BookingStatus::Expired => write!(f, "expired"),
             BookingStatus::Cancelled => write!(f, "cancelled"),
