@@ -1,0 +1,284 @@
+'use client';
+import { useState, useEffect, useCallback, use } from 'react';
+import { useRouter } from 'next/navigation';
+import { Clock, CreditCard, X, AlertTriangle } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import LockTimer from '@/components/booking/LockTimer';
+import Modal from '@/components/layout/Modal';
+import Button from '@/components/forms/Button';
+import Badge from '@/components/common/Badge';
+import { BookingSkeleton } from '@/components/common/LoadingSkeleton';
+import EmptyState from '@/components/common/EmptyState';
+import { useToast } from '@/components/layout/Toast';
+import { getBooking, extendLock, cancelBooking, releaseLock } from '@/api/bookings';
+import { getErrorMessage } from '@/utils/error';
+import { formatPrice, formatSeatList, formatDateTime } from '@/utils/format';
+import type { Booking, BookingStatus } from '@/types/api';
+import styles from './page.module.css';
+
+interface PageProps { params: Promise<{ bookingId: string }> }
+
+const statusBadge: Record<BookingStatus, 'success' | 'error' | 'warning' | 'info' | 'muted' | 'gold'> = {
+  Success: 'success',
+  Pending: 'warning',
+  PaymentPending: 'gold',
+  Expired: 'muted',
+  Cancelled: 'error',
+  PartialSuccess: 'warning',
+};
+
+export default function BookingDetailsPage({ params }: PageProps) {
+  const { bookingId } = use(params);
+  const router = useRouter();
+  const toast = useToast();
+
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isExtending, setIsExtending] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
+  const [extensionsUsed, setExtensionsUsed] = useState(0);
+  const MAX_EXTENSIONS = 2;
+
+  const loadBooking = useCallback(async () => {
+    try {
+      const data = await getBooking(bookingId);
+      setBooking(data);
+      // Load extensions from localStorage
+      const stored = localStorage.getItem('bms_lock_extensions');
+      const exts: Record<string, number> = stored ? JSON.parse(stored) : {};
+      setExtensionsUsed(exts[bookingId] ?? 0);
+      if (data.status === 'Expired') setShowExpiredModal(true);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [bookingId]);
+
+  useEffect(() => { loadBooking(); }, [loadBooking]);
+
+  // Poll every 10 seconds
+  useEffect(() => {
+    if (!booking) return;
+    const interval = setInterval(async () => {
+      try {
+        const data = await getBooking(bookingId);
+        setBooking(data);
+        if (data.status === 'Expired') {
+          setShowExpiredModal(true);
+          clearInterval(interval);
+        }
+      } catch { /* silently fail */ }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [booking, bookingId]);
+
+  const handleExtend = async () => {
+    setIsExtending(true);
+    try {
+      const updated = await extendLock(bookingId);
+      setBooking(updated);
+      // Track extension count
+      const stored = localStorage.getItem('bms_lock_extensions');
+      const exts: Record<string, number> = stored ? JSON.parse(stored) : {};
+      exts[bookingId] = (exts[bookingId] ?? 0) + 1;
+      localStorage.setItem('bms_lock_extensions', JSON.stringify(exts));
+      setExtensionsUsed(exts[bookingId]);
+      toast.showToast('Lock extended by 2 minutes.', 'success');
+    } catch (err) {
+      toast.showToast(getErrorMessage(err), 'error');
+    } finally {
+      setIsExtending(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    setIsCancelling(true);
+    try {
+      await cancelBooking(bookingId);
+      toast.showToast('Booking cancelled.', 'info');
+      router.push('/');
+    } catch (err) {
+      toast.showToast(getErrorMessage(err), 'error');
+    } finally {
+      setIsCancelling(false);
+      setShowCancelModal(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <>
+        <PageHeader title="Your Booking" />
+        <div className="container"><BookingSkeleton /></div>
+      </>
+    );
+  }
+
+  if (error || !booking) {
+    return (
+      <>
+        <PageHeader title="Your Booking" backHref="/" />
+        <div className="container">
+          <EmptyState
+            title="Booking not found"
+            description={error ?? 'This booking could not be found.'}
+            icon="film"
+            action={<button onClick={loadBooking}>Retry</button>}
+          />
+        </div>
+      </>
+    );
+  }
+
+  const isPending = booking.status === 'Pending' || booking.status === 'PaymentPending';
+  const expired = booking.status === 'Expired' || booking.status === 'Cancelled';
+  const badgeVariant = statusBadge[booking.status] ?? 'muted';
+
+  return (
+    <>
+      <PageHeader
+        title="Your Booking"
+        subtitle={booking.show ? `${booking.show.name} · ${booking.show.theatre_name}` : undefined}
+        backHref="/"
+        actions={<Badge variant={badgeVariant}>{booking.status}</Badge>}
+      />
+
+      <div className="container">
+        <div className={styles.card}>
+          {/* Lock Timer */}
+          {isPending && (
+            <div className={styles.timerSection}>
+              <LockTimer
+                expiresAt={booking.expires_at}
+                label="Lock expires in"
+                sublabel={`${booking.seat_ids.length} seat${booking.seat_ids.length !== 1 ? 's' : ''} · ${formatPrice(booking.total_amount)}`}
+              />
+            </div>
+          )}
+
+          {/* Show details */}
+          {booking.show && (
+            <div className={styles.showSection}>
+              <div className={styles.showInfo}>
+                <h2 className={styles.showName}>{booking.show.name}</h2>
+                <p className={styles.showMeta}>
+                  {booking.show.theatre_name} · Screen {booking.show.screen_number}
+                </p>
+                <p className={styles.showTime}>{formatDateTime(booking.show.start_time)}</p>
+              </div>
+            </div>
+          )}
+
+          <div className={styles.divider} />
+
+          {/* Seats */}
+          <div className={styles.seatsSection}>
+            <span className={styles.seatsLabel}>Your Seats</span>
+            <div className={styles.seatList}>
+              {booking.seats && booking.seats.length > 0
+                ? booking.seats.map((s) => (
+                    <span key={s.seat_id} className={styles.seatChip}>
+                      {s.seat_number}
+                    </span>
+                  ))
+                : booking.seat_ids.map((id) => (
+                    <span key={id} className={styles.seatChip}>{id.slice(0, 8)}</span>
+                  ))}
+            </div>
+          </div>
+
+          <div className={styles.divider} />
+
+          {/* Amount */}
+          <div className={styles.amountSection}>
+            <span>Total Amount</span>
+            <span className={styles.amount}>{formatPrice(booking.total_amount)}</span>
+          </div>
+
+          {/* Actions */}
+          {isPending && (
+            <div className={styles.actions}>
+              <Button
+                variant="secondary"
+                disabled={extensionsUsed >= MAX_EXTENSIONS}
+                isLoading={isExtending}
+                onClick={handleExtend}
+                title={
+                  extensionsUsed >= MAX_EXTENSIONS
+                    ? 'Maximum extensions reached'
+                    : undefined
+                }
+              >
+                Extend Lock (+2 min)
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => router.push(`/bookings/${bookingId}/payment`)}
+                leftIcon={<CreditCard size={16} strokeWidth={1.5} />}
+              >
+                Proceed to Payment
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => setShowCancelModal(true)}
+                leftIcon={<X size={16} strokeWidth={1.5} />}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+
+          {expired && (
+            <div className={styles.actions}>
+              <Button variant="primary" onClick={() => router.push('/')}>
+                Browse Shows
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Cancel confirmation modal */}
+      <Modal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Cancel Booking?"
+      >
+        <div className={styles.modalBody}>
+          <p>Are you sure you want to cancel this booking? Your seats will be released back to the pool.</p>
+          <div className={styles.modalActions}>
+            <Button variant="secondary" onClick={() => setShowCancelModal(false)}>
+              Keep Booking
+            </Button>
+            <Button variant="danger" isLoading={isCancelling} onClick={handleCancel}>
+              Yes, Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Expired modal */}
+      <Modal
+        isOpen={showExpiredModal}
+        onClose={() => { setShowExpiredModal(false); router.push('/'); }}
+        title="Lock Expired"
+      >
+        <div className={styles.modalBody}>
+          <div className={styles.expiredIcon}>
+            <AlertTriangle size={40} strokeWidth={1} />
+          </div>
+          <p>Your lock has expired and the seats have been released. Please select seats again.</p>
+          <div className={styles.modalActions}>
+            <Button variant="primary" onClick={() => router.push('/')}>
+              Browse Shows
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
+}

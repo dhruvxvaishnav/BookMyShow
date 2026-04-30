@@ -1,0 +1,29 @@
+.layout {
+  display: flex;
+  gap: var(--space-6);
+  align-items: flex-start;
+}
+
+.gridWrap { flex: 1; min-width: 0; }
+
+.panelWrap {
+  position: sticky;
+  top: 88px;
+  flex-shrink: 0;
+}
+
+.queueBannerWrap {
+  margin-bottom: var(--space-5);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .panelWrap {
+    position: static;
+    width: 100%;
+    max-width: none;
+  }
+}

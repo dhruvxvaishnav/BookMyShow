@@ -1,0 +1,124 @@
+.wrapper { position: relative; display: inline-flex; }
+
+.seat {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    background var(--transition-fast),
+    box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.seat:hover:not(:disabled) { transform: scale(1.12); }
+.seat:active:not(:disabled) { animation: seatBounce 200ms ease-out; }
+
+@keyframes seatBounce {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.88); }
+  70%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.seat:disabled { cursor: not-allowed; }
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── States ──────────────────────────────────────────────── */
+.available {
+  background: rgba(34,197,94,0.2);
+  border-color: rgba(34,197,94,0.4);
+  color: #22C55E;
+}
+
+.selected {
+  background: rgba(245,166,35,0.25);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  box-shadow: 0 0 10px var(--accent-gold-glow);
+  animation: pulseGlow 400ms ease-out;
+}
+
+@keyframes pulseGlow {
+  0%   { box-shadow: 0 0 8px var(--accent-gold-glow); }
+  50%  { box-shadow: 0 0 20px var(--accent-gold-glow); }
+  100% { box-shadow: 0 0 10px var(--accent-gold-glow); }
+}
+
+.locked-you {
+  background: rgba(245,166,35,0.25);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.locked-other {
+  background: rgba(239,68,68,0.2);
+  border-color: rgba(239,68,68,0.4);
+  color: #EF4444;
+}
+
+.booked {
+  background: rgba(107,114,128,0.15);
+  border-color: rgba(107,114,128,0.3);
+  color: #6B7280;
+}
+
+/* Conflict highlight */
+.conflicting {
+  outline: 2px solid #EF4444 !important;
+  outline-offset: 1px;
+  animation: conflictPulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes conflictPulse {
+  from { outline-color: #EF4444; }
+  to   { outline-color: rgba(239,68,68,0.4); }
+}
+
+/* ── Tooltip ────────────────────────────────────────────── */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+  z-index: 50;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+  animation: fadeIn 100ms ease-out;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.tooltip strong {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+}
+
+.tooltip span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}

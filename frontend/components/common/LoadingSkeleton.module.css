@@ -1,0 +1,47 @@
+.shimmerLine {
+  height: 16px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-elevated) 50%, var(--bg-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.shimmerBlock {
+  background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-elevated) 50%, var(--bg-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* Card skeleton */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.cardImg { height: 160px; border-radius: 0; }
+.cardBody { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.title { height: 20px; width: 80%; }
+.subtitle { height: 14px; width: 60%; }
+.w75 { width: 75% !important; }
+.btn { height: 38px; width: 100%; border-radius: var(--radius-md) !important; margin-top: var(--space-2); }
+
+/* Seat grid skeleton */
+.seatGrid { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-6); }
+.screen { height: 6px; width: 70%; border-radius: 3px !important; margin-bottom: var(--space-4); }
+.seatRow { display: flex; align-items: center; gap: var(--space-2); }
+.rowLabel { width: 20px; height: 20px; border-radius: var(--radius-sm); background: var(--bg-surface); flex-shrink: 0; }
+.seat { width: 24px; height: 24px; border-radius: var(--radius-sm) !important; flex-shrink: 0; }
+
+/* Booking skeleton */
+.booking { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-6); }
+.ticketTitle { height: 24px; width: 60%; }
+.ticketSub { height: 16px; width: 40%; }
+.timerRow { display: flex; justify-content: center; margin: var(--space-4) 0; }
+.timer { height: 48px; width: 120px; border-radius: var(--radius-md) !important; }

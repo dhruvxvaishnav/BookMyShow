@@ -1,0 +1,26 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.rowLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 28px;
+  justify-content: center;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.seats {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: nowrap;
+}

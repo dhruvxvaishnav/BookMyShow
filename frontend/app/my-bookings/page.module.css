@@ -1,0 +1,78 @@
+.tabs {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-8);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding-bottom: var(--space-4);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 16px;
+  border-radius: 100px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font-body);
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tab:hover { background: var(--bg-surface); color: var(--text-primary); }
+
+.tabActive {
+  background: rgba(245,166,35,0.12);
+  border-color: rgba(245,166,35,0.3);
+  color: var(--accent-gold);
+}
+
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 100px;
+  background: rgba(255,255,255,0.08);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.tabActive .tabCount {
+  background: rgba(245,166,35,0.2);
+  color: var(--accent-gold);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.errorRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-12) 0;
+  text-align: center;
+}
+
+.errorRow p { color: var(--danger); font-size: 0.9375rem; }
+.errorRow button {
+  padding: 8px 20px;
+  background: transparent;
+  border: 1px solid rgba(239,68,68,0.4);
+  border-radius: var(--radius-md);
+  color: #EF4444;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+}

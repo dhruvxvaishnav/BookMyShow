@@ -1,0 +1,194 @@
+.form {
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.presetBtn {
+  padding: 6px 14px;
+  background: var(--bg-surface);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.presetBtn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+
+.fieldError {
+  font-size: 0.8125rem;
+  color: var(--danger);
+}
+
+.rowList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.rowItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-md);
+}
+
+.rowLabelInput {
+  width: 40px;
+  padding: 6px 8px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+
+.rowSeatsInput {
+  width: 60px;
+  padding: 6px 8px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  outline: none;
+  text-align: center;
+}
+
+.rowSep { color: var(--text-muted); font-size: 0.875rem; }
+
+.removeRowBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: auto;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.removeRowBtn:hover { background: rgba(239,68,68,0.1); color: var(--danger); border-color: rgba(239,68,68,0.3); }
+
+.addRowActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.totalSeats {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Preview */
+.preview {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.previewLabel {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: var(--space-3);
+}
+
+.previewGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.previewRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.previewRow > .previewLabel {
+  margin: 0;
+  margin-right: var(--space-2);
+  min-width: 16px;
+  font-size: 0.6875rem;
+}
+
+.previewSeat {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: rgba(34,197,94,0.2);
+  border: 1px solid rgba(34,197,94,0.4);
+}
+
+.previewSeat.premium {
+  background: rgba(168,85,247,0.2);
+  border-color: rgba(168,85,247,0.4);
+}
+
+.previewSeat.recliner {
+  background: rgba(6,182,212,0.2);
+  border-color: rgba(6,182,212,0.4);
+}
+
+.submitRow {
+  display: flex;
+  gap: var(--space-3);
+  padding-top: var(--space-6);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+@media (max-width: 640px) {
+  .fieldGrid { grid-template-columns: 1fr; }
+  .rowItem { flex-wrap: wrap; }
+}

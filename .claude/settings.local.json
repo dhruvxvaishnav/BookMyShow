@@ -7,7 +7,11 @@
       "Bash(find C:/Users/admin/Desktop/BookMyShow/backend -name *.md -type f)",
       "Bash(for i:*)",
       "Bash(do cargo:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(bun create:*)",
+      "Bash(npx create-next-app@latest frontend --typescript --app --no-tailwind --no-eslint --no-src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

@@ -1,0 +1,46 @@
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+}
+
+.selectWrapper { position: relative; }
+
+.select {
+  width: 100%;
+  padding: 10px var(--space-4);
+  padding-right: 36px;
+  background: var(--bg-surface);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.select:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px var(--accent-gold-glow);
+}
+
+.select option { background: var(--bg-elevated); }
+
+.selectError { border-color: var(--danger); }
+
+.chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.error { font-size: 0.8125rem; color: var(--danger); }
