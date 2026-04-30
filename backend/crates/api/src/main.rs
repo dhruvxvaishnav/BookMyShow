@@ -16,11 +16,11 @@ use repository_inmemory::{
     InMemoryQueueRepository, InMemorySeatLockRepository, InMemorySeatRepository,
     InMemoryShowRepository, InMemoryUserRepository,
 };
+use service::show::{CreateShowRequest, RowConfig, SeatLayoutRequest};
 use service::{
     BookingService, PaymentService, QueueService, SeatLockingService, ShowService,
     booking_service::BookingServiceTrait, payment_service::PaymentServiceTrait,
 };
-use service::show::{CreateShowRequest, RowConfig, SeatLayoutRequest};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -205,10 +205,26 @@ async fn seed_demo_shows(show_svc: &ShowService) {
             price_per_seat: 200.0,
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig { row: "A".to_string(), seats: 10, seat_type: "Standard".to_string() },
-                    RowConfig { row: "B".to_string(), seats: 10, seat_type: "Standard".to_string() },
-                    RowConfig { row: "C".to_string(), seats: 10, seat_type: "Standard".to_string() },
-                    RowConfig { row: "D".to_string(), seats: 10, seat_type: "Standard".to_string() },
+                    RowConfig {
+                        row: "A".to_string(),
+                        seats: 10,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "B".to_string(),
+                        seats: 10,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "C".to_string(),
+                        seats: 10,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "D".to_string(),
+                        seats: 10,
+                        seat_type: "Standard".to_string(),
+                    },
                 ],
             },
         },
@@ -222,12 +238,36 @@ async fn seed_demo_shows(show_svc: &ShowService) {
             price_per_seat: 350.0,
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig { row: "A".to_string(), seats: 12, seat_type: "Premium".to_string() },
-                    RowConfig { row: "B".to_string(), seats: 12, seat_type: "Premium".to_string() },
-                    RowConfig { row: "C".to_string(), seats: 12, seat_type: "Standard".to_string() },
-                    RowConfig { row: "D".to_string(), seats: 12, seat_type: "Standard".to_string() },
-                    RowConfig { row: "E".to_string(), seats: 12, seat_type: "Standard".to_string() },
-                    RowConfig { row: "F".to_string(), seats: 12, seat_type: "Recliner".to_string() },
+                    RowConfig {
+                        row: "A".to_string(),
+                        seats: 12,
+                        seat_type: "Premium".to_string(),
+                    },
+                    RowConfig {
+                        row: "B".to_string(),
+                        seats: 12,
+                        seat_type: "Premium".to_string(),
+                    },
+                    RowConfig {
+                        row: "C".to_string(),
+                        seats: 12,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "D".to_string(),
+                        seats: 12,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "E".to_string(),
+                        seats: 12,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "F".to_string(),
+                        seats: 12,
+                        seat_type: "Recliner".to_string(),
+                    },
                 ],
             },
         },
@@ -241,9 +281,21 @@ async fn seed_demo_shows(show_svc: &ShowService) {
             price_per_seat: 500.0,
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig { row: "A".to_string(), seats: 8, seat_type: "Recliner".to_string() },
-                    RowConfig { row: "B".to_string(), seats: 8, seat_type: "Recliner".to_string() },
-                    RowConfig { row: "C".to_string(), seats: 8, seat_type: "Recliner".to_string() },
+                    RowConfig {
+                        row: "A".to_string(),
+                        seats: 8,
+                        seat_type: "Recliner".to_string(),
+                    },
+                    RowConfig {
+                        row: "B".to_string(),
+                        seats: 8,
+                        seat_type: "Recliner".to_string(),
+                    },
+                    RowConfig {
+                        row: "C".to_string(),
+                        seats: 8,
+                        seat_type: "Recliner".to_string(),
+                    },
                 ],
             },
         },
@@ -257,14 +309,46 @@ async fn seed_demo_shows(show_svc: &ShowService) {
             price_per_seat: 150.0,
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig { row: "A".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "B".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "C".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "D".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "E".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "F".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "G".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "H".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig {
+                        row: "A".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "B".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "C".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "D".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "E".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "F".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "G".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "H".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
                 ],
             },
         },
