@@ -14,7 +14,11 @@
       "Bash(npm run:*)",
       "Bash(find C:UsersadminDesktopBookMyShowfrontendapp -name *.tsx -o -name *.ts)",
       "Bash(find C:UsersadminDesktopBookMyShowfrontendapi -name *.ts)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(chmod:*)",
+      "Bash(bash smoke-test.sh)",
+      "Bash(curl -s http://localhost:8080/health)",
+      "Bash(powershell -ExecutionPolicy Bypass -File smoke-test.ps1)"
     ]
   }
 }

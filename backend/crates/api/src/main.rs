@@ -20,6 +20,7 @@ use service::{
     BookingService, PaymentService, QueueService, SeatLockingService, ShowService,
     booking_service::BookingServiceTrait, payment_service::PaymentServiceTrait,
 };
+use service::show::{CreateShowRequest, RowConfig, SeatLayoutRequest};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -106,6 +107,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         cfg.clone(),
     ));
 
+    // ── 4b. Seed demo shows ──────────────────────────────────────────────────
+    seed_demo_shows(&show_svc).await;
+
     // ── 5. Build app state and router ──────────────────────────────────────
     let rate_limiter = RateLimiter::new();
 
@@ -174,4 +178,106 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tracing::info!(uptime = ?start.elapsed(), "server shutdown");
     Ok(())
+}
+
+/// Seed 4 demo shows so the home page isn't empty on first boot.
+/// Only seeds if the show repository is empty.
+async fn seed_demo_shows(show_svc: &ShowService) {
+    // Only seed if no shows exist yet
+    let existing = show_svc.list_shows().await.unwrap_or_default();
+    if !existing.is_empty() {
+        tracing::info!(count = existing.len(), "shows already exist, skipping seed");
+        return;
+    }
+
+    let now = chrono::Utc::now();
+    let hour = chrono::Duration::hours(1);
+    let two_hours = chrono::Duration::hours(2);
+
+    let shows = vec![
+        // Show 1: Standard layout — 4 rows × 10 seats, ₹200/seat
+        CreateShowRequest {
+            show_name: "Avengers: Endgame".to_string(),
+            theatre_name: "PVR Nexus".to_string(),
+            screen_number: 1,
+            start_time: now + hour,
+            end_time: now + two_hours,
+            price_per_seat: 200.0,
+            seat_layout: SeatLayoutRequest {
+                rows: vec![
+                    RowConfig { row: "A".to_string(), seats: 10, seat_type: "Standard".to_string() },
+                    RowConfig { row: "B".to_string(), seats: 10, seat_type: "Standard".to_string() },
+                    RowConfig { row: "C".to_string(), seats: 10, seat_type: "Standard".to_string() },
+                    RowConfig { row: "D".to_string(), seats: 10, seat_type: "Standard".to_string() },
+                ],
+            },
+        },
+        // Show 2: Premium layout — 6 rows × 12 seats, ₹350/seat
+        CreateShowRequest {
+            show_name: "Dune: Part Two".to_string(),
+            theatre_name: "IMAX Central".to_string(),
+            screen_number: 2,
+            start_time: now + hour * 2,
+            end_time: now + hour * 4,
+            price_per_seat: 350.0,
+            seat_layout: SeatLayoutRequest {
+                rows: vec![
+                    RowConfig { row: "A".to_string(), seats: 12, seat_type: "Premium".to_string() },
+                    RowConfig { row: "B".to_string(), seats: 12, seat_type: "Premium".to_string() },
+                    RowConfig { row: "C".to_string(), seats: 12, seat_type: "Standard".to_string() },
+                    RowConfig { row: "D".to_string(), seats: 12, seat_type: "Standard".to_string() },
+                    RowConfig { row: "E".to_string(), seats: 12, seat_type: "Standard".to_string() },
+                    RowConfig { row: "F".to_string(), seats: 12, seat_type: "Recliner".to_string() },
+                ],
+            },
+        },
+        // Show 3: Recliner-only — 3 rows × 8 seats, ₹500/seat
+        CreateShowRequest {
+            show_name: "Spider-Man: No Way Home".to_string(),
+            theatre_name: "Gold Class Cinemas".to_string(),
+            screen_number: 1,
+            start_time: now + hour * 3,
+            end_time: now + hour * 5,
+            price_per_seat: 500.0,
+            seat_layout: SeatLayoutRequest {
+                rows: vec![
+                    RowConfig { row: "A".to_string(), seats: 8, seat_type: "Recliner".to_string() },
+                    RowConfig { row: "B".to_string(), seats: 8, seat_type: "Recliner".to_string() },
+                    RowConfig { row: "C".to_string(), seats: 8, seat_type: "Recliner".to_string() },
+                ],
+            },
+        },
+        // Show 4: Large show — 8 rows × 15 seats, ₹150/seat
+        CreateShowRequest {
+            show_name: "The Grand Budapest Hotel".to_string(),
+            theatre_name: "Retro Cinema".to_string(),
+            screen_number: 1,
+            start_time: now + hour * 4,
+            end_time: now + hour * 6,
+            price_per_seat: 150.0,
+            seat_layout: SeatLayoutRequest {
+                rows: vec![
+                    RowConfig { row: "A".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "B".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "C".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "D".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "E".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "F".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "G".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "H".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                ],
+            },
+        },
+    ];
+
+    for show in shows {
+        match show_svc.create_show(show).await {
+            Ok((s, seats)) => {
+                tracing::info!(show_id = %s.show_id, show_name = %s.show_name, seat_count = seats.len(), "seeded demo show");
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "failed to seed demo show");
+            }
+        }
+    }
 }
