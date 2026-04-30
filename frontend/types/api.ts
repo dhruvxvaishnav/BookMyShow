@@ -136,17 +136,17 @@ export interface AdminShowAnalytics {
 }
 
 export interface CreateShowRequest {
-  name: string;
+  show_name: string;
   theatre_name: string;
   screen_number: number;
-  start_time: string; // ISO datetime-local
-  end_time: string;
+  start_time: number; // Unix timestamp seconds
+  end_time: number;
   price_per_seat: number;
-  rows: RowConfig[];
+  seat_layout: { rows: RowConfig[] };
 }
 
 export interface RowConfig {
-  label: string;
+  row: string;
   seats: number;
   seat_type: 'Standard' | 'Premium' | 'Recliner';
 }

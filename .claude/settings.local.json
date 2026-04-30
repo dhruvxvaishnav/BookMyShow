@@ -11,7 +11,10 @@
       "Bash(bun create:*)",
       "Bash(npx create-next-app@latest frontend --typescript --app --no-tailwind --no-eslint --no-src-dir --import-alias \"@/*\" --use-npm)",
       "Bash(npm install:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(find C:UsersadminDesktopBookMyShowfrontendapp -name *.tsx -o -name *.ts)",
+      "Bash(find C:UsersadminDesktopBookMyShowfrontendapi -name *.ts)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

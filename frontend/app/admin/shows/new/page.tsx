@@ -19,18 +19,18 @@ const SEAT_TYPE_OPTIONS = [
 
 const PRESETS = [
   { label: 'Standard Cinema (4 rows × 10 seats)', rows: [
-    { label: 'A', seats: 10, seat_type: 'Standard' as const },
-    { label: 'B', seats: 10, seat_type: 'Standard' as const },
-    { label: 'C', seats: 10, seat_type: 'Standard' as const },
-    { label: 'D', seats: 10, seat_type: 'Standard' as const },
+    { row: 'A', seats: 10, seat_type: 'Standard' as const },
+    { row: 'B', seats: 10, seat_type: 'Standard' as const },
+    { row: 'C', seats: 10, seat_type: 'Standard' as const },
+    { row: 'D', seats: 10, seat_type: 'Standard' as const },
   ]},
   { label: 'Premium Cinema (6 rows × 12 seats)', rows: [
-    { label: 'A', seats: 12, seat_type: 'Premium' as const },
-    { label: 'B', seats: 12, seat_type: 'Premium' as const },
-    { label: 'C', seats: 12, seat_type: 'Standard' as const },
-    { label: 'D', seats: 12, seat_type: 'Standard' as const },
-    { label: 'E', seats: 12, seat_type: 'Standard' as const },
-    { label: 'F', seats: 12, seat_type: 'Recliner' as const },
+    { row: 'A', seats: 12, seat_type: 'Premium' as const },
+    { row: 'B', seats: 12, seat_type: 'Premium' as const },
+    { row: 'C', seats: 12, seat_type: 'Standard' as const },
+    { row: 'D', seats: 12, seat_type: 'Standard' as const },
+    { row: 'E', seats: 12, seat_type: 'Standard' as const },
+    { row: 'F', seats: 12, seat_type: 'Recliner' as const },
   ]},
 ];
 
@@ -49,9 +49,9 @@ export default function CreateShowPage() {
 
   const addRow = () => {
     const nextLabel = rows.length > 0
-      ? String.fromCharCode(rows[rows.length - 1].label.charCodeAt(0) + 1)
+      ? String.fromCharCode(rows[rows.length - 1].row.charCodeAt(0) + 1)
       : 'A';
-    setRows([...rows, { label: nextLabel, seats: 10, seat_type: 'Standard' }]);
+    setRows([...rows, { row: nextLabel, seats: 10, seat_type: 'Standard' }]);
   };
 
   const removeRow = (index: number) => {
@@ -94,13 +94,13 @@ export default function CreateShowPage() {
     setIsSubmitting(true);
     try {
       await createShow({
-        name: name.trim(),
+        show_name: name.trim(),
         theatre_name: theatre.trim(),
         screen_number: Number(screen),
-        start_time: new Date(startTime).toISOString(),
-        end_time: new Date(endTime).toISOString(),
+        start_time: Math.floor(new Date(startTime).getTime() / 1000),
+        end_time: Math.floor(new Date(endTime).getTime() / 1000),
         price_per_seat: Number(price),
-        rows,
+        seat_layout: { rows },
       });
       toast.showToast(`Show created with ${totalSeats} seats.`, 'success');
       router.push('/admin');
@@ -197,9 +197,9 @@ export default function CreateShowPage() {
                 <div key={i} className={styles.rowItem}>
                   <input
                     className={styles.rowLabelInput}
-                    value={row.label}
+                    value={row.row}
                     maxLength={1}
-                    onChange={(e) => updateRow(i, 'label', e.target.value.toUpperCase())}
+                    onChange={(e) => updateRow(i, 'row', e.target.value.toUpperCase())}
                     placeholder="A"
                     aria-label="Row label"
                   />
@@ -245,7 +245,7 @@ export default function CreateShowPage() {
                 <div className={styles.previewGrid}>
                   {rows.map((row, i) => (
                     <div key={i} className={styles.previewRow}>
-                      <span className={styles.previewLabel}>{row.label}</span>
+                      <span className={styles.previewLabel}>{row.row}</span>
                       {[...Array(row.seats)].map((_, j) => (
                         <div
                           key={j}
