@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
 /* ── Design Tokens ─────────────────────────────────────── */
 :root {
@@ -38,9 +38,9 @@
   --space-16: 64px;
 
   /* Typography */
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body:    'Lora', Georgia, serif;
-  --font-mono:    'Courier Prime', 'Courier New', monospace;
+  --font-display: 'Inter', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
 
   /* Radius */
   --radius-sm: 4px; --radius-md: 8px;
@@ -129,8 +129,8 @@ p { color: var(--text-secondary); }
 }
 @keyframes seatBounce {
   0%   { transform: scale(1); }
-  40%  { transform: scale(0.92); }
-  70%  { transform: scale(1.05); }
+  40%  { transform: scale(0.95); }
+  70%  { transform: scale(1.02); }
   100% { transform: scale(1); }
 }
 

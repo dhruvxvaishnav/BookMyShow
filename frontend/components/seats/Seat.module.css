@@ -18,13 +18,13 @@
   overflow: hidden;
 }
 
-.seat:hover:not(:disabled) { transform: scale(1.12); }
+.seat:hover:not(:disabled) { transform: scale(1.1); }
 .seat:active:not(:disabled) { animation: seatBounce 200ms ease-out; }
 
 @keyframes seatBounce {
   0%   { transform: scale(1); }
-  40%  { transform: scale(0.88); }
-  70%  { transform: scale(1.05); }
+  40%  { transform: scale(0.95); }
+  70%  { transform: scale(1.02); }
   100% { transform: scale(1); }
 }
 
@@ -41,41 +41,41 @@
 
 /* ── States ──────────────────────────────────────────────── */
 .available {
-  background: rgba(34,197,94,0.2);
-  border-color: rgba(34,197,94,0.4);
-  color: #22C55E;
+  background: var(--seat-available);
+  border-color: var(--seat-available);
+  color: var(--bg-primary);
 }
 
 .selected {
-  background: rgba(245,166,35,0.25);
+  background: var(--bg-surface);
   border-color: var(--accent-gold);
   color: var(--accent-gold);
-  box-shadow: 0 0 10px var(--accent-gold-glow);
-  animation: pulseGlow 400ms ease-out;
-}
-
-@keyframes pulseGlow {
-  0%   { box-shadow: 0 0 8px var(--accent-gold-glow); }
-  50%  { box-shadow: 0 0 20px var(--accent-gold-glow); }
-  100% { box-shadow: 0 0 10px var(--accent-gold-glow); }
 }
 
 .locked-you {
-  background: rgba(245,166,35,0.25);
-  border-color: var(--accent-gold);
-  color: var(--accent-gold);
+  background: var(--seat-locked-you);
+  border-color: var(--seat-locked-you);
+  color: var(--bg-primary);
+  box-shadow: 0 0 8px var(--accent-gold-glow);
+  animation: lockAcquiredPulse 400ms ease-out forwards;
+}
+
+@keyframes lockAcquiredPulse {
+  0%   { box-shadow: 0 0 0px var(--accent-gold-glow); }
+  50%  { box-shadow: 0 0 24px var(--accent-gold-glow); }
+  100% { box-shadow: 0 0 12px var(--accent-gold-glow); }
 }
 
 .locked-other {
-  background: rgba(239,68,68,0.2);
-  border-color: rgba(239,68,68,0.4);
-  color: #EF4444;
+  background: var(--seat-locked-other);
+  border-color: var(--seat-locked-other);
+  color: var(--text-primary);
 }
 
 .booked {
-  background: rgba(107,114,128,0.15);
-  border-color: rgba(107,114,128,0.3);
-  color: #6B7280;
+  background: var(--seat-booked);
+  border-color: var(--seat-booked);
+  color: var(--bg-surface);
 }
 
 /* Conflict highlight */
