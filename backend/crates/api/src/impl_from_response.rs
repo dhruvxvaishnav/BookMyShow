@@ -1,6 +1,10 @@
 /// Newtype wrapper that implements `IntoResponse` for `AppError`,
 /// allowing handlers to return `Result<T, ApiError>` cleanly.
-use axum::{Json, http::StatusCode, response::IntoResponse};
+use axum::{
+    Json,
+    http::{StatusCode, header},
+    response::IntoResponse,
+};
 use common::error::AppError;
 use serde::Serialize;
 
@@ -148,7 +152,14 @@ impl IntoResponse for ApiError {
             },
         };
 
-        (status, Json(body)).into_response()
+        let mut response = (status, Json(body)).into_response();
+        if matches!(self.0, AppError::RateLimitExceeded) {
+            response.headers_mut().insert(
+                header::RETRY_AFTER,
+                axum::http::HeaderValue::from_static("60"),
+            );
+        }
+        response
     }
 }
 

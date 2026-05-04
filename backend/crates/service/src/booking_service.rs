@@ -147,10 +147,28 @@ impl BookingServiceTrait for BookingService {
             BookingStatus::SuccessPartial
         };
 
+        let previous_status = booking.status.to_string();
         booking.status = new_status;
         booking.confirmed_at = Some(Utc::now());
         booking.payment_id = Some(payment_id.to_string());
         self.booking_repo.save(booking.clone()).await?;
+
+        self.save_audit_event(
+            &booking.booking_id,
+            &booking.show_id,
+            &booking.user_id,
+            "book",
+            None,
+            Some(previous_status),
+            Some(new_status.to_string()),
+            Some("booking confirmed after successful payment".to_string()),
+            Some(serde_json::json!({
+                "payment_id": payment_id,
+                "confirmed_seats": confirmed_seats.clone(),
+                "failed_seats": failed_seats.clone()
+            })),
+        )
+        .await;
 
         // If partial, record a CompensationLog for the failed seats
         if !failed_seats.is_empty() {
@@ -222,10 +240,26 @@ impl BookingServiceTrait for BookingService {
             self.seat_repo.release_seat(seat_id).await?;
         }
 
+        let status_from = booking.status.to_string();
+        let show_id = booking.show_id.clone();
+        let seat_ids = booking.seat_ids.clone();
         let mut updated = booking;
         updated.status = BookingStatus::Cancelled;
         updated.cancelled_at = Some(Utc::now());
         self.booking_repo.save(updated).await?;
+
+        self.save_audit_event(
+            booking_id,
+            &show_id,
+            user_id,
+            "cancel",
+            Some(user_id.to_string()),
+            Some(status_from),
+            Some(BookingStatus::Cancelled.to_string()),
+            Some("booking cancelled and seats released".to_string()),
+            Some(serde_json::json!({ "seat_ids": seat_ids })),
+        )
+        .await;
 
         tracing::info!(booking_id = %booking_id, user_id = %user_id, "booking cancelled");
 
@@ -253,5 +287,37 @@ impl BookingServiceTrait for BookingService {
 
     async fn get_all_bookings(&self) -> Result<Vec<Booking>, common::AppError> {
         self.booking_repo.find_all().await
+    }
+}
+
+impl BookingService {
+    #[allow(clippy::too_many_arguments)]
+    async fn save_audit_event(
+        &self,
+        booking_id: &str,
+        show_id: &str,
+        user_id: &str,
+        event_type: &str,
+        actor_id: Option<String>,
+        status_from: Option<String>,
+        status_to: Option<String>,
+        message: Option<String>,
+        metadata: Option<serde_json::Value>,
+    ) {
+        let log = CompensationLog::audit_event(
+            Uuid::new_v4().to_string(),
+            booking_id.to_string(),
+            show_id.to_string(),
+            user_id.to_string(),
+            event_type,
+            actor_id,
+            status_from,
+            status_to,
+            message,
+            metadata,
+        );
+        if let Err(e) = self.compensation_log_repo.save(log).await {
+            tracing::error!(booking_id = %booking_id, event_type = %event_type, error = %e, "failed to save audit log");
+        }
     }
 }

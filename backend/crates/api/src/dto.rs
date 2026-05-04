@@ -225,3 +225,23 @@ pub struct SeatOverrideResponse {
     pub new_status: String,
     pub released_lock_id: Option<String>,
 }
+
+/// Admin: audit trail response.
+#[derive(Debug, Clone, Serialize)]
+pub struct AuditLogResponse {
+    pub audit_id: String,
+    pub booking_id: String,
+    pub show_id: String,
+    pub user_id: String,
+    pub event_type: String,
+    pub actor_id: Option<String>,
+    pub status_from: Option<String>,
+    pub status_to: Option<String>,
+    pub message: Option<String>,
+    pub confirmed_seats: Vec<String>,
+    pub failed_seats: Vec<String>,
+    pub total_amount: f64,
+    pub failed_amount: f64,
+    pub metadata: Option<serde_json::Value>,
+    pub created_at: i64,
+}

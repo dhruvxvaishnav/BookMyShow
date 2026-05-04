@@ -35,15 +35,17 @@ async fn make_state() -> crate::AppState {
         Arc::new(InMemoryCompensationLogRepository::new());
     let rate_limiter = crate::rate_limiter::RateLimiter::new();
 
-    let seat_locking_svc = Arc::new(SeatLockingService::new(
-        Arc::clone(&show_repo),
-        Arc::clone(&seat_repo),
-        Arc::clone(&booking_repo),
-        Arc::clone(&seat_lock_repo),
-        Arc::clone(&user_repo),
-        cfg.clone(),
-    ));
-    let user_repo: Arc<dyn UserRepository> = Arc::new(InMemoryUserRepository::new());
+    let seat_locking_svc = Arc::new(
+        SeatLockingService::new(
+            Arc::clone(&show_repo),
+            Arc::clone(&seat_repo),
+            Arc::clone(&booking_repo),
+            Arc::clone(&seat_lock_repo),
+            Arc::clone(&user_repo),
+            cfg.clone(),
+        )
+        .with_audit_log_repo(Arc::clone(&compensation_log_repo)),
+    );
     let email_svc = Arc::new(service::EmailService::new(cfg.clone()));
 
     let booking_svc = Arc::new(BookingService::new(
@@ -57,14 +59,17 @@ async fn make_state() -> crate::AppState {
         cfg.clone(),
     ));
 
-    let payment_svc = Arc::new(PaymentService::new(
-        Arc::clone(&payment_repo),
-        Arc::clone(&booking_repo),
-        Arc::clone(&user_repo),
-        Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
-        Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
-        cfg.clone(),
-    ));
+    let payment_svc = Arc::new(
+        PaymentService::new(
+            Arc::clone(&payment_repo),
+            Arc::clone(&booking_repo),
+            Arc::clone(&user_repo),
+            Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
+            Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
+            cfg.clone(),
+        )
+        .with_audit_log_repo(Arc::clone(&compensation_log_repo)),
+    );
     let show_svc = Arc::new(ShowService::new(
         Arc::clone(&show_repo),
         Arc::clone(&seat_repo),
@@ -86,6 +91,7 @@ async fn make_state() -> crate::AppState {
         show_svc,
         queue_svc,
         user_repo,
+        compensation_log_repo,
         email_svc as Arc<dyn service::EmailServiceTrait>,
         rate_limiter,
         cfg,
@@ -302,6 +308,43 @@ async fn test_availability_endpoint() {
 }
 
 #[tokio::test]
+async fn test_malformed_show_id_is_rejected_before_repository_lookup() {
+    let app = crate::create_router(make_state().await);
+    let client = axum_test::TestServer::new(app).unwrap();
+
+    let resp = client.get("/shows/not-a-uuid").await;
+    resp.assert_status(axum::http::StatusCode::BAD_REQUEST);
+
+    let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
+    assert_eq!(body["error"]["code"], "VALIDATION_ERROR");
+}
+
+#[tokio::test]
+async fn test_lock_rate_limit_returns_retry_after_header() {
+    let app = crate::create_router(make_state().await);
+    let client = axum_test::TestServer::new(app).unwrap();
+
+    let show_id = create_show(&client, "Rate Limit Test").await;
+
+    for _ in 0..5 {
+        let _ = client
+            .post(&format!("/shows/{show_id}/seats/lock"))
+            .add_header(&user_hdr().0, &user_hdr().1)
+            .json(&serde_json::json!({ "seat_ids": [] }))
+            .await;
+    }
+
+    let resp = client
+        .post(&format!("/shows/{show_id}/seats/lock"))
+        .add_header(&user_hdr().0, &user_hdr().1)
+        .json(&serde_json::json!({ "seat_ids": [] }))
+        .await;
+
+    resp.assert_status(axum::http::StatusCode::TOO_MANY_REQUESTS);
+    assert_eq!(resp.headers().get("retry-after").unwrap(), "60");
+}
+
+#[tokio::test]
 async fn test_payment_failure_releases_seats() {
     let app = crate::create_router(make_state().await);
     let client = axum_test::TestServer::new(app).unwrap();
@@ -350,6 +393,66 @@ async fn test_payment_failure_releases_seats() {
         body["data"]["status"].as_str().unwrap().to_lowercase(),
         "cancelled"
     );
+}
+
+#[tokio::test]
+async fn test_admin_audit_endpoint_returns_booking_timeline() {
+    let app = crate::create_router(make_state().await);
+    let client = axum_test::TestServer::new(app).unwrap();
+
+    let show_id = create_show(&client, "Audit Test").await;
+    let seat_ids = get_seat_ids(&client, &show_id, 1).await;
+
+    let resp = client
+        .post(&format!("/shows/{show_id}/seats/lock"))
+        .add_header(&user_hdr().0, &user_hdr().1)
+        .json(&serde_json::json!({ "seat_ids": seat_ids }))
+        .await;
+    resp.assert_status(axum::http::StatusCode::CREATED);
+    let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
+    let booking_id = body["data"]["booking_id"].as_str().unwrap().to_string();
+
+    let resp = client
+        .post(&format!("/bookings/{booking_id}/payment/initiate"))
+        .add_header(&user_hdr().0, &user_hdr().1)
+        .await;
+    resp.assert_status(axum::http::StatusCode::OK);
+    let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
+    let payment_intent_id = body["data"]["payment_intent_id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let amount = body["data"]["amount"].as_f64().unwrap();
+
+    client
+        .post("/mock-gateway/pay")
+        .json(&serde_json::json!({
+            "payment_intent_id": payment_intent_id,
+            "amount": amount,
+            "simulate_failure": false,
+            "simulate_delay_ms": 0
+        }))
+        .await
+        .assert_status(axum::http::StatusCode::OK);
+
+    let resp = client
+        .get(&format!("/admin/audit?booking_id={booking_id}"))
+        .add_header(&admin_hdr().0, &admin_hdr().1)
+        .await;
+    resp.assert_status(axum::http::StatusCode::OK);
+
+    let body: serde_json::Value = serde_json::from_str(resp.text().as_str()).unwrap();
+    let events: Vec<String> = body["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|event| event["event_type"].as_str().unwrap().to_string())
+        .collect();
+
+    assert!(events.iter().any(|event| event == "lock"));
+    assert!(events.iter().any(|event| event == "pay"));
+    assert!(events.iter().any(|event| event == "payment_callback"));
+    assert!(events.iter().any(|event| event == "book"));
 }
 
 #[tokio::test]

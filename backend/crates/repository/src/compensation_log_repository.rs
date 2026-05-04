@@ -6,4 +6,6 @@ use domain::CompensationLog;
 pub trait CompensationLogRepository: Send + Sync {
     async fn save(&self, log: CompensationLog) -> Result<CompensationLog, AppError>;
     async fn find_by_booking(&self, booking_id: &str) -> Result<Vec<CompensationLog>, AppError>;
+    async fn find_by_user(&self, user_id: &str) -> Result<Vec<CompensationLog>, AppError>;
+    async fn find_all(&self) -> Result<Vec<CompensationLog>, AppError>;
 }

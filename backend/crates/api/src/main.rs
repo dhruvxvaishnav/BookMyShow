@@ -89,14 +89,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::new(InMemoryCompensationLogRepository::new());
 
     // ── 4. Initialise services ─────────────────────────────────────────────
-    let seat_locking_svc = Arc::new(SeatLockingService::new(
-        Arc::clone(&show_repo),
-        Arc::clone(&seat_repo),
-        Arc::clone(&booking_repo),
-        Arc::clone(&seat_lock_repo),
-        Arc::clone(&user_repo),
-        cfg.clone(),
-    ));
+    let seat_locking_svc = Arc::new(
+        SeatLockingService::new(
+            Arc::clone(&show_repo),
+            Arc::clone(&seat_repo),
+            Arc::clone(&booking_repo),
+            Arc::clone(&seat_lock_repo),
+            Arc::clone(&user_repo),
+            cfg.clone(),
+        )
+        .with_audit_log_repo(Arc::clone(&compensation_log_repo)),
+    );
 
     let email_svc = Arc::new(service::EmailService::new(cfg.clone()));
 
@@ -111,14 +114,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         cfg.clone(),
     ));
 
-    let payment_svc = Arc::new(PaymentService::new(
-        Arc::clone(&payment_repo),
-        Arc::clone(&booking_repo),
-        Arc::clone(&user_repo),
-        Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
-        Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
-        cfg.clone(),
-    ));
+    let payment_svc = Arc::new(
+        PaymentService::new(
+            Arc::clone(&payment_repo),
+            Arc::clone(&booking_repo),
+            Arc::clone(&user_repo),
+            Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
+            Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
+            cfg.clone(),
+        )
+        .with_audit_log_repo(Arc::clone(&compensation_log_repo)),
+    );
 
     let show_svc = Arc::new(ShowService::new(
         Arc::clone(&show_repo),
@@ -148,6 +154,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&show_svc),
         Arc::clone(&queue_svc),
         Arc::clone(&user_repo),
+        Arc::clone(&compensation_log_repo),
         Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
         rate_limiter,
         cfg.clone(),

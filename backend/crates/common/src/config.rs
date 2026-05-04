@@ -13,6 +13,7 @@ pub struct AppConfig {
     pub queue: QueueConfig,
     pub payment: PaymentConfig,
     pub rate_limit: RateLimitConfig,
+    pub distributed_lock: DistributedLockConfig,
     pub jwt: JwtConfig,
     pub email: EmailConfig,
 }
@@ -62,6 +63,14 @@ pub struct RateLimitConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct DistributedLockConfig {
+    pub redis_url: Option<String>,
+    pub lock_ttl_ms: u64,
+    pub renewal_interval_ms: u64,
+    pub acquire_timeout_ms: u64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct JwtConfig {
     pub secret: String,
     pub access_token_expiry_secs: u64,
@@ -98,6 +107,12 @@ impl Default for AppConfig {
                 lock_requests_per_min: 5,
                 payment_requests_per_min: 3,
                 default_requests_per_min: 60,
+            },
+            distributed_lock: DistributedLockConfig {
+                redis_url: None,
+                lock_ttl_ms: 10_000,
+                renewal_interval_ms: 3_000,
+                acquire_timeout_ms: 2_000,
             },
             jwt: JwtConfig {
                 secret: "dev-jwt-secret-change-in-production-must-be-at-least-32-chars".to_string(),
@@ -146,6 +161,16 @@ impl AppConfig {
         env_override!("payment.stripe_webhook_secret", "STRIPE_WEBHOOK_SECRET");
         env_override!("email.api_key", "EMAIL_API_KEY");
         env_override!("email.from_address", "EMAIL_FROM_ADDRESS");
+        env_override!("distributed_lock.redis_url", "REDIS_URL");
+        env_override!("distributed_lock.lock_ttl_ms", "DISTRIBUTED_LOCK_TTL_MS");
+        env_override!(
+            "distributed_lock.renewal_interval_ms",
+            "DISTRIBUTED_LOCK_RENEWAL_INTERVAL_MS"
+        );
+        env_override!(
+            "distributed_lock.acquire_timeout_ms",
+            "DISTRIBUTED_LOCK_ACQUIRE_TIMEOUT_MS"
+        );
 
         // If deserialization fails (e.g. no config.toml and no env vars), use defaults
         match builder.build()?.try_deserialize::<Self>() {
@@ -181,5 +206,6 @@ mod tests {
         assert_eq!(cfg.seat_lock.max_extensions, 2);
         assert_eq!(cfg.queue.max_concurrent_per_show, 3);
         assert_eq!(cfg.payment.timeout_seconds, 600);
+        assert_eq!(cfg.distributed_lock.lock_ttl_ms, 10_000);
     }
 }

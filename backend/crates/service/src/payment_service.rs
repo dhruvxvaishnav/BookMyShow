@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use chrono::Utc;
 use common::AppConfig;
-use domain::{BookingStatus, Payment, PaymentStatus};
-use repository::{BookingRepository, PaymentRepository, UserRepository};
+use domain::{BookingStatus, CompensationLog, Payment, PaymentStatus};
+use repository::{BookingRepository, CompensationLogRepository, PaymentRepository, UserRepository};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -53,6 +53,7 @@ pub struct PaymentService {
     user_repo: Arc<dyn UserRepository>,
     booking_svc: Arc<dyn BookingServiceTrait>,
     email_svc: Arc<dyn EmailServiceTrait>,
+    compensation_log_repo: Option<Arc<dyn CompensationLogRepository>>,
     cfg: AppConfig,
     http_client: reqwest::Client,
 }
@@ -72,9 +73,15 @@ impl PaymentService {
             user_repo,
             booking_svc,
             email_svc,
+            compensation_log_repo: None,
             cfg,
             http_client: reqwest::Client::new(),
         }
+    }
+
+    pub fn with_audit_log_repo(mut self, repo: Arc<dyn CompensationLogRepository>) -> Self {
+        self.compensation_log_repo = Some(repo);
+        self
     }
 }
 
@@ -187,10 +194,29 @@ impl PaymentServiceTrait for PaymentService {
 
         // Update booking status — clone needed fields before moving
         let booking_total = booking.total_amount;
+        let booking_show_id = booking.show_id.clone();
+        let booking_status = booking.status.to_string();
         let mut updated_booking = booking;
         updated_booking.status = BookingStatus::PaymentPending;
         updated_booking.payment_id = Some(payment_id.clone());
         self.booking_repo.save(updated_booking).await?;
+
+        self.save_audit_event(
+            booking_id,
+            &booking_show_id,
+            user_id,
+            "pay",
+            Some(user_id.to_string()),
+            Some(booking_status),
+            Some(BookingStatus::PaymentPending.to_string()),
+            Some("payment initiated".to_string()),
+            Some(serde_json::json!({
+                "payment_id": payment_id.clone(),
+                "payment_intent_id": payment_intent_id.clone(),
+                "gateway": gateway_name.clone()
+            })),
+        )
+        .await;
 
         tracing::info!(
             payment_id = %payment_id,
@@ -268,8 +294,39 @@ impl PaymentServiceTrait for PaymentService {
                     error = %e,
                     "failed to confirm booking after payment success"
                 );
+                self.save_audit_event(
+                    &booking_id,
+                    "",
+                    &updated_payment.user_id,
+                    "payment_callback_compensation_required",
+                    None,
+                    Some(PaymentStatus::Pending.to_string()),
+                    Some(PaymentStatus::Success.to_string()),
+                    Some("payment succeeded but booking confirmation failed".to_string()),
+                    Some(serde_json::json!({
+                        "payment_id": payment_id.clone(),
+                        "payment_intent_id": payment_intent_id,
+                        "error": e.to_string()
+                    })),
+                )
+                .await;
                 return Err(e);
             }
+            self.save_audit_event(
+                &booking_id,
+                "",
+                &updated_payment.user_id,
+                "payment_callback",
+                None,
+                Some(PaymentStatus::Pending.to_string()),
+                Some(PaymentStatus::Success.to_string()),
+                Some("payment callback marked payment successful".to_string()),
+                Some(serde_json::json!({
+                    "payment_id": payment_id.clone(),
+                    "payment_intent_id": payment_intent_id
+                })),
+            )
+            .await;
         } else {
             if let Ok(Some(user)) = self.user_repo.find_by_id(&updated_payment.user_id).await {
                 let _ = self
@@ -290,6 +347,21 @@ impl PaymentServiceTrait for PaymentService {
                     "failed to cancel booking after payment failure"
                 );
             }
+            self.save_audit_event(
+                &booking_id,
+                "",
+                &updated_payment.user_id,
+                "payment_callback",
+                None,
+                Some(PaymentStatus::Pending.to_string()),
+                Some(PaymentStatus::Failed.to_string()),
+                Some("payment callback marked payment failed".to_string()),
+                Some(serde_json::json!({
+                    "payment_id": payment_id.clone(),
+                    "payment_intent_id": payment_intent_id
+                })),
+            )
+            .await;
         }
 
         tracing::info!(
@@ -360,6 +432,19 @@ impl PaymentServiceTrait for PaymentService {
         }
 
         tracing::info!(payment_id = %payment_id, "payment refunded");
+
+        self.save_audit_event(
+            &payment.booking_id,
+            "",
+            &payment.user_id,
+            "refund",
+            None,
+            Some(PaymentStatus::Success.to_string()),
+            Some(PaymentStatus::Refunded.to_string()),
+            Some("payment refunded".to_string()),
+            Some(serde_json::json!({ "payment_id": payment.payment_id })),
+        )
+        .await;
         Ok(())
     }
 
@@ -382,8 +467,69 @@ impl PaymentServiceTrait for PaymentService {
                     .cancel_booking(&booking.booking_id, &booking.user_id)
                     .await;
             }
+
+            self.save_audit_event(
+                &payment.booking_id,
+                "",
+                &payment.user_id,
+                "payment_timeout",
+                None,
+                Some(PaymentStatus::Pending.to_string()),
+                Some(PaymentStatus::Failed.to_string()),
+                Some("pending payment expired".to_string()),
+                Some(serde_json::json!({ "payment_id": payment.payment_id })),
+            )
+            .await;
         }
         Ok(())
+    }
+}
+
+impl PaymentService {
+    #[allow(clippy::too_many_arguments)]
+    async fn save_audit_event(
+        &self,
+        booking_id: &str,
+        show_id: &str,
+        user_id: &str,
+        event_type: &str,
+        actor_id: Option<String>,
+        status_from: Option<String>,
+        status_to: Option<String>,
+        message: Option<String>,
+        metadata: Option<serde_json::Value>,
+    ) {
+        let Some(repo) = &self.compensation_log_repo else {
+            return;
+        };
+
+        let resolved_show_id = if show_id.is_empty() {
+            self.booking_repo
+                .find_by_id(booking_id)
+                .await
+                .ok()
+                .flatten()
+                .map(|b| b.show_id)
+                .unwrap_or_default()
+        } else {
+            show_id.to_string()
+        };
+
+        let log = CompensationLog::audit_event(
+            Uuid::new_v4().to_string(),
+            booking_id.to_string(),
+            resolved_show_id,
+            user_id.to_string(),
+            event_type,
+            actor_id,
+            status_from,
+            status_to,
+            message,
+            metadata,
+        );
+        if let Err(e) = repo.save(log).await {
+            tracing::error!(booking_id = %booking_id, event_type = %event_type, error = %e, "failed to save audit log");
+        }
     }
 }
 

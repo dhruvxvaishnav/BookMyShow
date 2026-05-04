@@ -37,6 +37,58 @@ fn get_admin_token(headers: &HeaderMap) -> Option<String> {
         .map(|s| s.to_string())
 }
 
+fn get_client_ip(headers: &HeaderMap) -> String {
+    headers
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.split(',').next())
+        .map(str::trim)
+        .filter(|v| !v.is_empty())
+        .or_else(|| headers.get("x-real-ip").and_then(|v| v.to_str().ok()))
+        .unwrap_or("unknown")
+        .to_string()
+}
+
+async fn check_auth_rate_limit(
+    state: &AppState,
+    headers: &HeaderMap,
+    endpoint: &str,
+) -> Result<(), common::AppError> {
+    let key = format!("auth:{endpoint}:{}", get_client_ip(headers));
+    state
+        .rate_limiter
+        .check(&key, state.cfg.rate_limit.default_requests_per_min)
+        .await
+        .map(|_| ())
+        .map_err(|_| common::AppError::RateLimitExceeded)
+}
+
+fn is_valid_email(email: &str) -> bool {
+    if email.len() > 254 || email.contains(char::is_whitespace) {
+        return false;
+    }
+    let Some((local, domain)) = email.split_once('@') else {
+        return false;
+    };
+    if local.is_empty()
+        || domain.is_empty()
+        || domain.starts_with('.')
+        || domain.ends_with('.')
+        || !domain.contains('.')
+    {
+        return false;
+    }
+    domain.split('.').all(|label| {
+        !label.is_empty() && label.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+    })
+}
+
+fn validate_uuid_param(name: &str, value: &str) -> Result<(), common::AppError> {
+    Uuid::parse_str(value)
+        .map(|_| ())
+        .map_err(|_| common::AppError::ValidationError(format!("{name} must be a valid UUID")))
+}
+
 /// Validate admin access: JWT with role=admin (preferred) or static env-var token (fallback for tests).
 fn require_admin(token: Option<String>, jwt_secret: &str) -> Result<(), common::AppError> {
     let token = token.ok_or(common::AppError::Unauthorized)?;
@@ -62,14 +114,17 @@ fn require_admin(token: Option<String>, jwt_secret: &str) -> Result<(), common::
 
 pub async fn register(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<RegisterRequest>,
 ) -> Result<
     (axum::http::StatusCode, Json<ApiResponse<AuthResponse>>),
     crate::impl_from_response::ApiError,
 > {
+    check_auth_rate_limit(&state, &headers, "register").await?;
+
     // Validate inputs
     let email = req.email.trim().to_lowercase();
-    if email.is_empty() || !email.contains('@') {
+    if !is_valid_email(&email) {
         return Err(common::AppError::ValidationError("Invalid email".to_string()).into());
     }
     if req.password.len() < 8 {
@@ -135,8 +190,11 @@ pub async fn register(
 
 pub async fn login(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<LoginRequest>,
 ) -> Result<Json<ApiResponse<AuthResponse>>, crate::impl_from_response::ApiError> {
+    check_auth_rate_limit(&state, &headers, "login").await?;
+
     let email = req.email.trim().to_lowercase();
 
     let user = state
@@ -193,8 +251,11 @@ pub async fn login(
 
 pub async fn refresh_token(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<RefreshTokenRequest>,
 ) -> Result<Json<ApiResponse<AuthResponse>>, crate::impl_from_response::ApiError> {
+    check_auth_rate_limit(&state, &headers, "refresh").await?;
+
     let claims = decode_token(&req.refresh_token, &state.cfg.jwt.secret)?;
 
     if claims.token_type != "refresh" {
@@ -233,8 +294,11 @@ pub async fn refresh_token(
 
 pub async fn admin_login(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<AdminLoginRequest>,
 ) -> Result<Json<ApiResponse<AuthResponse>>, crate::impl_from_response::ApiError> {
+    check_auth_rate_limit(&state, &headers, "admin_login").await?;
+
     let email = req.email.trim().to_lowercase();
 
     let user = state
@@ -335,6 +399,8 @@ pub async fn get_show(
     State(state): State<AppState>,
     Path(show_id): Path<String>,
 ) -> Result<Json<ApiResponse<ShowResponse>>, crate::impl_from_response::ApiError> {
+    validate_uuid_param("show_id", &show_id)?;
+
     let show = state
         .show_svc
         .get_show(&show_id)
@@ -373,6 +439,8 @@ pub async fn get_seat_layout(
     Path(show_id): Path<String>,
     Query(query): Query<SeatPageQuery>,
 ) -> Result<Json<ApiResponse<SeatLayoutPageResponse>>, crate::impl_from_response::ApiError> {
+    validate_uuid_param("show_id", &show_id)?;
+
     let show = state
         .show_svc
         .get_show(&show_id)
@@ -412,6 +480,13 @@ pub async fn get_availability(
     State(state): State<AppState>,
     Path(show_id): Path<String>,
 ) -> Result<Json<ApiResponse<AvailabilityResponse>>, crate::impl_from_response::ApiError> {
+    validate_uuid_param("show_id", &show_id)?;
+    state
+        .show_svc
+        .get_show(&show_id)
+        .await?
+        .ok_or_else(|| common::AppError::ShowNotFound(show_id.clone()))?;
+
     let avail = state.show_svc.get_show_availability(&show_id).await?;
     Ok(Json(ApiResponse::ok(AvailabilityResponse {
         show_id: avail.show_id,
@@ -432,7 +507,16 @@ pub async fn lock_seats(
     (axum::http::StatusCode, Json<ApiResponse<LockSeatsResponse>>),
     crate::impl_from_response::ApiError,
 > {
+    validate_uuid_param("show_id", &show_id)?;
+
     let user_id = get_user_id(&headers, &state.cfg.jwt.secret)?;
+
+    const MAX_SEATS_PER_BOOKING: usize = 10;
+    if req.seat_ids.len() > MAX_SEATS_PER_BOOKING {
+        return Err(
+            common::AppError::TooManySeats(MAX_SEATS_PER_BOOKING, req.seat_ids.len()).into(),
+        );
+    }
 
     let rate_key = format!("lock:{}", user_id);
     let lock_limit = state.cfg.rate_limit.lock_requests_per_min;
@@ -748,7 +832,16 @@ pub async fn join_queue(
     (axum::http::StatusCode, Json<ApiResponse<QueueJoinResponse>>),
     crate::impl_from_response::ApiError,
 > {
+    validate_uuid_param("show_id", &show_id)?;
+
     let user_id = get_user_id(&headers, &state.cfg.jwt.secret)?;
+
+    const MAX_SEATS_PER_BOOKING: usize = 10;
+    if req.seat_ids.len() > MAX_SEATS_PER_BOOKING {
+        return Err(
+            common::AppError::TooManySeats(MAX_SEATS_PER_BOOKING, req.seat_ids.len()).into(),
+        );
+    }
 
     let result = state
         .queue_svc
@@ -846,6 +939,7 @@ pub async fn cancel_show(
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
     require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
+    validate_uuid_param("show_id", &show_id)?;
 
     state.show_svc.cancel_show(&show_id).await?;
 
@@ -895,12 +989,41 @@ pub async fn admin_list_bookings(
     Ok(Json(ApiResponse::ok(responses)))
 }
 
+pub async fn admin_get_booking(
+    State(state): State<AppState>,
+    Path(booking_id): Path<String>,
+    headers: HeaderMap,
+) -> Result<Json<ApiResponse<BookingResponse>>, crate::impl_from_response::ApiError> {
+    require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
+
+    let booking = state
+        .booking_svc
+        .get_booking(&booking_id)
+        .await?
+        .ok_or_else(|| common::AppError::BookingNotFound(booking_id.clone()))?;
+
+    Ok(Json(ApiResponse::ok(BookingResponse {
+        booking_id: booking.booking_id,
+        user_id: booking.user_id,
+        show_id: booking.show_id,
+        seat_ids: booking.seat_ids,
+        status: booking.status.to_string(),
+        total_amount: booking.total_amount,
+        payment_id: booking.payment_id,
+        created_at: booking.created_at.timestamp(),
+        expires_at: booking.expires_at.timestamp(),
+        confirmed_at: booking.confirmed_at.map(|dt| dt.timestamp()),
+        cancelled_at: booking.cancelled_at.map(|dt| dt.timestamp()),
+    })))
+}
+
 pub async fn admin_show_analytics(
     State(state): State<AppState>,
     Path(show_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<ShowAnalyticsResponse>>, crate::impl_from_response::ApiError> {
     require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
+    validate_uuid_param("show_id", &show_id)?;
 
     let analytics = state.show_svc.get_show_analytics(&show_id).await?;
 
@@ -923,6 +1046,7 @@ pub async fn admin_override_seat(
     Json(req): Json<SeatOverrideRequest>,
 ) -> Result<Json<ApiResponse<SeatOverrideResponse>>, crate::impl_from_response::ApiError> {
     require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
+    validate_uuid_param("show_id", &_show_id)?;
 
     let reason = if req.reason.is_empty() {
         "admin override".to_string()
@@ -954,4 +1078,58 @@ pub async fn refund_payment(
     state.payment_svc.refund_payment(&payment_id).await?;
 
     Ok(Json(ApiResponse::ok(())))
+}
+
+#[derive(Deserialize)]
+pub struct AuditQuery {
+    pub booking_id: Option<String>,
+    pub user_id: Option<String>,
+}
+
+pub async fn admin_audit(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(query): Query<AuditQuery>,
+) -> Result<Json<ApiResponse<Vec<AuditLogResponse>>>, crate::impl_from_response::ApiError> {
+    require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
+
+    let mut logs = match (&query.booking_id, &query.user_id) {
+        (Some(booking_id), _) => {
+            state
+                .compensation_log_repo
+                .find_by_booking(booking_id)
+                .await?
+        }
+        (None, Some(user_id)) => state.compensation_log_repo.find_by_user(user_id).await?,
+        (None, None) => state.compensation_log_repo.find_all().await?,
+    };
+
+    if let Some(user_id) = &query.user_id {
+        logs.retain(|log| &log.user_id == user_id);
+    }
+
+    logs.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+
+    let response = logs
+        .into_iter()
+        .map(|log| AuditLogResponse {
+            audit_id: log.compensation_id,
+            booking_id: log.booking_id,
+            show_id: log.show_id,
+            user_id: log.user_id,
+            event_type: log.event_type,
+            actor_id: log.actor_id,
+            status_from: log.status_from,
+            status_to: log.status_to,
+            message: log.message,
+            confirmed_seats: log.confirmed_seats,
+            failed_seats: log.failed_seats,
+            total_amount: log.total_amount,
+            failed_amount: log.failed_amount,
+            metadata: log.metadata,
+            created_at: log.created_at.timestamp(),
+        })
+        .collect();
+
+    Ok(Json(ApiResponse::ok(response)))
 }

@@ -1,12 +1,13 @@
 use chrono::{Duration, Utc};
 use common::{AppConfig, AppError};
-use domain::{Booking, BookingStatus, LockStatus, SeatLock, SeatStatus};
+use domain::{Booking, BookingStatus, CompensationLog, LockStatus, SeatLock, SeatStatus};
 use repository::{
-    BookingRepository, SeatLockRepository, SeatRepository, ShowRepository, UserRepository,
+    BookingRepository, CompensationLogRepository, SeatLockRepository, SeatRepository,
+    ShowRepository, UserRepository,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use tokio::sync::{OwnedRwLockWriteGuard, RwLock};
 use uuid::Uuid;
 
 use super::seat_locking::{LockResult, OverrideResult};
@@ -20,6 +21,7 @@ pub struct SeatLockingService {
     booking_repo: Arc<dyn BookingRepository>,
     seat_lock_repo: Arc<dyn SeatLockRepository>,
     user_repo: Arc<dyn UserRepository>,
+    compensation_log_repo: Option<Arc<dyn CompensationLogRepository>>,
     /// Per-show Mutex — only one lock acquisition can proceed per show at a time.
     show_locks: Arc<RwLock<HashMap<String, Arc<RwLock<()>>>>>,
     cfg: AppConfig,
@@ -40,9 +42,15 @@ impl SeatLockingService {
             booking_repo,
             seat_lock_repo,
             user_repo,
+            compensation_log_repo: None,
             show_locks: Arc::new(RwLock::new(HashMap::new())),
             cfg,
         }
+    }
+
+    pub fn with_audit_log_repo(mut self, repo: Arc<dyn CompensationLogRepository>) -> Self {
+        self.compensation_log_repo = Some(repo);
+        self
     }
 
     /// Acquire a lock on one or more seats for a user.
@@ -93,7 +101,12 @@ impl SeatLockingService {
                 .iter()
                 .filter(|id| !found_ids.contains(id))
                 .collect();
-            return Err(AppError::SeatNotFound((*missing.first().unwrap()).clone()));
+            return Err(AppError::SeatNotFound(
+                (*missing.first().ok_or_else(|| {
+                    AppError::InternalError("seat lookup returned inconsistent results".to_string())
+                })?)
+                .clone(),
+            ));
         }
 
         // All seats must belong to the same show
@@ -102,8 +115,7 @@ impl SeatLockingService {
         }
 
         // ── Acquire per-show Mutex ────────────────────────────────────────────
-        let show_lock = self.get_show_lock(show_id).await;
-        let _guard = show_lock.write().await;
+        let _guard = self.acquire_show_lock(show_id).await;
 
         // ── Double-check: re-read seats inside critical section ──────────────
         let current_seats = self.seat_repo.find_by_ids(&seat_ids).await?;
@@ -142,11 +154,18 @@ impl SeatLockingService {
         let lock_id = Uuid::new_v4().to_string();
         let booking_id = Uuid::new_v4().to_string();
 
-        // Lock all seats
+        // Lock all seats. Roll back already-locked seats if any repository call fails.
+        let mut locked_seat_ids = Vec::with_capacity(current_seats.len());
         for seat in &current_seats {
-            self.seat_repo
+            if let Err(e) = self
+                .seat_repo
                 .lock_seat(&seat.seat_id, user_id, &lock_id, expires_at)
-                .await?;
+                .await
+            {
+                self.rollback_locked_seats(&locked_seat_ids).await;
+                return Err(e);
+            }
+            locked_seat_ids.push(seat.seat_id.clone());
         }
 
         // Create SeatLock record
@@ -157,10 +176,17 @@ impl SeatLockingService {
             seat_ids.clone(),
             expires_at,
         );
-        self.seat_lock_repo.save(seat_lock).await?;
+        if let Err(e) = self.seat_lock_repo.save(seat_lock).await {
+            self.rollback_locked_seats(&locked_seat_ids).await;
+            return Err(e);
+        }
 
         // Calculate total amount
-        let show = self.show_repo.find_by_id(show_id).await?.unwrap();
+        let show = self
+            .show_repo
+            .find_by_id(show_id)
+            .await?
+            .ok_or_else(|| AppError::ShowNotFound(show_id.to_string()))?;
         let total_amount: f64 = current_seats
             .iter()
             .map(|s| s.effective_price(show.price_per_seat))
@@ -176,7 +202,39 @@ impl SeatLockingService {
             lock_id.clone(),
             expires_at,
         );
-        self.booking_repo.save(booking).await?;
+        if let Err(e) = self.booking_repo.save(booking).await {
+            self.rollback_locked_seats(&locked_seat_ids).await;
+            let _ = self
+                .seat_lock_repo
+                .update_status(&lock_id, LockStatus::Released)
+                .await;
+            self.save_audit_event(
+                &booking_id,
+                show_id,
+                user_id,
+                "lock_rollback",
+                Some(user_id.to_string()),
+                Some("Pending".to_string()),
+                Some("Cancelled".to_string()),
+                Some("rolled back seat lock after booking insert failure".to_string()),
+                Some(serde_json::json!({ "lock_id": lock_id, "seat_ids": seat_ids })),
+            )
+            .await;
+            return Err(e);
+        }
+
+        self.save_audit_event(
+            &booking_id,
+            show_id,
+            user_id,
+            "lock",
+            Some(user_id.to_string()),
+            None,
+            Some("Pending".to_string()),
+            Some("seat lock acquired and booking created".to_string()),
+            Some(serde_json::json!({ "lock_id": lock_id.clone(), "seat_ids": seat_ids.clone() })),
+        )
+        .await;
 
         tracing::info!(
             booking_id = %booking_id,
@@ -244,7 +302,11 @@ impl SeatLockingService {
 
         // Update SeatLock
         self.seat_lock_repo.increment_extension(&lock_id).await?;
-        let updated_lock = self.seat_lock_repo.find_by_id(&lock_id).await?.unwrap();
+        let updated_lock = self
+            .seat_lock_repo
+            .find_by_id(&lock_id)
+            .await?
+            .ok_or_else(|| AppError::LockNotFound(lock_id.clone()))?;
         let mut updated_lock = updated_lock;
         updated_lock.expires_at = new_expires_at;
         self.seat_lock_repo.save(updated_lock.clone()).await?;
@@ -253,7 +315,11 @@ impl SeatLockingService {
         let seat_ids_clone = booking.seat_ids.clone();
         let show_id_clone = booking.show_id.clone();
         for seat_id in &seat_ids_clone {
-            let seat = self.seat_repo.find_by_id(seat_id).await?.unwrap();
+            let seat = self
+                .seat_repo
+                .find_by_id(seat_id)
+                .await?
+                .ok_or_else(|| AppError::SeatNotFound(seat_id.clone()))?;
             let mut updated_seat = seat;
             updated_seat.lock_expires_at = Some(new_expires_at);
             self.seat_repo.save(updated_seat).await?;
@@ -264,6 +330,23 @@ impl SeatLockingService {
         updated_booking.expires_at = new_expires_at;
         self.booking_repo.save(updated_booking.clone()).await?;
 
+        self.save_audit_event(
+            booking_id,
+            &show_id_clone,
+            user_id,
+            "lock_extended",
+            Some(user_id.to_string()),
+            Some("Pending".to_string()),
+            Some("Pending".to_string()),
+            Some("seat lock expiry extended".to_string()),
+            Some(serde_json::json!({
+                "lock_id": lock_id.clone(),
+                "new_expires_at": new_expires_at.timestamp(),
+                "extension_count": updated_lock.extended_count
+            })),
+        )
+        .await;
+
         tracing::info!(
             booking_id = %booking_id,
             lock_id = %lock_id,
@@ -272,7 +355,11 @@ impl SeatLockingService {
             "lock extended"
         );
 
-        let show = self.show_repo.find_by_id(&show_id_clone).await?.unwrap();
+        let show = self
+            .show_repo
+            .find_by_id(&show_id_clone)
+            .await?
+            .ok_or_else(|| AppError::ShowNotFound(show_id_clone.clone()))?;
         let seats = self.seat_repo.find_by_ids(&seat_ids_clone).await?;
         let total_amount: f64 = seats
             .iter()
@@ -319,10 +406,26 @@ impl SeatLockingService {
         }
 
         // Mark booking as Cancelled
+        let status_from = booking.status.to_string();
+        let show_id = booking.show_id.clone();
+        let seat_ids = booking.seat_ids.clone();
         let mut updated_booking = booking;
         updated_booking.status = BookingStatus::Cancelled;
         updated_booking.cancelled_at = Some(Utc::now());
         self.booking_repo.save(updated_booking).await?;
+
+        self.save_audit_event(
+            booking_id,
+            &show_id,
+            user_id,
+            "cancel",
+            Some(user_id.to_string()),
+            Some(status_from),
+            Some(BookingStatus::Cancelled.to_string()),
+            Some("lock released by user".to_string()),
+            Some(serde_json::json!({ "seat_ids": seat_ids })),
+        )
+        .await;
 
         tracing::info!(
             booking_id = %booking_id,
@@ -357,9 +460,21 @@ impl SeatLockingService {
                 .save(Booking {
                     status: BookingStatus::Expired,
                     cancelled_at: Some(Utc::now()),
-                    ..booking
+                    ..booking.clone()
                 })
                 .await?;
+            self.save_audit_event(
+                &booking.booking_id,
+                &booking.show_id,
+                &booking.user_id,
+                "expire",
+                None,
+                Some(booking.status.to_string()),
+                Some(BookingStatus::Expired.to_string()),
+                Some("booking expired after lock grace period".to_string()),
+                Some(serde_json::json!({ "seat_ids": booking.seat_ids })),
+            )
+            .await;
             processed += 1;
         }
 
@@ -433,8 +548,7 @@ impl SeatLockingService {
         let seat_number = seat.seat_number.clone();
 
         // Acquire per-show mutex so no concurrent lock attempt races us
-        let show_lock = self.get_show_lock(&seat.show_id).await;
-        let _guard = show_lock.write().await;
+        let _guard = self.acquire_show_lock(&seat.show_id).await;
 
         self.seat_repo.release_seat(seat_id).await?;
 
@@ -455,7 +569,19 @@ impl SeatLockingService {
                 if booking.lock_id.as_deref() == Some(lock_id) {
                     booking.status = BookingStatus::Cancelled;
                     booking.cancelled_at = Some(Utc::now());
-                    self.booking_repo.save(booking).await?;
+                    self.booking_repo.save(booking.clone()).await?;
+                    self.save_audit_event(
+                        &booking.booking_id,
+                        &booking.show_id,
+                        &booking.user_id,
+                        "admin_override",
+                        None,
+                        Some(BookingStatus::Pending.to_string()),
+                        Some(BookingStatus::Cancelled.to_string()),
+                        Some(reason.to_string()),
+                        Some(serde_json::json!({ "seat_id": seat_id, "lock_id": lock_id })),
+                    )
+                    .await;
                 }
             }
         }
@@ -477,6 +603,65 @@ impl SeatLockingService {
         })
     }
 
+    async fn rollback_locked_seats(&self, seat_ids: &[String]) {
+        for seat_id in seat_ids {
+            if let Err(e) = self.seat_repo.release_seat(seat_id).await {
+                tracing::error!(seat_id = %seat_id, error = %e, "failed to roll back locked seat");
+            }
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    async fn save_audit_event(
+        &self,
+        booking_id: &str,
+        show_id: &str,
+        user_id: &str,
+        event_type: &str,
+        actor_id: Option<String>,
+        status_from: Option<String>,
+        status_to: Option<String>,
+        message: Option<String>,
+        metadata: Option<serde_json::Value>,
+    ) {
+        let Some(repo) = &self.compensation_log_repo else {
+            return;
+        };
+
+        let log = CompensationLog::audit_event(
+            Uuid::new_v4().to_string(),
+            booking_id.to_string(),
+            show_id.to_string(),
+            user_id.to_string(),
+            event_type,
+            actor_id,
+            status_from,
+            status_to,
+            message,
+            metadata,
+        );
+        if let Err(e) = repo.save(log).await {
+            tracing::error!(booking_id = %booking_id, event_type = %event_type, error = %e, "failed to save audit log");
+        }
+    }
+
+    async fn acquire_show_lock(&self, show_id: &str) -> ShowLockGuard {
+        #[cfg(feature = "distributed-lock")]
+        if let Some(redis_url) = &self.cfg.distributed_lock.redis_url {
+            match RedisShowLockGuard::acquire(redis_url, show_id, &self.cfg).await {
+                Ok(guard) => return ShowLockGuard::Redis(guard),
+                Err(e) => tracing::warn!(
+                    show_id = %show_id,
+                    error = %e,
+                    "redis show lock unavailable; falling back to local lock"
+                ),
+            }
+        }
+
+        let show_lock = self.get_show_lock(show_id).await;
+        ShowLockGuard::Local(show_lock.write_owned().await)
+    }
+
     /// Get or create the per-show Mutex guard.
     async fn get_show_lock(&self, show_id: &str) -> Arc<RwLock<()>> {
         {
@@ -487,9 +672,115 @@ impl SeatLockingService {
         }
 
         let mut w = self.show_locks.write().await;
-        w.entry(show_id.to_string())
-            .or_insert_with(|| Arc::new(RwLock::new(())));
-        Arc::clone(w.get(show_id).unwrap())
+        Arc::clone(
+            w.entry(show_id.to_string())
+                .or_insert_with(|| Arc::new(RwLock::new(()))),
+        )
+    }
+}
+
+enum ShowLockGuard {
+    Local(#[allow(dead_code)] OwnedRwLockWriteGuard<()>),
+    #[cfg(feature = "distributed-lock")]
+    Redis(#[allow(dead_code)] RedisShowLockGuard),
+}
+
+#[cfg(feature = "distributed-lock")]
+struct RedisShowLockGuard {
+    client: redis::Client,
+    key: String,
+    token: String,
+    renew_task: tokio::task::JoinHandle<()>,
+}
+
+#[cfg(feature = "distributed-lock")]
+impl RedisShowLockGuard {
+    async fn acquire(redis_url: &str, show_id: &str, cfg: &AppConfig) -> Result<Self, AppError> {
+        let client = redis::Client::open(redis_url)
+            .map_err(|e| AppError::InternalError(format!("invalid redis url: {e}")))?;
+        let key = format!("bms:show-lock:{show_id}");
+        let token = Uuid::new_v4().to_string();
+        let ttl_ms = cfg.distributed_lock.lock_ttl_ms.max(1);
+        let deadline = tokio::time::Instant::now()
+            + std::time::Duration::from_millis(cfg.distributed_lock.acquire_timeout_ms.max(1));
+
+        loop {
+            let mut conn = client
+                .get_multiplexed_async_connection()
+                .await
+                .map_err(|e| AppError::InternalError(format!("redis connection failed: {e}")))?;
+            let acquired: Option<String> = redis::cmd("SET")
+                .arg(&key)
+                .arg(&token)
+                .arg("NX")
+                .arg("PX")
+                .arg(ttl_ms)
+                .query_async(&mut conn)
+                .await
+                .map_err(|e| AppError::InternalError(format!("redis set nx failed: {e}")))?;
+
+            if acquired.is_some() {
+                let renew_client = client.clone();
+                let renew_key = key.clone();
+                let renew_token = token.clone();
+                let interval_ms = cfg.distributed_lock.renewal_interval_ms.max(1).min(ttl_ms);
+                let renew_task = tokio::spawn(async move {
+                    let mut ticker =
+                        tokio::time::interval(std::time::Duration::from_millis(interval_ms));
+                    loop {
+                        ticker.tick().await;
+                        let Ok(mut conn) = renew_client.get_multiplexed_async_connection().await
+                        else {
+                            continue;
+                        };
+                        let _: redis::RedisResult<i64> = redis::Script::new(
+                            "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('pexpire', KEYS[1], ARGV[2]) else return 0 end",
+                        )
+                        .key(&renew_key)
+                        .arg(&renew_token)
+                        .arg(ttl_ms)
+                        .invoke_async(&mut conn)
+                        .await;
+                    }
+                });
+
+                return Ok(Self {
+                    client,
+                    key,
+                    token,
+                    renew_task,
+                });
+            }
+
+            if tokio::time::Instant::now() >= deadline {
+                return Err(AppError::InternalError(
+                    "redis show lock timed out".to_string(),
+                ));
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+        }
+    }
+}
+
+#[cfg(feature = "distributed-lock")]
+impl Drop for RedisShowLockGuard {
+    fn drop(&mut self) {
+        self.renew_task.abort();
+        let client = self.client.clone();
+        let key = self.key.clone();
+        let token = self.token.clone();
+        tokio::spawn(async move {
+            let Ok(mut conn) = client.get_multiplexed_async_connection().await else {
+                return;
+            };
+            let _: redis::RedisResult<i64> = redis::Script::new(
+                "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end",
+            )
+            .key(key)
+            .arg(token)
+            .invoke_async(&mut conn)
+            .await;
+        });
     }
 }
 

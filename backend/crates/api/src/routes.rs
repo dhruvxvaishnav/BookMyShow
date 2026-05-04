@@ -70,6 +70,15 @@ pub fn create_router(state: AppState) -> Router {
             post(handlers::admin_override_seat),
         )
         .route("/admin/bookings", get(handlers::admin_list_bookings))
+        .route(
+            "/admin/bookings/:booking_id",
+            get(handlers::admin_get_booking),
+        )
+        .route(
+            "/admin/payments/:payment_id/refund",
+            post(handlers::refund_payment),
+        )
+        .route("/admin/audit", get(handlers::admin_audit))
         // Attach app state
         .with_state(state)
         // Add tracing middleware

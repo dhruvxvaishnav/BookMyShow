@@ -142,7 +142,9 @@ export default function AdminDashboardPage() {
               </div>
               {bookings.slice(0, 10).map((b) => (
                 <div key={b.booking_id} className={styles.tableRow}>
-                  <span className={styles.mono}>{b.booking_id.slice(0, 8)}...</span>
+                  <Link href={`/admin/bookings/${b.booking_id}`} className={styles.mono}>
+                    {b.booking_id.slice(0, 8)}...
+                  </Link>
                   <span className={styles.mono}>{b.show_id.slice(0, 8)}...</span>
                   <Badge variant={statusVariant(b.status)}>{b.status}</Badge>
                   <span className={styles.mono}>{formatPrice(b.total_amount)}</span>

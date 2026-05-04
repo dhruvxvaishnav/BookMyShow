@@ -33,4 +33,17 @@ impl CompensationLogRepository for InMemoryCompensationLogRepository {
             .cloned()
             .collect())
     }
+
+    async fn find_by_user(&self, user_id: &str) -> Result<Vec<CompensationLog>, AppError> {
+        let r = self.logs.read().await;
+        Ok(r.values()
+            .filter(|l| l.user_id == user_id)
+            .cloned()
+            .collect())
+    }
+
+    async fn find_all(&self) -> Result<Vec<CompensationLog>, AppError> {
+        let r = self.logs.read().await;
+        Ok(r.values().cloned().collect())
+    }
 }

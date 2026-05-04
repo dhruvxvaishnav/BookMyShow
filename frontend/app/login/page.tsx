@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Film, Mail, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getErrorMessage } from '@/utils/error';
+import { isValidEmail } from '@/utils/validation';
 import styles from './page.module.css';
 
 export default function LoginPage() {
@@ -18,6 +19,14 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if (!isValidEmail(email)) {
+      setError('Enter a valid email address');
+      return;
+    }
+    if (!password) {
+      setError('Password is required');
+      return;
+    }
     setIsLoading(true);
     try {
       await login(email, password);

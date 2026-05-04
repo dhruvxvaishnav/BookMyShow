@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Film, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getErrorMessage } from '@/utils/error';
+import { getPasswordStrengthError, isValidEmail } from '@/utils/validation';
 import styles from './page.module.css';
 
 export default function RegisterPage() {
@@ -20,12 +21,21 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if (!isValidEmail(email)) {
+      setError('Enter a valid email address');
+      return;
+    }
+    if (!userName.trim()) {
+      setError('Full name is required');
+      return;
+    }
     if (password !== confirm) {
       setError('Passwords do not match');
       return;
     }
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+    const passwordError = getPasswordStrengthError(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
     setIsLoading(true);

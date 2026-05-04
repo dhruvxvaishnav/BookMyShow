@@ -23,3 +23,8 @@ mock_gateway_failure_rate = 0.2
 lock_requests_per_min = 5
 payment_requests_per_min = 3
 default_requests_per_min = 60
+
+[distributed_lock]
+lock_ttl_ms = 10000
+renewal_interval_ms = 3000
+acquire_timeout_ms = 2000

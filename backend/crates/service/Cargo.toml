@@ -3,6 +3,10 @@ name = "service"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+distributed-lock = ["dep:redis"]
+
 [dependencies]
 repository = { path = "../repository" }
 domain = { path = "../domain" }
@@ -16,6 +20,7 @@ rand = "0.8"
 serde = { version = "1", features = ["derive"] }
 reqwest = { version = "0.13.3", features = ["form", "json"] }
 serde_json = "1.0.149"
+redis = { version = "0.27", features = ["aio", "tokio-comp"], optional = true }
 
 [dev-dependencies]
 tokio-test = "0.4"

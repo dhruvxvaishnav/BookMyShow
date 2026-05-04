@@ -164,6 +164,24 @@ export interface RowConfig {
   seat_type: 'Standard' | 'Premium' | 'Recliner';
 }
 
+export interface AuditLog {
+  audit_id: string;
+  booking_id: string;
+  show_id: string;
+  user_id: string;
+  event_type: string;
+  actor_id?: string;
+  status_from?: string;
+  status_to?: string;
+  message?: string;
+  confirmed_seats: string[];
+  failed_seats: string[];
+  total_amount: number;
+  failed_amount: number;
+  metadata?: Record<string, unknown>;
+  created_at: number;
+}
+
 // ── BookingStore ──────────────────────────────────────────
 export interface BookingState {
   booking: Booking | null;

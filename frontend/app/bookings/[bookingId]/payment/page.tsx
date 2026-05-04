@@ -13,6 +13,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { initiatePayment, mockGatewayPay } from '@/api/payments';
 import { getErrorMessage } from '@/utils/error';
 import { formatPrice } from '@/utils/format';
+import { isFutureCardExpiry, passesLuhn } from '@/utils/validation';
 import type { Booking, PaymentInitiateResponse } from '@/types/api';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
@@ -89,8 +90,8 @@ export default function PaymentPage({ params }: PageProps) {
   const validate = () => {
     const e: Record<string, string> = {};
     const rawCard = cardNumber.replace(/\s/g, '');
-    if (!/^\d{16}$/.test(rawCard)) e.cardNumber = 'Enter a valid 16-digit card number.';
-    if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) e.cardExpiry = 'Enter expiry as MM/YY.';
+    if (!passesLuhn(rawCard)) e.cardNumber = 'Enter a valid card number.';
+    if (!isFutureCardExpiry(cardExpiry)) e.cardExpiry = 'Enter a valid future expiry as MM/YY.';
     if (!/^\d{3,4}$/.test(cardCvv)) e.cardCvv = 'Enter a valid CVV.';
     setErrors(e);
     return Object.keys(e).length === 0;

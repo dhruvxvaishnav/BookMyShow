@@ -93,32 +93,32 @@
 
 ### PHASE 3 — Reliability & Production Hardening
 
-#### 3.1 Atomic Transactions
-- [ ] **Backend:** Wrap lock creation + booking insert in single DB transaction
-- [ ] **Backend:** Wrap payment callback + booking status update in transaction
-- [ ] **Backend:** Compensating transaction on partial failure (rollback seat lock if booking insert fails)
+#### 3.1 Atomic Transactions ✅ DONE (DB transaction deferred)
+- [x] **Backend:** Repository-level atomic lock creation + booking insert rollback added; single DB transaction deferred until database setup
+- [x] **Backend:** Payment callback + booking status update hardened with idempotent callback handling and compensation audit logging; DB transaction deferred until database setup
+- [x] **Backend:** Compensating transaction on partial failure (rollback seat lock if booking insert fails)
 
-#### 3.2 Distributed Locking (Multi-server)
-- [ ] **Backend:** Add Redis as optional dep (feature flag `distributed-lock`)
-- [ ] **Backend:** Replace per-show `tokio::Mutex` with Redis `SET NX PX` lock per show_id
-- [ ] **Backend:** Lease renewal for long-running lock holders
-- [ ] **Backend:** Fallback to in-process mutex when Redis unavailable (single-server mode)
+#### 3.2 Distributed Locking (Multi-server) ✅ DONE
+- [x] **Backend:** Add Redis as optional dep (feature flag `distributed-lock`)
+- [x] **Backend:** Replace per-show `tokio::Mutex` with Redis `SET NX PX` lock per show_id when `REDIS_URL` + feature are enabled
+- [x] **Backend:** Lease renewal for long-running lock holders
+- [x] **Backend:** Fallback to in-process mutex when Redis unavailable (single-server mode)
 
-#### 3.3 Audit Logging
-- [ ] **Backend:** Fully wire `CompensationLog` — write entry on every state transition (lock, book, pay, refund, cancel)
-- [ ] **Backend:** `GET /admin/audit?booking_id=&user_id=` endpoint
-- [ ] **Frontend:** Show audit trail on admin booking detail page
+#### 3.3 Audit Logging ✅ DONE
+- [x] **Backend:** Fully wire `CompensationLog` — write entry on every state transition (lock, book, pay, refund, cancel)
+- [x] **Backend:** `GET /admin/audit?booking_id=&user_id=` endpoint
+- [x] **Frontend:** Show audit trail on admin booking detail page
 
-#### 3.4 Input Validation Hardening
-- [ ] **Backend:** Validate email format on registration
-- [ ] **Backend:** Enforce max seats per booking at API level (already in service, add to route docs)
-- [ ] **Backend:** Validate `show_id` UUID format before DB query (avoid malformed ID errors)
-- [ ] **Frontend:** Client-side form validation (email regex, password strength, card number Luhn)
+#### 3.4 Input Validation Hardening ✅ DONE
+- [x] **Backend:** Validate email format on registration
+- [x] **Backend:** Enforce max seats per booking at API level (already in service, add to route docs)
+- [x] **Backend:** Validate `show_id` UUID format before DB query (avoid malformed ID errors)
+- [x] **Frontend:** Client-side form validation (email regex, password strength, card number Luhn)
 
-#### 3.5 Rate Limiting Expansion
-- [ ] **Backend:** Extend rate limiting to payment initiation (prevent payment spam)
-- [ ] **Backend:** Global IP-based rate limit on auth endpoints (prevent brute force)
-- [ ] **Backend:** Return `Retry-After` header on 429 responses
+#### 3.5 Rate Limiting Expansion ✅ DONE
+- [x] **Backend:** Extend rate limiting to payment initiation (prevent payment spam)
+- [x] **Backend:** Global IP-based rate limit on auth endpoints (prevent brute force)
+- [x] **Backend:** Return `Retry-After` header on 429 responses
 
 ---
 
