@@ -43,10 +43,10 @@ impl UserRepository for InMemoryUserRepository {
         let mut users = self.users.write().await;
         let mut index = self.email_index.write().await;
         // Keep email index consistent when user email changes
-        if let Some(existing) = users.get(&user.user_id) {
-            if existing.email != user.email {
-                index.remove(&existing.email);
-            }
+        if let Some(existing) = users.get(&user.user_id)
+            && existing.email != user.email
+        {
+            index.remove(&existing.email);
         }
         index.insert(user.email.clone(), user.user_id.clone());
         users.insert(user.user_id.clone(), user.clone());

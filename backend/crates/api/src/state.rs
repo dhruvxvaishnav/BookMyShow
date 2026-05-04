@@ -20,6 +20,7 @@ pub struct AppState {
 }
 
 impl AppState {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         seat_locking_svc: Arc<SeatLockingService>,
         booking_svc: Arc<dyn BookingServiceTrait>,

@@ -15,13 +15,12 @@ use crate::state::AppState;
 
 /// Extract user_id from JWT Bearer token (preferred) or X-User-Id header (fallback for tests).
 fn get_user_id(headers: &HeaderMap, jwt_secret: &str) -> Result<String, common::AppError> {
-    if let Some(auth_val) = headers.get("Authorization") {
-        if let Ok(auth_str) = auth_val.to_str() {
-            if let Some(token) = auth_str.strip_prefix("Bearer ") {
-                let claims = decode_token(token, jwt_secret)?;
-                return Ok(claims.sub);
-            }
-        }
+    if let Some(auth_val) = headers.get("Authorization")
+        && let Ok(auth_str) = auth_val.to_str()
+        && let Some(token) = auth_str.strip_prefix("Bearer ")
+    {
+        let claims = decode_token(token, jwt_secret)?;
+        return Ok(claims.sub);
     }
     // Fallback: X-User-Id header (keeps tests and legacy clients working)
     headers
@@ -74,10 +73,10 @@ pub async fn register(
         return Err(common::AppError::ValidationError("Invalid email".to_string()).into());
     }
     if req.password.len() < 8 {
-        return Err(
-            common::AppError::ValidationError("Password must be at least 8 characters".to_string())
-                .into(),
-        );
+        return Err(common::AppError::ValidationError(
+            "Password must be at least 8 characters".to_string(),
+        )
+        .into());
     }
     let user_name = req.user_name.trim().to_string();
     if user_name.is_empty() {
@@ -85,12 +84,7 @@ pub async fn register(
     }
 
     // Check email uniqueness
-    if state
-        .user_repo
-        .find_by_email(&email)
-        .await?
-        .is_some()
-    {
+    if state.user_repo.find_by_email(&email).await?.is_some() {
         return Err(common::AppError::EmailAlreadyExists.into());
     }
 
@@ -102,7 +96,8 @@ pub async fn register(
         .map_err(|e| common::AppError::InternalError(e.to_string()))?;
 
     let user_id = Uuid::new_v4().to_string();
-    let user = domain::User::new_with_password(user_id.clone(), user_name.clone(), email.clone(), hash);
+    let user =
+        domain::User::new_with_password(user_id.clone(), user_name.clone(), email.clone(), hash);
     state.user_repo.save(user).await?;
 
     let secret = &state.cfg.jwt.secret;

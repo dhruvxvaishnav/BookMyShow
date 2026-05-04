@@ -97,11 +97,9 @@ impl IntoResponse for ApiError {
                 self.0.to_string(),
             ),
 
-            AppError::Unauthorized => (
-                StatusCode::UNAUTHORIZED,
-                "UNAUTHORIZED",
-                self.0.to_string(),
-            ),
+            AppError::Unauthorized => {
+                (StatusCode::UNAUTHORIZED, "UNAUTHORIZED", self.0.to_string())
+            }
             AppError::InvalidCredentials => (
                 StatusCode::UNAUTHORIZED,
                 "INVALID_CREDENTIALS",
