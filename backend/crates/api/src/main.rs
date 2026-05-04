@@ -1,3 +1,5 @@
+use bcrypt;
+use domain::User;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::time::{Duration, interval};
@@ -57,6 +59,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ── 3. Initialise repositories (in-memory for now) ─────────────────────
     let in_memory_user_repo = InMemoryUserRepository::new();
     in_memory_user_repo.seed_test_user().await;
+
+    // Seed admin user (password from env or default)
+    let admin_email = std::env::var("ADMIN_EMAIL")
+        .unwrap_or_else(|_| "admin@bookmyshow.com".to_string());
+    let admin_pw = std::env::var("ADMIN_PASSWORD")
+        .unwrap_or_else(|_| "Admin@123".to_string());
+    let admin_hash = tokio::task::spawn_blocking(move || {
+        bcrypt::hash(&admin_pw, 12).expect("admin password hash failed")
+    })
+    .await?;
+    let admin_user = User::new_admin(
+        "admin-001".to_string(),
+        "Administrator".to_string(),
+        admin_email,
+        admin_hash,
+    );
+    in_memory_user_repo.save(admin_user).await.expect("seed admin user failed");
+
     let user_repo: Arc<dyn UserRepository> = Arc::new(in_memory_user_repo);
     let show_repo: Arc<dyn ShowRepository> = Arc::new(InMemoryShowRepository::new());
     let seat_repo: Arc<dyn SeatRepository> = Arc::new(InMemorySeatRepository::new());
@@ -119,6 +139,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&payment_svc) as Arc<dyn PaymentServiceTrait>,
         Arc::clone(&show_svc),
         Arc::clone(&queue_svc),
+        Arc::clone(&user_repo),
         rate_limiter,
         cfg.clone(),
     );

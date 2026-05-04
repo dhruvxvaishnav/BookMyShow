@@ -9,6 +9,7 @@ import Input from '@/components/forms/Input';
 import Modal from '@/components/layout/Modal';
 import { useToast } from '@/components/layout/Toast';
 import { getBooking } from '@/api/bookings';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { initiatePayment, mockGatewayPay } from '@/api/payments';
 import { getErrorMessage } from '@/utils/error';
 import { formatPrice } from '@/utils/format';
@@ -18,6 +19,7 @@ import styles from './page.module.css';
 interface PageProps { params: Promise<{ bookingId: string }> }
 
 export default function PaymentPage({ params }: PageProps) {
+  const isAuthed = useRequireAuth();
   const { bookingId } = use(params);
   const router = useRouter();
   const toast = useToast();
@@ -76,6 +78,8 @@ export default function PaymentPage({ params }: PageProps) {
     }, 5000);
     return () => clearInterval(interval);
   }, [booking, bookingId, router]);
+
+  if (!isAuthed) return null;
 
   const validate = () => {
     const e: Record<string, string> = {};

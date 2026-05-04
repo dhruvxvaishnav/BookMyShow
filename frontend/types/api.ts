@@ -1,3 +1,15 @@
+// ── Auth ──────────────────────────────────────────────────
+export interface AuthResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  user_id: string;
+  email: string;
+  user_name: string;
+  role: 'user' | 'admin';
+}
+
 // ── API Response Envelope ────────────────────────────────
 export interface ApiResponse<T> {
   success: boolean;

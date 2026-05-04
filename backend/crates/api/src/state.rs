@@ -1,4 +1,5 @@
 use common::AppConfig;
+use repository::UserRepository;
 use service::booking_service::BookingServiceTrait;
 use service::payment_service::PaymentServiceTrait;
 use service::{QueueService, SeatLockingService, ShowService};
@@ -6,8 +7,6 @@ use std::sync::Arc;
 
 use super::rate_limiter::RateLimiter;
 
-/// Aggregates all application services and repositories into a single struct
-/// that is passed to every HTTP handler via Axum's extension mechanism.
 #[derive(Clone)]
 pub struct AppState {
     pub seat_locking_svc: Arc<SeatLockingService>,
@@ -15,6 +14,7 @@ pub struct AppState {
     pub payment_svc: Arc<dyn PaymentServiceTrait>,
     pub show_svc: Arc<ShowService>,
     pub queue_svc: Arc<QueueService>,
+    pub user_repo: Arc<dyn UserRepository>,
     pub rate_limiter: RateLimiter,
     pub cfg: AppConfig,
 }
@@ -26,6 +26,7 @@ impl AppState {
         payment_svc: Arc<dyn PaymentServiceTrait>,
         show_svc: Arc<ShowService>,
         queue_svc: Arc<QueueService>,
+        user_repo: Arc<dyn UserRepository>,
         rate_limiter: RateLimiter,
         cfg: AppConfig,
     ) -> Self {
@@ -35,6 +36,7 @@ impl AppState {
             payment_svc,
             show_svc,
             queue_svc,
+            user_repo,
             rate_limiter,
             cfg,
         }

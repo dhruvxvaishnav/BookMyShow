@@ -8,6 +8,7 @@ import Input from '@/components/forms/Input';
 import Select from '@/components/forms/Select';
 import { useToast } from '@/components/layout/Toast';
 import { createShow } from '@/api/admin';
+import { useRequireAdmin } from '@/hooks/useRequireAuth';
 import type { RowConfig } from '@/types/api';
 import styles from './page.module.css';
 
@@ -35,6 +36,7 @@ const PRESETS = [
 ];
 
 export default function CreateShowPage() {
+  const isAdmin = useRequireAdmin();
   const router = useRouter();
   const toast = useToast();
   const [name, setName] = useState('');
@@ -46,6 +48,8 @@ export default function CreateShowPage() {
   const [rows, setRows] = useState<RowConfig[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  if (!isAdmin) return null;
 
   const addRow = () => {
     const nextLabel = rows.length > 0

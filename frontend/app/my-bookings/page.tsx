@@ -6,6 +6,7 @@ import EmptyState from '@/components/common/EmptyState';
 import { BookingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useToast } from '@/components/layout/Toast';
 import { useUserId } from '@/hooks/useUserId';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { getUserBookings } from '@/api/bookings';
 import { getErrorMessage } from '@/utils/error';
 import type { Booking, BookingStatus } from '@/types/api';
@@ -16,6 +17,7 @@ type FilterTab = 'All' | BookingStatus;
 const TABS: FilterTab[] = ['All', 'Pending', 'PaymentPending', 'Success', 'Cancelled', 'Expired'];
 
 export default function MyBookingsPage() {
+  const isAuthed = useRequireAuth();
   const userId = useUserId();
   const toast = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -38,6 +40,8 @@ export default function MyBookingsPage() {
   }, [userId]);
 
   useEffect(() => { loadBookings(); }, [loadBookings]);
+
+  if (!isAuthed) return null;
 
   const filtered = bookings.filter((b) => activeTab === 'All' || b.status === activeTab);
 

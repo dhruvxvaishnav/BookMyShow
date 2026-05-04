@@ -14,13 +14,13 @@ apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window === 'undefined') return config;
 
-    // User auth
-    const userId = localStorage.getItem('bms_user_id');
-    if (userId && config.headers) {
-      config.headers['X-User-Id'] = userId;
+    // JWT user auth (preferred)
+    const accessToken = localStorage.getItem('bms_access_token');
+    if (accessToken && config.headers) {
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    // Admin auth
+    // Admin JWT token
     const adminToken = localStorage.getItem('bms_admin_token');
     if (adminToken && config.headers) {
       config.headers['X-Admin-Token'] = adminToken;
@@ -31,7 +31,15 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ── Response interceptor: unwrap ApiResponse envelope ─────
+let isRefreshing = false;
+let refreshQueue: Array<(token: string) => void> = [];
+
+function drainQueue(token: string) {
+  refreshQueue.forEach((cb) => cb(token));
+  refreshQueue = [];
+}
+
+// ── Response interceptor: unwrap ApiResponse envelope + auto-refresh ─────
 apiClient.interceptors.response.use(
   (response) => {
     const data = response.data as ApiResponse<unknown>;
@@ -40,37 +48,74 @@ apiClient.interceptors.response.use(
         response.data = data.data;
         return response;
       } else if (!data.success && data.error) {
-        const err = new ApiError(
-          data.error.code,
-          data.error.message,
-          data.error.details,
-          response.status
+        return Promise.reject(
+          new ApiError(data.error.code, data.error.message, data.error.details, response.status)
         );
-        return Promise.reject(err);
       }
     }
     return response;
   },
-  (error: AxiosError<ApiResponse<unknown>>) => {
+  async (error: AxiosError<ApiResponse<unknown>>) => {
+    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // Auto-refresh on 401 (skip for auth endpoints themselves)
+    if (
+      error.response?.status === 401 &&
+      !original?._retry &&
+      original?.url &&
+      !original.url.includes('/auth/')
+    ) {
+      const refreshToken = typeof window !== 'undefined'
+        ? localStorage.getItem('bms_refresh_token')
+        : null;
+
+      if (refreshToken) {
+        if (isRefreshing) {
+          return new Promise<string>((resolve) => {
+            refreshQueue.push(resolve);
+          }).then((token) => {
+            if (original.headers) original.headers['Authorization'] = `Bearer ${token}`;
+            return apiClient(original);
+          });
+        }
+
+        isRefreshing = true;
+        original._retry = true;
+
+        try {
+          const res = await axios.post<{ success: boolean; data: { access_token: string; refresh_token: string } }>(
+            `${BASE_URL}/auth/refresh`,
+            { refresh_token: refreshToken },
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+          const newAccess = res.data.data.access_token;
+          const newRefresh = res.data.data.refresh_token;
+          localStorage.setItem('bms_access_token', newAccess);
+          localStorage.setItem('bms_refresh_token', newRefresh);
+          drainQueue(newAccess);
+          if (original.headers) original.headers['Authorization'] = `Bearer ${newAccess}`;
+          return apiClient(original);
+        } catch {
+          // Refresh failed — clear tokens and let the app redirect to login
+          localStorage.removeItem('bms_access_token');
+          localStorage.removeItem('bms_refresh_token');
+          drainQueue('');
+          window.location.href = '/login';
+        } finally {
+          isRefreshing = false;
+        }
+      }
+    }
+
     if (error.response) {
       const data = error.response.data;
       if (data && data.error) {
         return Promise.reject(
-          new ApiError(
-            data.error.code,
-            data.error.message,
-            data.error.details,
-            error.response.status
-          )
+          new ApiError(data.error.code, data.error.message, data.error.details, error.response.status)
         );
       }
       return Promise.reject(
-        new ApiError(
-          'HTTP_ERROR',
-          `Server error: ${error.response.status}`,
-          undefined,
-          error.response.status
-        )
+        new ApiError('HTTP_ERROR', `Server error: ${error.response.status}`, undefined, error.response.status)
       );
     }
     if (error.code === 'ECONNABORTED') {

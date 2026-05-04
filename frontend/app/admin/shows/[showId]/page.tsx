@@ -8,6 +8,7 @@ import Modal from '@/components/layout/Modal';
 import { useToast } from '@/components/layout/Toast';
 import { getShow, getSeatLayout } from '@/api/shows';
 import { getShowAnalytics, forceReleaseSeat, cancelShow } from '@/api/admin';
+import { useRequireAdmin } from '@/hooks/useRequireAuth';
 import { formatPrice } from '@/utils/format';
 import type { Show, AdminShowAnalytics, Seat } from '@/types/api';
 import styles from './page.module.css';
@@ -15,6 +16,7 @@ import styles from './page.module.css';
 interface PageProps { params: Promise<{ showId: string }> }
 
 export default function ShowAnalyticsPage({ params }: PageProps) {
+  const isAdmin = useRequireAdmin();
   const { showId } = use(params);
   const router = useRouter();
   const toast = useToast();
@@ -45,6 +47,8 @@ export default function ShowAnalyticsPage({ params }: PageProps) {
   }, [showId, toast]);
 
   useEffect(() => { load(); }, [load]);
+
+  if (!isAdmin) return null;
 
   const handleForceRelease = async (seatId: string) => {
     setReleasingSeatId(seatId);

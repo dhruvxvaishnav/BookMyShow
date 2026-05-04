@@ -11,6 +11,11 @@ pub fn create_router(state: AppState) -> Router {
     Router::new()
         // ── Health ────────────────────────────────────────────────────────────
         .route("/health", get(handlers::health))
+        // ── Auth ──────────────────────────────────────────────────────────────
+        .route("/auth/register", post(handlers::register))
+        .route("/auth/login", post(handlers::login))
+        .route("/auth/refresh", post(handlers::refresh_token))
+        .route("/admin/auth/login", post(handlers::admin_login))
         // ── Shows ─────────────────────────────────────────────────────────────
         .route("/shows", get(handlers::list_shows))
         .route("/shows/:show_id", get(handlers::get_show))

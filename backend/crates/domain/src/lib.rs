@@ -26,4 +26,4 @@ pub use seat_lock::SeatLock;
 pub use seat_status::SeatStatus;
 pub use seat_type::SeatType;
 pub use show::Show;
-pub use user::User;
+pub use user::{User, UserRole};

@@ -8,6 +8,7 @@ import Button from '@/components/forms/Button';
 import { BookingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useToast } from '@/components/layout/Toast';
 import { getBooking } from '@/api/bookings';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { getErrorMessage } from '@/utils/error';
 import type { Booking } from '@/types/api';
 import styles from './page.module.css';
@@ -15,6 +16,7 @@ import styles from './page.module.css';
 interface PageProps { params: Promise<{ bookingId: string }> }
 
 export default function ConfirmedPage({ params }: PageProps) {
+  const isAuthed = useRequireAuth();
   const { bookingId } = use(params);
   const router = useRouter();
   const toast = useToast();
@@ -38,6 +40,8 @@ export default function ConfirmedPage({ params }: PageProps) {
       .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setIsLoading(false));
   }, [bookingId, router]);
+
+  if (!isAuthed) return null;
 
   if (isLoading) {
     return (

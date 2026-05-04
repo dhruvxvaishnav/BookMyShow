@@ -71,6 +71,17 @@ pub enum AppError {
     #[error("payment amount mismatch: expected {expected}, got {actual}")]
     PaymentMismatch { expected: f64, actual: f64 },
 
+    // ─── 401 Unauthorized ─────────────────────────────────────────────────────
+    #[error("unauthorized")]
+    Unauthorized,
+
+    #[error("invalid email or password")]
+    InvalidCredentials,
+
+    // ─── 409 Conflict (auth) ──────────────────────────────────────────────────
+    #[error("email already registered")]
+    EmailAlreadyExists,
+
     // ─── 429 Too Many Requests ─────────────────────────────────────────────────
     #[error("rate limit exceeded")]
     RateLimitExceeded,
@@ -111,6 +122,12 @@ impl AppError {
             AppError::BookingExpired(_) => 410,
 
             AppError::PaymentMismatch { .. } => 422,
+
+            AppError::Unauthorized => 401,
+            AppError::InvalidCredentials => 401,
+
+            AppError::EmailAlreadyExists => 409,
+
             AppError::RateLimitExceeded => 429,
 
             AppError::InternalError(_) => 500,
@@ -145,6 +162,11 @@ impl AppError {
             AppError::BookingExpired(_) => "BOOKING_EXPIRED",
 
             AppError::PaymentMismatch { .. } => "PAYMENT_MISMATCH",
+
+            AppError::Unauthorized => "UNAUTHORIZED",
+            AppError::InvalidCredentials => "INVALID_CREDENTIALS",
+            AppError::EmailAlreadyExists => "EMAIL_ALREADY_EXISTS",
+
             AppError::RateLimitExceeded => "RATE_LIMIT_EXCEEDED",
 
             AppError::InternalError(_) => "INTERNAL_ERROR",

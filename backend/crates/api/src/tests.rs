@@ -76,6 +76,7 @@ async fn make_state() -> crate::AppState {
         payment_svc as Arc<dyn PaymentServiceTrait>,
         show_svc,
         queue_svc,
+        user_repo,
         rate_limiter,
         cfg,
     )

@@ -5,18 +5,30 @@ use axum::{
 };
 use common::error::ApiResponse;
 use serde::Deserialize;
+use uuid::Uuid;
 
+use crate::auth::{decode_token, encode_access_token, encode_refresh_token};
 use crate::dto::*;
 use crate::state::AppState;
 
-// ─── Header helpers ───────────────────────────────────────────────────────────
+// ─── Auth helpers ─────────────────────────────────────────────────────────────
 
-fn get_user_id(headers: &HeaderMap) -> Result<String, common::AppError> {
+/// Extract user_id from JWT Bearer token (preferred) or X-User-Id header (fallback for tests).
+fn get_user_id(headers: &HeaderMap, jwt_secret: &str) -> Result<String, common::AppError> {
+    if let Some(auth_val) = headers.get("Authorization") {
+        if let Ok(auth_str) = auth_val.to_str() {
+            if let Some(token) = auth_str.strip_prefix("Bearer ") {
+                let claims = decode_token(token, jwt_secret)?;
+                return Ok(claims.sub);
+            }
+        }
+    }
+    // Fallback: X-User-Id header (keeps tests and legacy clients working)
     headers
         .get("X-User-Id")
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string())
-        .ok_or_else(|| common::AppError::ValidationError("X-User-Id header required".to_string()))
+        .ok_or(common::AppError::Unauthorized)
 }
 
 fn get_admin_token(headers: &HeaderMap) -> Option<String> {
@@ -26,14 +38,263 @@ fn get_admin_token(headers: &HeaderMap) -> Option<String> {
         .map(|s| s.to_string())
 }
 
-fn require_admin(token: Option<String>) -> Result<(), common::AppError> {
-    let expected = std::env::var("ADMIN_TOKEN").unwrap_or_else(|_| "admin-secret".to_string());
-    if token.as_ref() != Some(&expected) {
-        return Err(common::AppError::ValidationError(
-            "Invalid admin token".to_string(),
-        ));
+/// Validate admin access: JWT with role=admin (preferred) or static env-var token (fallback for tests).
+fn require_admin(token: Option<String>, jwt_secret: &str) -> Result<(), common::AppError> {
+    let token = token.ok_or(common::AppError::Unauthorized)?;
+
+    // Try JWT first
+    if let Ok(claims) = decode_token(&token, jwt_secret) {
+        if claims.role == "admin" {
+            return Ok(());
+        }
+        return Err(common::AppError::Unauthorized);
     }
-    Ok(())
+
+    // Fallback to static token (for tests / backward compat)
+    let expected = std::env::var("ADMIN_TOKEN").unwrap_or_else(|_| "admin-secret".to_string());
+    if token == expected {
+        return Ok(());
+    }
+
+    Err(common::AppError::Unauthorized)
+}
+
+// ─── Auth handlers ────────────────────────────────────────────────────────────
+
+pub async fn register(
+    State(state): State<AppState>,
+    Json(req): Json<RegisterRequest>,
+) -> Result<
+    (axum::http::StatusCode, Json<ApiResponse<AuthResponse>>),
+    crate::impl_from_response::ApiError,
+> {
+    // Validate inputs
+    let email = req.email.trim().to_lowercase();
+    if email.is_empty() || !email.contains('@') {
+        return Err(common::AppError::ValidationError("Invalid email".to_string()).into());
+    }
+    if req.password.len() < 8 {
+        return Err(
+            common::AppError::ValidationError("Password must be at least 8 characters".to_string())
+                .into(),
+        );
+    }
+    let user_name = req.user_name.trim().to_string();
+    if user_name.is_empty() {
+        return Err(common::AppError::ValidationError("Name is required".to_string()).into());
+    }
+
+    // Check email uniqueness
+    if state
+        .user_repo
+        .find_by_email(&email)
+        .await?
+        .is_some()
+    {
+        return Err(common::AppError::EmailAlreadyExists.into());
+    }
+
+    // Hash password (blocking)
+    let pw = req.password.clone();
+    let hash = tokio::task::spawn_blocking(move || bcrypt::hash(&pw, 12))
+        .await
+        .map_err(|e| common::AppError::InternalError(e.to_string()))?
+        .map_err(|e| common::AppError::InternalError(e.to_string()))?;
+
+    let user_id = Uuid::new_v4().to_string();
+    let user = domain::User::new_with_password(user_id.clone(), user_name.clone(), email.clone(), hash);
+    state.user_repo.save(user).await?;
+
+    let secret = &state.cfg.jwt.secret;
+    let access_token = encode_access_token(
+        &user_id,
+        &email,
+        &user_name,
+        "user",
+        secret,
+        state.cfg.jwt.access_token_expiry_secs,
+    )?;
+    let refresh_token = encode_refresh_token(
+        &user_id,
+        &email,
+        &user_name,
+        "user",
+        secret,
+        state.cfg.jwt.refresh_token_expiry_secs,
+    )?;
+
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ApiResponse::ok(AuthResponse {
+            access_token,
+            refresh_token,
+            token_type: "Bearer".to_string(),
+            expires_in: state.cfg.jwt.access_token_expiry_secs,
+            user_id,
+            email,
+            user_name,
+            role: "user".to_string(),
+        })),
+    ))
+}
+
+pub async fn login(
+    State(state): State<AppState>,
+    Json(req): Json<LoginRequest>,
+) -> Result<Json<ApiResponse<AuthResponse>>, crate::impl_from_response::ApiError> {
+    let email = req.email.trim().to_lowercase();
+
+    let user = state
+        .user_repo
+        .find_by_email(&email)
+        .await?
+        .ok_or(common::AppError::InvalidCredentials)?;
+
+    let hash = user
+        .password_hash
+        .clone()
+        .ok_or(common::AppError::InvalidCredentials)?;
+
+    let pw = req.password.clone();
+    let valid = tokio::task::spawn_blocking(move || bcrypt::verify(&pw, &hash))
+        .await
+        .map_err(|e| common::AppError::InternalError(e.to_string()))?
+        .map_err(|_| common::AppError::InvalidCredentials)?;
+
+    if !valid {
+        return Err(common::AppError::InvalidCredentials.into());
+    }
+
+    let secret = &state.cfg.jwt.secret;
+    let role = user.role.to_string();
+    let access_token = encode_access_token(
+        &user.user_id,
+        &user.email,
+        &user.user_name,
+        &role,
+        secret,
+        state.cfg.jwt.access_token_expiry_secs,
+    )?;
+    let refresh_token = encode_refresh_token(
+        &user.user_id,
+        &user.email,
+        &user.user_name,
+        &role,
+        secret,
+        state.cfg.jwt.refresh_token_expiry_secs,
+    )?;
+
+    Ok(Json(ApiResponse::ok(AuthResponse {
+        access_token,
+        refresh_token,
+        token_type: "Bearer".to_string(),
+        expires_in: state.cfg.jwt.access_token_expiry_secs,
+        user_id: user.user_id,
+        email: user.email,
+        user_name: user.user_name,
+        role,
+    })))
+}
+
+pub async fn refresh_token(
+    State(state): State<AppState>,
+    Json(req): Json<RefreshTokenRequest>,
+) -> Result<Json<ApiResponse<AuthResponse>>, crate::impl_from_response::ApiError> {
+    let claims = decode_token(&req.refresh_token, &state.cfg.jwt.secret)?;
+
+    if claims.token_type != "refresh" {
+        return Err(common::AppError::Unauthorized.into());
+    }
+
+    let secret = &state.cfg.jwt.secret;
+    let access_token = encode_access_token(
+        &claims.sub,
+        &claims.email,
+        &claims.user_name,
+        &claims.role,
+        secret,
+        state.cfg.jwt.access_token_expiry_secs,
+    )?;
+    let new_refresh = encode_refresh_token(
+        &claims.sub,
+        &claims.email,
+        &claims.user_name,
+        &claims.role,
+        secret,
+        state.cfg.jwt.refresh_token_expiry_secs,
+    )?;
+
+    Ok(Json(ApiResponse::ok(AuthResponse {
+        access_token,
+        refresh_token: new_refresh,
+        token_type: "Bearer".to_string(),
+        expires_in: state.cfg.jwt.access_token_expiry_secs,
+        user_id: claims.sub,
+        email: claims.email,
+        user_name: claims.user_name,
+        role: claims.role,
+    })))
+}
+
+pub async fn admin_login(
+    State(state): State<AppState>,
+    Json(req): Json<AdminLoginRequest>,
+) -> Result<Json<ApiResponse<AuthResponse>>, crate::impl_from_response::ApiError> {
+    let email = req.email.trim().to_lowercase();
+
+    let user = state
+        .user_repo
+        .find_by_email(&email)
+        .await?
+        .ok_or(common::AppError::InvalidCredentials)?;
+
+    if user.role != domain::UserRole::Admin {
+        return Err(common::AppError::Unauthorized.into());
+    }
+
+    let hash = user
+        .password_hash
+        .clone()
+        .ok_or(common::AppError::InvalidCredentials)?;
+
+    let pw = req.password.clone();
+    let valid = tokio::task::spawn_blocking(move || bcrypt::verify(&pw, &hash))
+        .await
+        .map_err(|e| common::AppError::InternalError(e.to_string()))?
+        .map_err(|_| common::AppError::InvalidCredentials)?;
+
+    if !valid {
+        return Err(common::AppError::InvalidCredentials.into());
+    }
+
+    let secret = &state.cfg.jwt.secret;
+    let access_token = encode_access_token(
+        &user.user_id,
+        &user.email,
+        &user.user_name,
+        "admin",
+        secret,
+        state.cfg.jwt.access_token_expiry_secs,
+    )?;
+    let refresh_token = encode_refresh_token(
+        &user.user_id,
+        &user.email,
+        &user.user_name,
+        "admin",
+        secret,
+        state.cfg.jwt.refresh_token_expiry_secs,
+    )?;
+
+    Ok(Json(ApiResponse::ok(AuthResponse {
+        access_token,
+        refresh_token,
+        token_type: "Bearer".to_string(),
+        expires_in: state.cfg.jwt.access_token_expiry_secs,
+        user_id: user.user_id,
+        email: user.email,
+        user_name: user.user_name,
+        role: "admin".to_string(),
+    })))
 }
 
 // ─── Health ────────────────────────────────────────────────────────────────────
@@ -166,9 +427,8 @@ pub async fn lock_seats(
     (axum::http::StatusCode, Json<ApiResponse<LockSeatsResponse>>),
     crate::impl_from_response::ApiError,
 > {
-    let user_id = get_user_id(&headers)?;
+    let user_id = get_user_id(&headers, &state.cfg.jwt.secret)?;
 
-    // Rate limit: 5 lock requests per minute per user
     let rate_key = format!("lock:{}", user_id);
     let lock_limit = state.cfg.rate_limit.lock_requests_per_min;
     if state
@@ -206,9 +466,8 @@ pub async fn extend_lock(
     Path(booking_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<LockSeatsResponse>>, crate::impl_from_response::ApiError> {
-    let user_id = get_user_id(&headers)?;
+    let user_id = get_user_id(&headers, &state.cfg.jwt.secret)?;
 
-    // Rate limit: 5 lock extension requests per minute per user
     let rate_key = format!("lock:{}", user_id);
     let lock_limit = state.cfg.rate_limit.lock_requests_per_min;
     if state
@@ -241,7 +500,7 @@ pub async fn release_lock(
     Path(booking_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
-    let user_id = get_user_id(&headers)?;
+    let user_id = get_user_id(&headers, &state.cfg.jwt.secret)?;
 
     state
         .seat_locking_svc
@@ -258,7 +517,7 @@ pub async fn get_booking(
     Path(booking_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<BookingResponse>>, crate::impl_from_response::ApiError> {
-    let _user_id = get_user_id(&headers)?;
+    let _user_id = get_user_id(&headers, &state.cfg.jwt.secret)?;
 
     let booking = state
         .booking_svc
@@ -286,7 +545,7 @@ pub async fn cancel_booking(
     Path(booking_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
-    let user_id = get_user_id(&headers)?;
+    let user_id = get_user_id(&headers, &state.cfg.jwt.secret)?;
 
     state
         .booking_svc
@@ -301,7 +560,7 @@ pub async fn get_user_bookings(
     Path(user_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<Vec<BookingResponse>>>, crate::impl_from_response::ApiError> {
-    let _ = get_user_id(&headers)?; // Verify caller is authenticated
+    let _ = get_user_id(&headers, &state.cfg.jwt.secret)?;
 
     let bookings = state.booking_svc.get_user_bookings(&user_id).await?;
 
@@ -332,13 +591,12 @@ pub async fn initiate_payment(
     Path(booking_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<PaymentInitiatedResponse>>, crate::impl_from_response::ApiError> {
-    let user_id = get_user_id(&headers)?;
+    let user_id = get_user_id(&headers, &state.cfg.jwt.secret)?;
     let idempotency_key = headers
         .get("Idempotency-Key")
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
 
-    // Rate limit: 3 payment initiation requests per minute per user
     let rate_key = format!("payment:{}", user_id);
     let payment_limit = state.cfg.rate_limit.payment_requests_per_min;
     if state
@@ -415,8 +673,6 @@ pub async fn mock_gateway_pay(
     let payment_intent_id = req.payment_intent_id.clone();
     let response = state.payment_svc.mock_gateway_pay(req).await?;
 
-    // After the mock gateway "processes" the payment, trigger the callback
-    // This bridges the mock gateway back into our service layer
     state
         .payment_svc
         .payment_callback(
@@ -436,7 +692,7 @@ pub async fn leave_queue(
     Path(queue_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
-    let user_id = get_user_id(&headers)?;
+    let user_id = get_user_id(&headers, &state.cfg.jwt.secret)?;
 
     state.queue_svc.leave_queue(&queue_id, &user_id).await?;
 
@@ -452,7 +708,7 @@ pub async fn join_queue(
     (axum::http::StatusCode, Json<ApiResponse<QueueJoinResponse>>),
     crate::impl_from_response::ApiError,
 > {
-    let user_id = get_user_id(&headers)?;
+    let user_id = get_user_id(&headers, &state.cfg.jwt.secret)?;
 
     let result = state
         .queue_svc
@@ -500,7 +756,7 @@ pub async fn create_show(
     (axum::http::StatusCode, Json<ApiResponse<ShowResponse>>),
     crate::impl_from_response::ApiError,
 > {
-    require_admin(get_admin_token(&headers))?;
+    require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
 
     let svc_req = service::show::CreateShowRequest {
         show_name: req.show_name.clone(),
@@ -544,19 +800,15 @@ pub async fn create_show(
     ))
 }
 
-// ── Admin Cancel Show ─────────────────────────────────────────────────────────
-
 pub async fn cancel_show(
     State(state): State<AppState>,
     Path(show_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
-    require_admin(get_admin_token(&headers))?;
+    require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
 
-    // Cancel show
     state.show_svc.cancel_show(&show_id).await?;
 
-    // Refund all bookings for the show
     let bookings = state.booking_svc.get_show_bookings(&show_id).await?;
     for booking in bookings {
         if matches!(
@@ -566,7 +818,6 @@ pub async fn cancel_show(
         {
             let _ = state.payment_svc.refund_payment(payment_id).await;
         }
-        // Also cancel it
         let _ = state
             .booking_svc
             .cancel_booking(&booking.booking_id, &booking.user_id)
@@ -576,13 +827,11 @@ pub async fn cancel_show(
     Ok(Json(ApiResponse::ok(())))
 }
 
-// ── Admin: List All Bookings ──────────────────────────────────────────────────
-
 pub async fn admin_list_bookings(
     State(state): State<AppState>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<Vec<BookingResponse>>>, crate::impl_from_response::ApiError> {
-    require_admin(get_admin_token(&headers))?;
+    require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
 
     let bookings = state.booking_svc.get_all_bookings().await?;
 
@@ -606,14 +855,12 @@ pub async fn admin_list_bookings(
     Ok(Json(ApiResponse::ok(responses)))
 }
 
-// ── Admin: Show Analytics ─────────────────────────────────────────────────────
-
 pub async fn admin_show_analytics(
     State(state): State<AppState>,
     Path(show_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<ShowAnalyticsResponse>>, crate::impl_from_response::ApiError> {
-    require_admin(get_admin_token(&headers))?;
+    require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
 
     let analytics = state.show_svc.get_show_analytics(&show_id).await?;
 
@@ -629,15 +876,13 @@ pub async fn admin_show_analytics(
     })))
 }
 
-// ── Admin: Manual Seat Override ───────────────────────────────────────────────
-
 pub async fn admin_override_seat(
     State(state): State<AppState>,
     Path((_show_id, seat_id)): Path<(String, String)>,
     headers: HeaderMap,
     Json(req): Json<SeatOverrideRequest>,
 ) -> Result<Json<ApiResponse<SeatOverrideResponse>>, crate::impl_from_response::ApiError> {
-    require_admin(get_admin_token(&headers))?;
+    require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
 
     let reason = if req.reason.is_empty() {
         "admin override".to_string()
@@ -659,14 +904,12 @@ pub async fn admin_override_seat(
     })))
 }
 
-// ── Admin Refund Payment ──────────────────────────────────────────────────────
-
 pub async fn refund_payment(
     State(state): State<AppState>,
     Path(payment_id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
-    require_admin(get_admin_token(&headers))?;
+    require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
 
     state.payment_svc.refund_payment(&payment_id).await?;
 

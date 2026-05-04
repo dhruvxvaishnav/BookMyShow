@@ -13,6 +13,7 @@ pub struct AppConfig {
     pub queue: QueueConfig,
     pub payment: PaymentConfig,
     pub rate_limit: RateLimitConfig,
+    pub jwt: JwtConfig,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -51,6 +52,13 @@ pub struct RateLimitConfig {
     pub default_requests_per_min: usize,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct JwtConfig {
+    pub secret: String,
+    pub access_token_expiry_secs: u64,
+    pub refresh_token_expiry_secs: u64,
+}
+
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
@@ -79,6 +87,11 @@ impl Default for AppConfig {
                 lock_requests_per_min: 5,
                 payment_requests_per_min: 3,
                 default_requests_per_min: 60,
+            },
+            jwt: JwtConfig {
+                secret: "dev-jwt-secret-change-in-production-must-be-at-least-32-chars".to_string(),
+                access_token_expiry_secs: 900,      // 15 min
+                refresh_token_expiry_secs: 604_800, // 7 days
             },
         }
     }
@@ -111,6 +124,9 @@ impl AppConfig {
             "seat_lock.grace_period_seconds",
             "SEAT_LOCK_GRACE_PERIOD_SECS"
         );
+        env_override!("jwt.secret", "JWT_SECRET");
+        env_override!("jwt.access_token_expiry_secs", "JWT_ACCESS_EXPIRY_SECS");
+        env_override!("jwt.refresh_token_expiry_secs", "JWT_REFRESH_EXPIRY_SECS");
 
         // If deserialization fails (e.g. no config.toml and no env vars), use defaults
         match builder.build()?.try_deserialize::<Self>() {

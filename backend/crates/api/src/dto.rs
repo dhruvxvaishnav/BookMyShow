@@ -1,5 +1,43 @@
 use serde::{Deserialize, Serialize};
 
+// ─── Auth DTOs ────────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct RegisterRequest {
+    pub email: String,
+    pub password: String,
+    pub user_name: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct LoginRequest {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct RefreshTokenRequest {
+    pub refresh_token: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AuthResponse {
+    pub access_token: String,
+    pub refresh_token: String,
+    pub token_type: String,
+    pub expires_in: u64,
+    pub user_id: String,
+    pub email: String,
+    pub user_name: String,
+    pub role: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct AdminLoginRequest {
+    pub email: String,
+    pub password: String,
+}
+
 /// Request body for locking seats.
 #[derive(Debug, Clone, Deserialize)]
 pub struct LockSeatsRequest {

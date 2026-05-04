@@ -11,6 +11,7 @@ import { BookingSkeleton } from '@/components/common/LoadingSkeleton';
 import EmptyState from '@/components/common/EmptyState';
 import { useToast } from '@/components/layout/Toast';
 import { getBooking, extendLock, cancelBooking, releaseLock } from '@/api/bookings';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { getErrorMessage } from '@/utils/error';
 import { formatPrice, formatSeatList, formatDateTime } from '@/utils/format';
 import type { Booking, BookingStatus } from '@/types/api';
@@ -28,6 +29,7 @@ const statusBadge: Record<BookingStatus, 'success' | 'error' | 'warning' | 'info
 };
 
 export default function BookingDetailsPage({ params }: PageProps) {
+  const isAuthed = useRequireAuth();
   const { bookingId } = use(params);
   const router = useRouter();
   const toast = useToast();
@@ -75,6 +77,8 @@ export default function BookingDetailsPage({ params }: PageProps) {
     }, 10000);
     return () => clearInterval(interval);
   }, [booking, bookingId]);
+
+  if (!isAuthed) return null;
 
   const handleExtend = async () => {
     setIsExtending(true);

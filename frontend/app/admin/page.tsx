@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, BarChart2, TrendingUp } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
@@ -9,11 +10,13 @@ import Badge from '@/components/common/Badge';
 import { CardSkeleton } from '@/components/common/LoadingSkeleton';
 import { getShows, getShowAvailability } from '@/api/shows';
 import { getAdminBookings } from '@/api/admin';
+import { useRequireAdmin } from '@/hooks/useRequireAuth';
 import type { Show, ShowAvailability, Booking } from '@/types/api';
 import { formatDateTime, formatPrice } from '@/utils/format';
 import styles from './page.module.css';
 
 export default function AdminDashboardPage() {
+  const isAdmin = useRequireAdmin();
   const [shows, setShows] = useState<Show[]>([]);
   const [availabilities, setAvailabilities] = useState<Record<string, ShowAvailability>>({});
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -36,6 +39,8 @@ export default function AdminDashboardPage() {
       })
       .finally(() => setIsLoading(false));
   }, []);
+
+  if (!isAdmin) return null;
 
   const todayBookings = bookings.filter((b) => b.status === 'Success');
   const totalRevenue = todayBookings.reduce((sum, b) => sum + b.total_amount, 0);
