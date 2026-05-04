@@ -1,4 +1,5 @@
 'use client';
+import type { KeyboardEvent, Ref } from 'react';
 import type { Seat as SeatType } from '@/types/api';
 import type { SeatDisplayState } from './Seat';
 import Seat from './Seat';
@@ -11,6 +12,10 @@ interface SeatRowProps {
   displayStates: Record<string, SeatDisplayState>;
   conflictingSeats: string[];
   onSeatClick: (seat: SeatType) => void;
+  focusedSeatId?: string;
+  registerSeat?: (seatId: string) => Ref<HTMLButtonElement>;
+  onSeatFocus?: (seatId: string) => void;
+  onSeatKeyDown?: (event: KeyboardEvent<HTMLButtonElement>, seat: SeatType) => void;
 }
 
 export default function SeatRow({
@@ -19,6 +24,10 @@ export default function SeatRow({
   displayStates,
   conflictingSeats,
   onSeatClick,
+  focusedSeatId,
+  registerSeat,
+  onSeatFocus,
+  onSeatKeyDown,
 }: SeatRowProps) {
   // Detect row type from first seat
   const firstSeat = seats[0];
@@ -43,6 +52,10 @@ export default function SeatRow({
             displayState={displayStates[seat.seat_id] ?? 'available'}
             isConflicting={conflictingSeats.includes(seat.seat_id)}
             onClick={onSeatClick}
+            buttonRef={registerSeat?.(seat.seat_id)}
+            tabIndex={focusedSeatId === seat.seat_id ? 0 : -1}
+            onFocus={() => onSeatFocus?.(seat.seat_id)}
+            onKeyDown={onSeatKeyDown}
           />
         ))}
       </div>

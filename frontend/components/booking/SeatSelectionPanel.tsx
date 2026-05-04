@@ -38,7 +38,12 @@ export default function SeatSelectionPanel({
       <div className={styles.header}>
         <h3>Your Selection</h3>
         {count > 0 && (
-          <button className={styles.clearBtn} onClick={() => {}} title="Clear all">
+          <button
+            className={styles.clearBtn}
+            onClick={() => {}}
+            title="Clear all"
+            aria-label="Clear selected seats"
+          >
             <Trash2 size={14} strokeWidth={1.5} />
           </button>
         )}

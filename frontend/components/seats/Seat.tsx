@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import type { KeyboardEvent, Ref } from 'react';
 import type { Seat as SeatType } from '@/types/api';
 import { formatPrice } from '@/utils/format';
 import styles from './Seat.module.css';
@@ -11,42 +11,67 @@ interface SeatProps {
   displayState: SeatDisplayState;
   isConflicting?: boolean;
   onClick: (seat: SeatType) => void;
+  buttonRef?: Ref<HTMLButtonElement>;
+  tabIndex?: number;
+  onFocus?: () => void;
+  onKeyDown?: (event: KeyboardEvent<HTMLButtonElement>, seat: SeatType) => void;
 }
 
-export default function Seat({ seat, displayState, isConflicting, onClick }: SeatProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
+export default function Seat({
+  seat,
+  displayState,
+  isConflicting,
+  onClick,
+  buttonRef,
+  tabIndex,
+  onFocus,
+  onKeyDown,
+}: SeatProps) {
   const canClick = displayState === 'available' || displayState === 'selected';
 
   const handleClick = () => {
     if (canClick) onClick(seat);
   };
 
+  const stateLabel: Record<SeatDisplayState, string> = {
+    available: 'available',
+    selected: 'selected',
+    'locked-you': 'locked by you',
+    'locked-other': 'locked by another user',
+    booked: 'booked',
+  };
+
   return (
     <div className={styles.wrapper}>
       <button
+        ref={buttonRef}
+        type="button"
         className={`
           ${styles.seat}
           ${styles[displayState]}
           ${isConflicting ? styles.conflicting : ''}
         `}
+        data-seat-id={seat.seat_id}
         onClick={handleClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onFocus={onFocus}
+        onKeyDown={(event) => onKeyDown?.(event, seat)}
         disabled={!canClick}
+        tabIndex={canClick ? tabIndex : undefined}
         title={`${seat.seat_number} — ${seat.seat_type} — ${formatPrice(seat.price)}`}
-        aria-label={`${seat.seat_number}, ${seat.seat_type}, ${displayState}`}
+        aria-label={`${seat.seat_number}, ${seat.seat_type} seat, ${stateLabel[displayState]}, ${formatPrice(seat.price)}`}
+        aria-pressed={displayState === 'selected'}
       >
         <span className={styles.label}>{seat.seat_number}</span>
+        <span className={styles.srOnly}>
+          {seat.seat_number}, {seat.seat_type}, {stateLabel[displayState]}, {formatPrice(seat.price)}
+        </span>
       </button>
 
-      {isHovered && (
-        <div className={styles.tooltip}>
-          <strong>{seat.seat_number}</strong>
-          <span>{seat.seat_type}</span>
-          <span>{formatPrice(seat.price)}</span>
-        </div>
-      )}
+      <div className={styles.tooltip}>
+        <strong>{seat.seat_number}</strong>
+        <span>{seat.seat_type}</span>
+        <span>{formatPrice(seat.price)}</span>
+      </div>
     </div>
   );
 }

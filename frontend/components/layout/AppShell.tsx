@@ -60,13 +60,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       autoFocus
                     />
                     <button className={styles.tokenSaveBtn} onClick={saveToken}>Set</button>
-                    <button className={styles.tokenCancelBtn} onClick={() => setShowTokenInput(false)}>×</button>
+                    <button
+                      className={styles.tokenCancelBtn}
+                      onClick={() => setShowTokenInput(false)}
+                      aria-label="Cancel admin token entry"
+                    >
+                      ×
+                    </button>
                   </div>
                 ) : (
                   <button
                     className={`${styles.navLink} ${styles.adminBtn}`}
                     onClick={() => setShowTokenInput(true)}
                     title={`Admin token: ${adminToken ? 'set' : 'not set'}`}
+                    aria-label="Open admin token entry"
                   >
                     {isTokenSet ? (
                       <span className={styles.tokenSet}>

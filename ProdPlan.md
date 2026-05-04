@@ -125,9 +125,9 @@
 ### PHASE 4 — UX Polish
 
 #### 4.1 Accessibility
-- [ ] **Frontend:** Add `aria-label` to all icon buttons (seat cells, close buttons, nav)
-- [ ] **Frontend:** Keyboard navigation for seat grid (arrow keys, space to select)
-- [ ] **Frontend:** Focus management in modals (trap focus, restore on close)
+- [x] **Frontend:** Add `aria-label` to all icon buttons (seat cells, close buttons, nav)
+- [x] **Frontend:** Keyboard navigation for seat grid (arrow keys, space to select)
+- [x] **Frontend:** Focus management in modals (trap focus, restore on close)
 - [ ] **Frontend:** Color contrast audit (WCAG 2.1 AA minimum)
 - [ ] **Frontend:** Screen reader announcements for seat status changes and timer
 

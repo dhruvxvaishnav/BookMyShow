@@ -71,6 +71,7 @@ export default function HomePage() {
               placeholder="Search shows or theatres..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search shows or theatres"
             />
           </div>
         }
