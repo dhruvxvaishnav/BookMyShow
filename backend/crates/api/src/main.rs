@@ -98,18 +98,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         cfg.clone(),
     ));
 
+    let email_svc = Arc::new(service::EmailService::new(cfg.clone()));
+
     let booking_svc = Arc::new(BookingService::new(
         Arc::clone(&booking_repo),
         Arc::clone(&seat_repo),
         Arc::clone(&payment_repo),
         Arc::clone(&compensation_log_repo),
+        Arc::clone(&user_repo),
+        Arc::clone(&show_repo),
+        Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
         cfg.clone(),
     ));
 
     let payment_svc = Arc::new(PaymentService::new(
         Arc::clone(&payment_repo),
         Arc::clone(&booking_repo),
+        Arc::clone(&user_repo),
         Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
+        Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
         cfg.clone(),
     ));
 
@@ -141,6 +148,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&show_svc),
         Arc::clone(&queue_svc),
         Arc::clone(&user_repo),
+        Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
         rate_limiter,
         cfg.clone(),
     );

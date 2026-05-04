@@ -161,3 +161,17 @@ p { color: var(--text-secondary); }
   min-height: calc(100vh - 72px);
   padding: var(--space-8) 0;
 }
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+  header, nav, .container > header, .back-button, .action-buttons {
+    display: none !important;
+  }
+  .page-content {
+    padding: 0;
+    margin: 0;
+  }
+}

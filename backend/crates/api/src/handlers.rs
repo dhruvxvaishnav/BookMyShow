@@ -373,6 +373,12 @@ pub async fn get_seat_layout(
     Path(show_id): Path<String>,
     Query(query): Query<SeatPageQuery>,
 ) -> Result<Json<ApiResponse<SeatLayoutPageResponse>>, crate::impl_from_response::ApiError> {
+    let show = state
+        .show_svc
+        .get_show(&show_id)
+        .await?
+        .ok_or_else(|| common::AppError::ShowNotFound(show_id.clone()))?;
+
     let all_seats = state.show_svc.get_seat_layout(&show_id).await?;
 
     let offset = (query.page.saturating_sub(1)) * query.limit;
@@ -380,13 +386,17 @@ pub async fn get_seat_layout(
         .into_iter()
         .skip(offset as usize)
         .take(query.limit as usize)
-        .map(|s| SeatResponse {
-            seat_id: s.seat_id,
-            seat_number: s.seat_number,
-            row_label: s.row_label,
-            seat_type: s.seat_type.to_string(),
-            status: s.status.to_string(),
-            lock_expires_at: s.lock_expires_at.map(|dt| dt.timestamp()),
+        .map(|s| {
+            let price = s.effective_price(show.price_per_seat);
+            SeatResponse {
+                seat_id: s.seat_id,
+                seat_number: s.seat_number,
+                row_label: s.row_label,
+                seat_type: s.seat_type.to_string(),
+                status: s.status.to_string(),
+                lock_expires_at: s.lock_expires_at.map(|dt| dt.timestamp()),
+                price,
+            }
         })
         .collect();
 
@@ -614,6 +624,7 @@ pub async fn initiate_payment(
         amount: result.amount,
         gateway_name: result.gateway_name,
         status: "pending".to_string(),
+        client_secret: result.client_secret,
     })))
 }
 
@@ -631,6 +642,40 @@ pub async fn payment_callback(
         .payment_svc
         .payment_callback(&payment_intent_id, &query.status, None)
         .await?;
+
+    Ok(Json(ApiResponse::ok(())))
+}
+
+pub async fn stripe_webhook(
+    State(state): State<AppState>,
+    body: axum::body::Bytes,
+) -> Result<Json<ApiResponse<()>>, crate::impl_from_response::ApiError> {
+    // Parse the payload as JSON
+    let payload: serde_json::Value = serde_json::from_slice(&body)
+        .map_err(|_| common::AppError::ValidationError("Invalid JSON payload".to_string()))?;
+
+    // TODO: Verify Stripe-Signature header using stripe_webhook_secret
+
+    if let Some(type_str) = payload.get("type").and_then(|t| t.as_str())
+        && (type_str == "payment_intent.succeeded" || type_str == "payment_intent.payment_failed")
+    {
+        let status = if type_str == "payment_intent.succeeded" {
+            "SUCCESS"
+        } else {
+            "FAILED"
+        };
+
+        if let Some(data) = payload.get("data")
+            && let Some(object) = data.get("object")
+            && let Some(payment_intent_id) = object.get("id").and_then(|i| i.as_str())
+        {
+            // Call the existing payment callback logic
+            let _ = state
+                .payment_svc
+                .payment_callback(payment_intent_id, status, None)
+                .await;
+        }
+    }
 
     Ok(Json(ApiResponse::ok(())))
 }

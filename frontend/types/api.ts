@@ -113,6 +113,7 @@ export interface PaymentInitiateResponse {
   amount: number;
   gateway_name: string;
   status: 'pending';
+  client_secret?: string;
 }
 
 export interface MockGatewayPayRequest {

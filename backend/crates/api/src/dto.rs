@@ -111,6 +111,7 @@ pub struct PaymentInitiatedResponse {
     pub amount: f64,
     pub gateway_name: String,
     pub status: String,
+    pub client_secret: Option<String>,
 }
 
 /// Response for payment details.
@@ -147,6 +148,7 @@ pub struct SeatResponse {
     pub seat_type: String,
     pub status: String,
     pub lock_expires_at: Option<i64>,
+    pub price: f64,
 }
 
 /// Response for queue join.

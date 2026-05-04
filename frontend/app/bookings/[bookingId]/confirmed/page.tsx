@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Printer } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import TicketDisplay from '@/components/booking/TicketDisplay';
 import Button from '@/components/forms/Button';
@@ -83,7 +83,10 @@ export default function ConfirmedPage({ params }: PageProps) {
             <TicketDisplay booking={booking} />
           </div>
 
-          <div className={styles.actions}>
+          <div className={styles.actions} style={{ flexWrap: 'wrap' }}>
+            <Button variant="secondary" onClick={() => window.print()} leftIcon={<Printer size={16} />}>
+              Download PDF / Print
+            </Button>
             <Button variant="secondary" onClick={() => router.push('/')}>
               Browse More Shows
             </Button>

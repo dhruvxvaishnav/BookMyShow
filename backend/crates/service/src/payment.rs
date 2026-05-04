@@ -5,6 +5,7 @@ pub struct PaymentInitiated {
     pub payment_intent_id: String,
     pub amount: f64,
     pub gateway_name: String,
+    pub client_secret: Option<String>,
 }
 
 /// DTO for mock gateway payment request.

@@ -14,7 +14,12 @@ import { initiatePayment, mockGatewayPay } from '@/api/payments';
 import { getErrorMessage } from '@/utils/error';
 import { formatPrice } from '@/utils/format';
 import type { Booking, PaymentInitiateResponse } from '@/types/api';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import StripePaymentForm from '@/components/booking/StripePaymentForm';
 import styles from './page.module.css';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 interface PageProps { params: Promise<{ bookingId: string }> }
 
@@ -162,62 +167,97 @@ export default function PaymentPage({ params }: PageProps) {
 
               <h3 className={styles.formTitle}>Payment Details</h3>
 
-              <div className={styles.fieldGroup}>
-                <Input
-                  label="Card Number"
-                  placeholder="4242 4242 4242 4242"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(formatCardInput(e.target.value))}
-                  error={errors.cardNumber}
-                  maxLength={19}
-                  inputMode="numeric"
-                />
-              </div>
+              {payment?.client_secret ? (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret: payment.client_secret,
+                    appearance: {
+                      theme: 'night',
+                      variables: {
+                        colorPrimary: '#e11d48',
+                        colorBackground: '#18181b',
+                        colorText: '#f4f4f5',
+                        colorDanger: '#ef4444',
+                        fontFamily: 'system-ui, sans-serif',
+                        spacingUnit: '4px',
+                        borderRadius: '8px',
+                      },
+                    },
+                  }}
+                >
+                  <StripePaymentForm 
+                    amount={payment.amount} 
+                    onSuccess={() => router.replace(`/bookings/${bookingId}/confirmed`)} 
+                  />
+                  <Button
+                    variant="ghost"
+                    onClick={() => router.push(`/bookings/${bookingId}`)}
+                    style={{ marginTop: '1rem' }}
+                  >
+                    Cancel Payment
+                  </Button>
+                </Elements>
+              ) : (
+                <>
+                  <div className={styles.fieldGroup}>
+                    <Input
+                      label="Card Number"
+                      placeholder="4242 4242 4242 4242"
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(formatCardInput(e.target.value))}
+                      error={errors.cardNumber}
+                      maxLength={19}
+                      inputMode="numeric"
+                    />
+                  </div>
 
-              <div className={styles.fieldRow}>
-                <Input
-                  label="Expiry"
-                  placeholder="MM/YY"
-                  value={cardExpiry}
-                  onChange={(e) => setCardExpiry(formatExpiryInput(e.target.value))}
-                  error={errors.cardExpiry}
-                  maxLength={5}
-                  inputMode="numeric"
-                />
-                <Input
-                  label="CVV"
-                  placeholder="•••"
-                  type="password"
-                  value={cardCvv}
-                  onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                  error={errors.cardCvv}
-                  maxLength={4}
-                  inputMode="numeric"
-                />
-              </div>
+                  <div className={styles.fieldRow}>
+                    <Input
+                      label="Expiry"
+                      placeholder="MM/YY"
+                      value={cardExpiry}
+                      onChange={(e) => setCardExpiry(formatExpiryInput(e.target.value))}
+                      error={errors.cardExpiry}
+                      maxLength={5}
+                      inputMode="numeric"
+                    />
+                    <Input
+                      label="CVV"
+                      placeholder="•••"
+                      type="password"
+                      value={cardCvv}
+                      onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      error={errors.cardCvv}
+                      maxLength={4}
+                      inputMode="numeric"
+                    />
+                  </div>
 
-              <div className={styles.testHint}>
-                Test card: <code>4242 4242 4242 4242</code>
-              </div>
+                  <div className={styles.testHint}>
+                    Test card: <code>4242 4242 4242 4242</code>
+                  </div>
 
-              <Button
-                variant="primary"
-                size="lg"
-                isLoading={isPaying || isInitLoading}
-                disabled={!payment}
-                onClick={handlePay}
-                leftIcon={<Lock size={16} strokeWidth={1.5} />}
-                style={{ width: '100%' }}
-              >
-                {payment ? `Pay ${formatPrice(payment.amount)}` : 'Preparing payment...'}
-              </Button>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    isLoading={isPaying || isInitLoading}
+                    disabled={!payment}
+                    onClick={handlePay}
+                    leftIcon={<Lock size={16} strokeWidth={1.5} />}
+                    style={{ width: '100%' }}
+                  >
+                    {payment ? `Pay ${formatPrice(payment.amount)}` : 'Preparing payment...'}
+                  </Button>
 
-              <Button
-                variant="ghost"
-                onClick={() => router.push(`/bookings/${bookingId}`)}
-              >
-                Cancel Payment
-              </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => router.push(`/bookings/${bookingId}`)}
+                  >
+                    Cancel Payment
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 

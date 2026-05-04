@@ -43,17 +43,26 @@ async fn make_state() -> crate::AppState {
         Arc::clone(&user_repo),
         cfg.clone(),
     ));
+    let user_repo: Arc<dyn UserRepository> = Arc::new(InMemoryUserRepository::new());
+    let email_svc = Arc::new(service::EmailService::new(cfg.clone()));
+
     let booking_svc = Arc::new(BookingService::new(
         Arc::clone(&booking_repo),
         Arc::clone(&seat_repo),
         Arc::clone(&payment_repo),
         Arc::clone(&compensation_log_repo),
+        Arc::clone(&user_repo),
+        Arc::clone(&show_repo),
+        Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
         cfg.clone(),
     ));
+
     let payment_svc = Arc::new(PaymentService::new(
         Arc::clone(&payment_repo),
         Arc::clone(&booking_repo),
+        Arc::clone(&user_repo),
         Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
+        Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
         cfg.clone(),
     ));
     let show_svc = Arc::new(ShowService::new(
@@ -77,6 +86,7 @@ async fn make_state() -> crate::AppState {
         show_svc,
         queue_svc,
         user_repo,
+        email_svc as Arc<dyn service::EmailServiceTrait>,
         rate_limiter,
         cfg,
     )

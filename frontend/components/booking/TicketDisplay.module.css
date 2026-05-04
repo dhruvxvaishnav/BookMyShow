@@ -165,3 +165,54 @@
   color: var(--text-muted);
   font-style: italic;
 }
+
+@media print {
+  .ticket {
+    background: #fff;
+    color: #000;
+    box-shadow: none;
+    border: 2px solid #ccc;
+    max-width: none;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .title, .movieName, .movieTime, .amount, .bookingId {
+    color: #000;
+  }
+
+  .seatList {
+    color: #000;
+  }
+
+  .dashCircle {
+    background: #fff;
+    border-color: #ccc;
+  }
+
+  .dashLine {
+    border-color: #ccc;
+  }
+
+  .header {
+    background: none;
+    border-bottom: 2px solid #ccc;
+  }
+
+  .footer {
+    background: none;
+    border-top: 2px solid #ccc;
+  }
+
+  .footer p {
+    color: #555;
+  }
+  
+  .movieDetail, .sectionLabel, .detailRow, .paymentId {
+    color: #333;
+  }
+  
+  .star {
+    background: #000;
+  }
+}

@@ -84,6 +84,8 @@ async fn make_bench_services(seat_count: usize) -> BenchServices {
         .await
         .unwrap();
 
+    let email_svc = Arc::new(service::EmailService::new(cfg.clone()));
+
     let locking_svc = Arc::new(SeatLockingService::new(
         Arc::clone(&show_repo),
         Arc::clone(&seat_repo),
@@ -98,6 +100,9 @@ async fn make_bench_services(seat_count: usize) -> BenchServices {
         Arc::clone(&seat_repo),
         Arc::clone(&payment_repo),
         Arc::clone(&comp_log_repo),
+        Arc::clone(&user_repo),
+        Arc::clone(&show_repo),
+        Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
         cfg.clone(),
     ));
 
@@ -107,7 +112,9 @@ async fn make_bench_services(seat_count: usize) -> BenchServices {
     let payment_svc: Arc<dyn PaymentServiceTrait> = Arc::new(PaymentService::new(
         Arc::clone(&payment_repo),
         Arc::clone(&booking_repo),
+        Arc::clone(&user_repo),
         Arc::clone(&booking_svc) as Arc<dyn BookingServiceTrait>,
+        Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
         cfg_no_fail,
     ));
 

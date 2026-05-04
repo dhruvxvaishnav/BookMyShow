@@ -14,6 +14,13 @@ pub struct AppConfig {
     pub payment: PaymentConfig,
     pub rate_limit: RateLimitConfig,
     pub jwt: JwtConfig,
+    pub email: EmailConfig,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct EmailConfig {
+    pub api_key: Option<String>,
+    pub from_address: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -43,6 +50,8 @@ pub struct PaymentConfig {
     pub timeout_seconds: u64,
     pub mock_gateway_delay_ms: u64,
     pub mock_gateway_failure_rate: f64,
+    pub stripe_secret_key: Option<String>,
+    pub stripe_webhook_secret: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -82,6 +91,8 @@ impl Default for AppConfig {
                 timeout_seconds: 600,
                 mock_gateway_delay_ms: 2000,
                 mock_gateway_failure_rate: 0.2,
+                stripe_secret_key: None,
+                stripe_webhook_secret: None,
             },
             rate_limit: RateLimitConfig {
                 lock_requests_per_min: 5,
@@ -92,6 +103,10 @@ impl Default for AppConfig {
                 secret: "dev-jwt-secret-change-in-production-must-be-at-least-32-chars".to_string(),
                 access_token_expiry_secs: 900,      // 15 min
                 refresh_token_expiry_secs: 604_800, // 7 days
+            },
+            email: EmailConfig {
+                api_key: None,
+                from_address: "tickets@bookmyshow.local".to_string(),
             },
         }
     }
@@ -127,6 +142,10 @@ impl AppConfig {
         env_override!("jwt.secret", "JWT_SECRET");
         env_override!("jwt.access_token_expiry_secs", "JWT_ACCESS_EXPIRY_SECS");
         env_override!("jwt.refresh_token_expiry_secs", "JWT_REFRESH_EXPIRY_SECS");
+        env_override!("payment.stripe_secret_key", "STRIPE_SECRET_KEY");
+        env_override!("payment.stripe_webhook_secret", "STRIPE_WEBHOOK_SECRET");
+        env_override!("email.api_key", "EMAIL_API_KEY");
+        env_override!("email.from_address", "EMAIL_FROM_ADDRESS");
 
         // If deserialization fails (e.g. no config.toml and no env vars), use defaults
         match builder.build()?.try_deserialize::<Self>() {

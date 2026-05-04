@@ -2,12 +2,13 @@ use async_trait::async_trait;
 use chrono::Utc;
 use common::AppConfig;
 use domain::{BookingStatus, Payment, PaymentStatus};
-use repository::{BookingRepository, PaymentRepository};
+use repository::{BookingRepository, PaymentRepository, UserRepository};
 use std::sync::Arc;
 use uuid::Uuid;
 
 use super::booking_service::BookingServiceTrait;
 use super::payment::{MockPaymentRequest, MockPaymentResponse, PaymentInitiated};
+use crate::email_service::EmailServiceTrait;
 
 #[async_trait]
 pub trait PaymentServiceTrait: Send + Sync {
@@ -49,22 +50,30 @@ pub trait PaymentServiceTrait: Send + Sync {
 pub struct PaymentService {
     payment_repo: Arc<dyn PaymentRepository>,
     booking_repo: Arc<dyn BookingRepository>,
+    user_repo: Arc<dyn UserRepository>,
     booking_svc: Arc<dyn BookingServiceTrait>,
+    email_svc: Arc<dyn EmailServiceTrait>,
     cfg: AppConfig,
+    http_client: reqwest::Client,
 }
 
 impl PaymentService {
     pub fn new(
         payment_repo: Arc<dyn PaymentRepository>,
         booking_repo: Arc<dyn BookingRepository>,
+        user_repo: Arc<dyn UserRepository>,
         booking_svc: Arc<dyn BookingServiceTrait>,
+        email_svc: Arc<dyn EmailServiceTrait>,
         cfg: AppConfig,
     ) -> Self {
         Self {
             payment_repo,
             booking_repo,
+            user_repo,
             booking_svc,
+            email_svc,
             cfg,
+            http_client: reqwest::Client::new(),
         }
     }
 }
@@ -86,6 +95,7 @@ impl PaymentServiceTrait for PaymentService {
                 payment_intent_id: existing.payment_intent_id,
                 amount: existing.amount,
                 gateway_name: existing.gateway_name,
+                client_secret: None,
             });
         }
 
@@ -102,6 +112,7 @@ impl PaymentServiceTrait for PaymentService {
                 payment_intent_id: existing.payment_intent_id,
                 amount: existing.amount,
                 gateway_name: existing.gateway_name,
+                client_secret: None,
             });
         }
 
@@ -115,8 +126,52 @@ impl PaymentServiceTrait for PaymentService {
             return Err(common::AppError::LockNotOwnedByUser);
         }
 
-        let payment_intent_id = Uuid::new_v4().to_string();
+        let mut payment_intent_id = Uuid::new_v4().to_string();
         let payment_id = Uuid::new_v4().to_string();
+        let mut gateway_name = "mock".to_string();
+        let mut client_secret = None;
+
+        if let Some(stripe_key) = &self.cfg.payment.stripe_secret_key {
+            gateway_name = "stripe".to_string();
+            let amount_cents = (booking.total_amount * 100.0).round() as u64;
+
+            let mut req = self
+                .http_client
+                .post("https://api.stripe.com/v1/payment_intents")
+                .bearer_auth(stripe_key)
+                .form(&[
+                    ("amount", amount_cents.to_string()),
+                    ("currency", "inr".to_string()),
+                    ("metadata[booking_id]", booking_id.to_string()),
+                    ("metadata[payment_id]", payment_id.clone()),
+                ]);
+
+            if let Some(key) = &idempotency_key {
+                req = req.header("Idempotency-Key", key);
+            }
+
+            let res = req.send().await.map_err(|e| {
+                tracing::error!("stripe error: {}", e);
+                common::AppError::InternalError("Failed to contact payment gateway".to_string())
+            })?;
+
+            let body: serde_json::Value = res.json().await.map_err(|_| {
+                common::AppError::InternalError("Invalid gateway response".to_string())
+            })?;
+
+            if let Some(id) = body.get("id").and_then(|i: &serde_json::Value| i.as_str()) {
+                payment_intent_id = id.to_string();
+                client_secret = body
+                    .get("client_secret")
+                    .and_then(|cs: &serde_json::Value| cs.as_str())
+                    .map(|s| s.to_string());
+            } else {
+                tracing::error!("stripe error response: {:?}", body);
+                return Err(common::AppError::InternalError(
+                    "Failed to initiate payment".to_string(),
+                ));
+            }
+        }
 
         let payment = Payment::new(
             payment_id.clone(),
@@ -124,7 +179,7 @@ impl PaymentServiceTrait for PaymentService {
             booking_id.to_string(),
             user_id.to_string(),
             booking.total_amount,
-            "mock".to_string(),
+            gateway_name.clone(),
             idempotency_key,
         );
 
@@ -142,6 +197,7 @@ impl PaymentServiceTrait for PaymentService {
             payment_intent_id = %payment_intent_id,
             booking_id = %booking_id,
             amount = booking_total,
+            gateway = %gateway_name,
             "payment initiated"
         );
 
@@ -149,7 +205,8 @@ impl PaymentServiceTrait for PaymentService {
             payment_id,
             payment_intent_id,
             amount: booking_total,
-            gateway_name: "mock".to_string(),
+            gateway_name,
+            client_secret,
         })
     }
 
@@ -214,6 +271,13 @@ impl PaymentServiceTrait for PaymentService {
                 return Err(e);
             }
         } else {
+            if let Ok(Some(user)) = self.user_repo.find_by_id(&updated_payment.user_id).await {
+                let _ = self
+                    .email_svc
+                    .send_payment_failed(&user.email, &booking_id)
+                    .await;
+            }
+
             // Payment failed — cancel the booking and release seats
             if let Err(e) = self
                 .booking_svc

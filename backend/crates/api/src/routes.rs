@@ -52,6 +52,7 @@ pub fn create_router(state: AppState) -> Router {
             "/payments/callback/:payment_intent_id",
             post(handlers::payment_callback),
         )
+        .route("/payments/stripe-webhook", post(handlers::stripe_webhook))
         // ── Queue ─────────────────────────────────────────────────────────────
         .route("/queue/:queue_id", delete(handlers::leave_queue))
         .route("/queue/:queue_id/status", get(handlers::get_queue_status))

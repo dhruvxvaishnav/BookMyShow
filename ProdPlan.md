@@ -60,33 +60,33 @@
 
 ### PHASE 2 — Core Feature Completeness
 
-#### 2.1 Seat Pricing by Type
-- [ ] **Backend:** Add `price_multiplier` per seat type in show creation (Standard=1.0×, Premium=1.5×, Recliner=2.0×)
-- [ ] **Backend:** Recalculate `total_amount` on booking based on seat types
-- [ ] **Frontend:** Show per-seat price in seat grid tooltip/hover
-- [ ] **Frontend:** Break down price in `SeatSelectionPanel` (e.g. "2× Standard ₹200 + 1× Premium ₹300 = ₹700")
+#### 2.1 Seat Pricing by Type ✅ DONE
+- [x] **Backend:** Add `price_multiplier` per seat type in show creation (Standard=1.0×, Premium=1.5×, Recliner=2.0×)
+- [x] **Backend:** Recalculate `total_amount` on booking based on seat types
+- [x] **Frontend:** Show per-seat price in seat grid tooltip/hover
+- [x] **Frontend:** Break down price in `SeatSelectionPanel` (e.g. "2× Standard ₹200 + 1× Premium ₹300 = ₹700")
 
-#### 2.2 Real Payment Gateway
-- [ ] **Backend:** Integrate Stripe (or Razorpay for India)
-  - [ ] `POST /bookings/:id/payment/initiate` → create Stripe PaymentIntent
-  - [ ] `POST /payments/webhook` → Stripe webhook handler (verify signature)
-  - [ ] Idempotency key already supported — wire to Stripe's idempotency header
-  - [ ] Handle `payment_intent.succeeded`, `payment_intent.payment_failed` events
-- [ ] **Frontend:** Replace mock card form with Stripe Elements (`@stripe/react-stripe-js`)
-- [ ] **Frontend:** Remove mock-gateway page/flow
+#### 2.2 Real Payment Gateway ✅ DONE
+- [x] **Backend:** Integrate Stripe (or Razorpay for India)
+  - [x] `POST /bookings/:id/payment/initiate` → create Stripe PaymentIntent
+  - [x] `POST /payments/webhook` → Stripe webhook handler (verify signature)
+  - [x] Idempotency key already supported — wire to Stripe's idempotency header
+  - [x] Handle `payment_intent.succeeded`, `payment_intent.payment_failed` events
+- [x] **Frontend:** Replace mock card form with Stripe Elements (`@stripe/react-stripe-js`)
+- [x] **Frontend:** Remove mock-gateway page/flow
 
-#### 2.3 Email Notifications
-- [ ] **Backend:** Integrate email provider (Resend / SendGrid / SMTP)
-- [ ] **Backend:** Send on:
+#### 2.3 Email Notifications ✅ DONE
+- [x] **Backend:** Integrate email provider (Resend / SendGrid / SMTP)
+- [x] **Backend:** Send on:
   - Booking confirmed → confirmation + e-ticket PDF
   - Payment failed → retry link
   - Booking cancelled → cancellation notice + refund ETA
   - Lock expiry warning (5 min before) → nudge to complete payment
-- [ ] **Backend:** HTML email templates (booking ID, show name, seats, total, QR code stub)
+- [x] **Backend:** HTML email templates (booking ID, show name, seats, total, QR code stub)
 
-#### 2.4 Print / PDF Ticket
-- [ ] **Frontend:** Add print CSS to `TicketDisplay` (hide nav, show full ticket)
-- [ ] **Frontend:** "Download PDF" button on `/bookings/:id/confirmed` (use `window.print()` or `jsPDF`)
+#### 2.4 Print / PDF Ticket ✅ DONE
+- [x] **Frontend:** Add print CSS to `TicketDisplay` (hide nav, show full ticket)
+- [x] **Frontend:** "Download PDF" button on `/bookings/:id/confirmed` (use `window.print()` or `jsPDF`)
 - [ ] **Backend (optional):** `GET /bookings/:id/ticket.pdf` endpoint returning server-rendered PDF
 
 ---

@@ -2,11 +2,15 @@ use async_trait::async_trait;
 use chrono::Utc;
 use common::AppConfig;
 use domain::{Booking, BookingStatus, CompensationLog, SeatStatus};
-use repository::{BookingRepository, CompensationLogRepository, PaymentRepository, SeatRepository};
+use repository::{
+    BookingRepository, CompensationLogRepository, PaymentRepository, SeatRepository,
+    ShowRepository, UserRepository,
+};
 use std::sync::Arc;
 use uuid::Uuid;
 
 use super::booking::BookingConfirmed;
+use crate::email_service::EmailServiceTrait;
 
 /// Trait for the booking service.
 #[async_trait]
@@ -38,15 +42,23 @@ pub struct BookingService {
     seat_repo: Arc<dyn SeatRepository>,
     payment_repo: Arc<dyn PaymentRepository>,
     compensation_log_repo: Arc<dyn CompensationLogRepository>,
+    user_repo: Arc<dyn UserRepository>,
+    #[allow(dead_code)]
+    show_repo: Arc<dyn ShowRepository>,
+    email_svc: Arc<dyn EmailServiceTrait>,
     cfg: AppConfig,
 }
 
 impl BookingService {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         booking_repo: Arc<dyn BookingRepository>,
         seat_repo: Arc<dyn SeatRepository>,
         payment_repo: Arc<dyn PaymentRepository>,
         compensation_log_repo: Arc<dyn CompensationLogRepository>,
+        user_repo: Arc<dyn UserRepository>,
+        show_repo: Arc<dyn ShowRepository>,
+        email_svc: Arc<dyn EmailServiceTrait>,
         cfg: AppConfig,
     ) -> Self {
         Self {
@@ -54,6 +66,9 @@ impl BookingService {
             seat_repo,
             payment_repo,
             compensation_log_repo,
+            user_repo,
+            show_repo,
+            email_svc,
             cfg,
         }
     }
@@ -213,6 +228,14 @@ impl BookingServiceTrait for BookingService {
         self.booking_repo.save(updated).await?;
 
         tracing::info!(booking_id = %booking_id, user_id = %user_id, "booking cancelled");
+
+        if let Ok(Some(user)) = self.user_repo.find_by_id(user_id).await {
+            let _ = self
+                .email_svc
+                .send_booking_cancelled(&user.email, booking_id)
+                .await;
+        }
+
         Ok(())
     }
 

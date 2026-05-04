@@ -21,6 +21,18 @@ export default function SeatSelectionPanel({
   const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
   const count = selectedSeats.length;
 
+  const breakdown = selectedSeats.reduce((acc, seat) => {
+    if (!acc[seat.seat_type]) {
+      acc[seat.seat_type] = { count: 0, price: seat.price };
+    }
+    acc[seat.seat_type].count += 1;
+    return acc;
+  }, {} as Record<string, { count: number; price: number }>);
+
+  const breakdownText = Object.entries(breakdown)
+    .map(([type, data]) => `${data.count}× ${type} ${formatPrice(data.price * data.count)}`)
+    .join(' + ');
+
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
@@ -52,7 +64,10 @@ export default function SeatSelectionPanel({
             <div className={styles.divider} />
 
             <div className={styles.totalRow}>
-              <span>Total ({count} seat{count !== 1 ? 's' : ''})</span>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span>Total ({count} seat{count !== 1 ? 's' : ''})</span>
+                {count > 0 && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{breakdownText}</span>}
+              </div>
               <span className={styles.totalAmt}>{formatPrice(total)}</span>
             </div>
           </>
