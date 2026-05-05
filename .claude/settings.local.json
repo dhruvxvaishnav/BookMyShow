@@ -20,7 +20,10 @@
       "Bash(curl -s http://localhost:8080/health)",
       "Bash(powershell -ExecutionPolicy Bypass -File smoke-test.ps1)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\admin\\\\Desktop\\\\BookMyShow\" -Recurse -Directory)",
-      "Bash(Select-Object -First 50 FullName)"
+      "Bash(Select-Object -First 50 FullName)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\admin\\\\Desktop\\\\BookMyShow\\\\frontend\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)"
     ]
   }
 }

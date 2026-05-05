@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-width=1.0" name="viewport"/>
+<title>Search Results — Cineplex</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Playfair+Display:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "seat-gray": "#6B7280",
+                            "primary": "#ffc880",
+                            "surface-variant": "#3c332a",
+                            "cinema-black": "#0A0608",
+                            "premium-purple": "#A855F7",
+                            "inverse-surface": "#eee0d2",
+                            "deep-surface": "#161619",
+                            "surface-container-lowest": "#130d06",
+                            "parchment-text": "#F5F5F7",
+                            "error": "#ffb4ab",
+                            "tertiary-container": "#3ac2ff",
+                            "on-primary": "#452b00",
+                            "on-surface-variant": "#d7c3ae",
+                            "primary-fixed": "#ffddb4",
+                            "elevated-surface": "#1E1E23",
+                            "on-primary-container": "#644000",
+                            "seat-gold": "#F5A623",
+                            "recliner-teal": "#06B6D4",
+                            "ornament-bronze": "#8B7355",
+                            "surface-tint": "#ffb955",
+                            "on-tertiary-fixed": "#001e2c",
+                            "on-surface": "#eee0d2",
+                            "on-error": "#690005",
+                            "tertiary": "#9bd9ff",
+                            "surface-container-highest": "#3c332a",
+                            "surface-container-high": "#302920",
+                            "on-secondary-container": "#ff9e98",
+                            "secondary-fixed-dim": "#ffb3ae",
+                            "on-secondary-fixed-variant": "#832524",
+                            "tertiary-fixed": "#c4e7ff",
+                            "error-container": "#93000a",
+                            "void-black": "#0D0D0F",
+                            "surface-bright": "#40382e",
+                            "royal-crimson": "#7B1F1F",
+                            "stone-text": "#9CA3AF",
+                            "surface-container-low": "#211a12",
+                            "on-secondary-fixed": "#410004",
+                            "inverse-primary": "#835500",
+                            "on-tertiary": "#00344a",
+                            "on-primary-fixed": "#291800",
+                            "secondary-container": "#862726",
+                            "background": "#19120a",
+                            "antique-gold": "#F5A623",
+                            "secondary": "#ffb3ae",
+                            "outline-variant": "#524534",
+                            "surface-dim": "#19120a",
+                            "surface": "#19120a",
+                            "seat-green": "#22C55E",
+                            "tertiary-fixed-dim": "#7cd0ff",
+                            "bright-gold": "#F5C842",
+                            "on-background": "#eee0d2",
+                            "primary-fixed-dim": "#ffb955",
+                            "on-tertiary-container": "#004d6a",
+                            "on-primary-fixed-variant": "#633f00",
+                            "outline": "#9f8e7a",
+                            "on-secondary": "#630d10",
+                            "on-error-container": "#ffdad6",
+                            "primary-container": "#f5a623",
+                            "seat-red": "#EF4444",
+                            "surface-container": "#251e16",
+                            "secondary-fixed": "#ffdad7",
+                            "inverse-on-surface": "#372f26",
+                            "success-green": "#22C55E",
+                            "on-tertiary-fixed-variant": "#004c69",
+                            "alert-red": "#EF4444",
+                            "gold-foil": "#D4A843",
+                            "muted-text": "#8B96A0"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.125rem",
+                            "lg": "0.25rem",
+                            "xl": "0.5rem",
+                            "full": "0.75rem"
+                    },
+                    "spacing": {
+                            "section-gap": "48px",
+                            "container-padding": "24px",
+                            "unit": "8px",
+                            "hero-height": "70vh",
+                            "gutter": "16px"
+                    },
+                    "fontFamily": {
+                            "data-mono": [
+                                    "JetBrains Mono"
+                            ],
+                            "headline-marquee": [
+                                    "Inter"
+                            ],
+                            "display-hero": [
+                                    "Playfair Display"
+                            ],
+                            "body-main": [
+                                    "Inter"
+                            ],
+                            "label-small": [
+                                    "Inter"
+                            ]
+                    },
+                    "fontSize": {
+                            "data-mono": [
+                                    "14px",
+                                    {
+                                            "lineHeight": "1",
+                                            "letterSpacing": "-0.01em",
+                                            "fontWeight": "500"
+                                    }
+                            ],
+                            "headline-marquee": [
+                                    "14px",
+                                    {
+                                            "lineHeight": "1.2",
+                                            "letterSpacing": "0.2em",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "display-hero": [
+                                    "48px",
+                                    {
+                                            "lineHeight": "1.1",
+                                            "letterSpacing": "-0.02em",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "body-main": [
+                                    "16px",
+                                    {
+                                            "lineHeight": "1.6",
+                                            "letterSpacing": "0",
+                                            "fontWeight": "400"
+                                    }
+                            ],
+                            "label-small": [
+                                    "11px",
+                                    {
+                                            "lineHeight": "1.4",
+                                            "fontWeight": "500"
+                                    }
+                            ]
+                    }
+            },
+                },
+        }
+    </script>
+<style>
+        .photo-corner-tl {
+            position: absolute; top: 0; left: 0; width: 16px; height: 16px; border-top: 2px solid #F5A623; border-left: 2px solid #F5A623; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .photo-corner-tr {
+            position: absolute; top: 0; right: 0; width: 16px; height: 16px; border-top: 2px solid #F5A623; border-right: 2px solid #F5A623; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .photo-corner-bl {
+            position: absolute; bottom: 0; left: 0; width: 16px; height: 16px; border-bottom: 2px solid #F5A623; border-left: 2px solid #F5A623; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .photo-corner-br {
+            position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; border-bottom: 2px solid #F5A623; border-right: 2px solid #F5A623; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .movie-card:hover .photo-corner-tl,
+        .movie-card:hover .photo-corner-tr,
+        .movie-card:hover .photo-corner-bl,
+        .movie-card:hover .photo-corner-br {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-void-black text-parchment-text font-body-main antialiased min-h-screen selection:bg-antique-gold selection:text-void-black">
+<!-- TopAppBar -->
+<header class="hidden md:flex justify-between items-center h-20 px-8 w-full bg-[#161619] dark:bg-[#161619] fixed top-0 w-full z-50 border-b border-[#F5A623]/40 shadow-[0_4px_20px_rgba(0,0,0,0.8)] font-serif tracking-widest uppercase text-sm">
+<div class="flex items-center gap-8">
+<span class="font-serif text-2xl font-black text-[#F5A623] tracking-[0.2em]">CINEPLEX</span>
+<nav class="flex gap-6">
+<a class="text-stone-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all active:scale-95 duration-200" href="#">Home</a>
+<a class="text-[#F5A623] border-b-2 border-[#F5A623] pb-1 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all active:scale-95 duration-200" href="#">Movies</a>
+<a class="text-stone-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all active:scale-95 duration-200" href="#">My Bookings</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<!-- Active Search Field -->
+<div class="relative group">
+<input class="bg-deep-surface border border-antique-gold text-parchment-text font-data-mono text-data-mono px-4 py-2 w-64 focus:outline-none focus:border-antique-gold focus:drop-shadow-[0_0_8px_rgba(245,166,35,0.5)] transition-all" placeholder="Search movies..." type="text" value="Sci-Fi"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-antique-gold">search</span>
+</div>
+<button class="text-stone-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-[#F5A623] hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all active:scale-95 duration-200">Login</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pt-32 pb-32 md:pb-12 px-6 md:px-12 max-w-7xl mx-auto">
+<!-- Search Header -->
+<div class="mb-12 flex flex-col items-center md:items-start text-center md:text-left">
+<h1 class="font-display-hero text-display-hero text-parchment-text mb-2">Search Results</h1>
+<p class="font-data-mono text-data-mono text-stone-text uppercase tracking-widest">Showing results for "<span class="text-antique-gold">Sci-Fi</span>"</p>
+<!-- Ornamental Divider -->
+<div class="h-px w-full max-w-md mx-auto md:mx-0 mt-8 bg-gradient-to-r from-transparent via-ornament-bronze to-transparent"></div>
+</div>
+<!-- Movie Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+<!-- Movie Card 1 -->
+<div class="movie-card group cursor-pointer relative">
+<div class="relative w-full aspect-[2/3] overflow-hidden bg-deep-surface mb-6 shadow-xl">
+<img alt="Movie Poster" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A cinematic, high-contrast poster of an astronaut looking towards a glowing, distant nebula in deep space. The aesthetic is Grand Cinema 1920s meets modern OLED display, featuring deep void blacks and luminous, ethereal blues and purples. Subtle gold foil geometric accents frame the edges, enhancing the opulent, premium theatrical feel. The lighting is dramatic and atmospheric, suggesting a profound journey into the unknown." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDw2Dwb6Q61KeurZdkKxNKTC4OI6rdGFUcYXkeFW-ZfPWD--tyrmx9d-obyXQ_IyEo1R2XQWuHzDake4VAodwgbj6uqkSvi-w1x4qVR92971HjhiasYJ9WbYMZ6PgMe_PpA2x-hhgKD0zDWsM2A7DydfZe1_ogdsLeERjVL83EA8KxuEE1tpwWops4e9smDf-y4zT_OOBuI1CIV3XLOneWmNzZpVtOWuuZvdZ__9Hyro7MPFh2H40T-eOfAx3GTXWB49z4ABnPz24wh"/>
+<!-- Photo Corners -->
+<div class="photo-corner-tl"></div>
+<div class="photo-corner-tr"></div>
+<div class="photo-corner-bl"></div>
+<div class="photo-corner-br"></div>
+<!-- Hover Glow Overlay -->
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+<button class="bg-antique-gold text-cinema-black px-6 py-2 font-headline-marquee text-headline-marquee tracking-widest hover:bg-bright-gold transition-colors">BOOK TICKETS</button>
+</div>
+</div>
+<div class="text-center">
+<h2 class="font-display-hero text-[24px] leading-tight text-parchment-text mb-2 group-hover:text-antique-gold transition-colors">Starlight Protocol</h2>
+<p class="font-data-mono text-data-mono text-stone-text">142 MIN • SCI-FI, THRILLER</p>
+</div>
+</div>
+<!-- Movie Card 2 -->
+<div class="movie-card group cursor-pointer relative">
+<div class="relative w-full aspect-[2/3] overflow-hidden bg-deep-surface mb-6 shadow-xl">
+<img alt="Movie Poster" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A striking digital installation art piece featuring glowing, generative geometric shapes suspended in a vast, darkened cinema space. The artwork relies on a sophisticated palette of deep void blacks and pristine luminous whites, punctuated by intense accents of gold foil. The mood is serene yet technologically advanced, evoking a premium, Art Deco influenced futuristic setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbrRgGu8t_H4T8bT7agtJbBfR4rfng_EMp1f0ij4NraRe0xxdZGsSCL7UDSGq3G6sT4-TeU4ge49MQRNGw4t2UDjSmVHIuDZTwOQ5not-ASgviECnsbiCmUwnjrll7xq27RXDdWQ4vPTNZJXrFMbN-MJRY6AhfJjOG6BRo7fh_8HlULomsb-0E7cxfsTA9f8-r6Neu8ery7DBBVXEMeK_RAaBhuR2g9JpK0oxCEG9iz1HGch5DJL2gcNk7jF-RenMJd65dhw7mbSy9"/>
+<div class="photo-corner-tl"></div>
+<div class="photo-corner-tr"></div>
+<div class="photo-corner-bl"></div>
+<div class="photo-corner-br"></div>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+<button class="bg-antique-gold text-cinema-black px-6 py-2 font-headline-marquee text-headline-marquee tracking-widest hover:bg-bright-gold transition-colors">BOOK TICKETS</button>
+</div>
+</div>
+<div class="text-center">
+<h2 class="font-display-hero text-[24px] leading-tight text-parchment-text mb-2 group-hover:text-antique-gold transition-colors">Neon Horizon</h2>
+<p class="font-data-mono text-data-mono text-stone-text">118 MIN • SCI-FI, ACTION</p>
+</div>
+</div>
+<!-- Movie Card 3 -->
+<div class="movie-card group cursor-pointer relative">
+<div class="relative w-full aspect-[2/3] overflow-hidden bg-deep-surface mb-6 shadow-xl">
+<img alt="Movie Poster" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A dramatic view of Earth from orbit, bathed in deep shadows with glowing city lights creating a golden web across the dark surface. The image aligns with a high-contrast OLED aesthetic, using void blacks and radiant, opulent gold and crimson highlights. The visual style is highly tactical and cinematic, reminiscent of a vintage Grand Cinema poster modernized for contemporary prestige displays." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgbWvQ6gQRz36TX4cwzW83GrW8bI2cJBq7bNmL8T3dEkFWHXjLACVHMCoekRvHYil2DEEayHC88eScICLcDZUo7BUYkCudznAh8vXwn0TvgTUdmO7OAbDlJiZzUvE1Pfgo5Xrqc_QY6Zp399Loz54sP3sUPQzjEEXyIp3u4Xjk2ZZNoMbIaEbcvJFTxRFa5v2DZXKrvxgHFxgck_FaaWGmI9mFwzAN_2xTA0BGDNN3csVJfiCIrgjZfNxd9c1NkJXTg-txR6g_0zAf"/>
+<div class="photo-corner-tl"></div>
+<div class="photo-corner-tr"></div>
+<div class="photo-corner-bl"></div>
+<div class="photo-corner-br"></div>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+<button class="bg-antique-gold text-cinema-black px-6 py-2 font-headline-marquee text-headline-marquee tracking-widest hover:bg-bright-gold transition-colors">BOOK TICKETS</button>
+</div>
+</div>
+<div class="text-center">
+<h2 class="font-display-hero text-[24px] leading-tight text-parchment-text mb-2 group-hover:text-antique-gold transition-colors">Orbit</h2>
+<p class="font-data-mono text-data-mono text-stone-text">135 MIN • SCI-FI, DRAMA</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden flex justify-around items-center px-4 pb-safe bg-[#161619] dark:bg-[#161619] fixed bottom-0 w-full z-50 h-20 border-t border-[#F5A623]/30 shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
+<a class="flex flex-col items-center justify-center text-stone-600 hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#F5A623] drop-shadow-[0_0_5px_#F5A623] hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">theaters</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Movies</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-600 hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform" href="#">
+<span class="material-symbols-outlined mb-1">confirmation_number</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Bookings</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-600 hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform" href="#">
+<span class="material-symbols-outlined mb-1">account_circle</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Profile</span>
+</a>
+</nav>
+</body></html>

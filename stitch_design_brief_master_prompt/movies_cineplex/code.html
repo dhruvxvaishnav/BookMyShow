@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cineplex Royal - Movie Listing</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Noto+Serif:wght@400;700&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed-variant": "#004c69",
+                    "tertiary-fixed": "#c4e7ff",
+                    "elevated-surface": "#1E1E23",
+                    "muted-text": "#8B96A0",
+                    "on-error": "#690005",
+                    "on-primary-fixed-variant": "#633f00",
+                    "outline": "#9f8e7a",
+                    "tertiary-fixed-dim": "#7cd0ff",
+                    "parchment-text": "#F5F5F7",
+                    "primary": "#ffc880",
+                    "secondary": "#ffb3ae",
+                    "success-green": "#22C55E",
+                    "background": "#19120a",
+                    "surface": "#19120a",
+                    "on-secondary-container": "#ff9e98",
+                    "inverse-primary": "#835500",
+                    "surface-dim": "#19120a",
+                    "surface-bright": "#40382e",
+                    "seat-gray": "#6B7280",
+                    "surface-variant": "#3c332a",
+                    "seat-red": "#EF4444",
+                    "seat-green": "#22C55E",
+                    "surface-tint": "#ffb955",
+                    "surface-container-highest": "#3c332a",
+                    "primary-fixed": "#ffddb4",
+                    "deep-surface": "#161619",
+                    "recliner-teal": "#06B6D4",
+                    "royal-crimson": "#7B1F1F",
+                    "void-black": "#0D0D0F",
+                    "on-tertiary-fixed": "#001e2c",
+                    "on-primary-fixed": "#291800",
+                    "on-surface-variant": "#d7c3ae",
+                    "cinema-black": "#0A0608",
+                    "secondary-fixed": "#ffdad7",
+                    "on-secondary": "#630d10",
+                    "seat-gold": "#F5A623",
+                    "gold-foil": "#D4A843",
+                    "surface-container-lowest": "#130d06",
+                    "secondary-fixed-dim": "#ffb3ae",
+                    "primary-container": "#f5a623",
+                    "inverse-surface": "#eee0d2",
+                    "on-error-container": "#ffdad6",
+                    "secondary-container": "#862726",
+                    "error": "#ffb4ab",
+                    "on-secondary-fixed-variant": "#832524",
+                    "inverse-on-surface": "#372f26",
+                    "primary-fixed-dim": "#ffb955",
+                    "bright-gold": "#F5C842",
+                    "stone-text": "#9CA3AF",
+                    "on-primary": "#452b00",
+                    "tertiary-container": "#3ac2ff",
+                    "premium-purple": "#A855F7",
+                    "outline-variant": "#524534",
+                    "on-tertiary-container": "#004d6a",
+                    "surface-container-high": "#302920",
+                    "on-surface": "#eee0d2",
+                    "on-secondary-fixed": "#410004",
+                    "antique-gold": "#F5A623",
+                    "error-container": "#93000a",
+                    "tertiary": "#9bd9ff",
+                    "surface-container-low": "#211a12",
+                    "on-primary-container": "#644000",
+                    "alert-red": "#EF4444",
+                    "ornament-bronze": "#8B7355",
+                    "on-tertiary": "#00344a",
+                    "surface-container": "#251e16",
+                    "on-background": "#eee0d2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "section-gap": "48px",
+                    "gutter": "16px",
+                    "unit": "8px",
+                    "hero-height": "70vh",
+                    "container-padding": "24px"
+            },
+            "fontFamily": {
+                    "body-main": [
+                            "Inter", "sans-serif"
+                    ],
+                    "label-small": [
+                            "Inter", "sans-serif"
+                    ],
+                    "headline-marquee": [
+                            "Inter", "sans-serif"
+                    ],
+                    "data-mono": [
+                            "JetBrains Mono", "monospace"
+                    ],
+                    "display-hero": [
+                            "Playfair Display", "serif"
+                    ]
+            },
+            "fontSize": {
+                    "body-main": [
+                            "16px",
+                            {
+                                    "lineHeight": "1.6",
+                                    "letterSpacing": "0",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-small": [
+                            "11px",
+                            {
+                                    "lineHeight": "1.4",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "headline-marquee": [
+                            "14px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "letterSpacing": "0.2em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "data-mono": [
+                            "14px",
+                            {
+                                    "lineHeight": "1",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "display-hero": [
+                            "28px",
+                            {
+                                    "lineHeight": "1.1",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            }
+          }
+        }
+      }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .bg-gradient-ornament {
+                background: linear-gradient(90deg, transparent 0%, rgba(212, 168, 67, 0.5) 50%, transparent 100%);
+            }
+        }
+    </style>
+</head>
+<body class="bg-void-black text-parchment-text font-body-main antialiased min-h-screen flex flex-col">
+<!-- Shared TopNavBar (Immutable Segment) -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#493a22] px-10 py-3 bg-[#231c10]" style='font-family: "Noto Serif", "Noto Sans", sans-serif;'>
+<div class="flex items-center gap-4 text-white">
+<div class="size-4">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path></svg>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">Cineplex Royal</h2>
+</div>
+<div class="flex gap-2">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded h-10 bg-[#493a22] text-white gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
+<div class="text-white" data-icon="MagnifyingGlass" data-size="20px" data-weight="regular">
+<svg fill="currentColor" height="20px" viewbox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg">
+<path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+</svg>
+</div>
+</button>
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded h-10 bg-[#493a22] text-white gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
+<div class="text-white" data-icon="User" data-size="20px" data-weight="regular">
+<svg fill="currentColor" height="20px" viewbox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg">
+<path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"></path>
+</svg>
+</div>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col">
+<!-- Sticky Filter Bar -->
+<div class="sticky top-0 z-40 bg-deep-surface border-b border-gold-foil/40 px-container-padding py-4 shadow-[0_4px_20px_rgba(0,0,0,0.8)] backdrop-blur-md bg-opacity-95">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-4 w-full sm:w-auto">
+<!-- Genre Dropdown -->
+<button class="group flex items-center justify-between gap-3 bg-elevated-surface border border-outline/30 rounded-DEFAULT px-4 py-2.5 hover:border-gold-foil hover:drop-shadow-[0_0_8px_rgba(212,168,67,0.3)] transition-all duration-300 w-full sm:w-auto">
+<span class="font-headline-marquee text-parchment-text text-xs uppercase tracking-widest">Genre</span>
+<span class="material-symbols-outlined text-muted-text group-hover:text-gold-foil transition-colors text-[20px]" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</button>
+<!-- Language Dropdown -->
+<button class="group flex items-center justify-between gap-3 bg-elevated-surface border border-outline/30 rounded-DEFAULT px-4 py-2.5 hover:border-gold-foil hover:drop-shadow-[0_0_8px_rgba(212,168,67,0.3)] transition-all duration-300 w-full sm:w-auto">
+<span class="font-headline-marquee text-parchment-text text-xs uppercase tracking-widest">Language</span>
+<span class="material-symbols-outlined text-muted-text group-hover:text-gold-foil transition-colors text-[20px]" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</button>
+</div>
+<div class="hidden md:block">
+<span class="font-headline-marquee text-gold-foil text-sm tracking-[0.3em]">NOW SHOWING</span>
+</div>
+</div>
+</div>
+<!-- Movie Grid Section -->
+<section class="max-w-7xl mx-auto w-full px-container-padding py-section-gap flex-grow">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+<!-- Movie Card 1 -->
+<article class="group cursor-pointer flex flex-col gap-5">
+<div class="relative aspect-[2/3] rounded-DEFAULT overflow-hidden bg-surface-container-highest ring-1 ring-white/5">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105" data-alt="A theatrical movie poster composition featuring an old-fashioned film projector illuminating a cloud of smoke in a pitch-black room. The high-contrast OLED aesthetic emphasizes deep void blacks and sudden bursts of antique gold light. The mood is steeped in 1920s Grand Cinema opulence, feeling tactile and dramatic. Sharp geometric beams of light cut through the textured atmosphere, evoking prestige and history." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAo8ItAFyaFTETONe4dJZRBN3oD2wpv9nUexyeU1U2abp_LVgtKWZsM3GMaTX_4McIBOq7VmrjcmbuhPALGRwO9OuXIHJ0isTDoYbVr4xceA1VOyX4qKbWxmQ_iR0P5v3uhUkYgYwtnF8hv-JuvG_Pwhur6DkehX-RoECfGhe_G1pymtbInZ4YDlQGrdNP-AUVBelvhyA_oGNjaI25giJkAJnhb_hDo66XX79PWqQ3bVZFa5e-J2tXjkNdGUadZxk2E0f6Zlxw77Osn');">
+</div>
+<!-- Decorative Photo Corners (Hover) -->
+<div class="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-gold-foil opacity-0 -translate-x-2 -translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+<div class="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-gold-foil opacity-0 translate-x-2 -translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+<div class="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-gold-foil opacity-0 -translate-x-2 translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+<div class="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-gold-foil opacity-0 translate-x-2 translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+<!-- Gradient Overlay for legibility if needed, keeping it subtle -->
+<div class="absolute inset-0 bg-gradient-to-t from-void-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-display-hero text-parchment-text group-hover:text-gold-foil transition-colors duration-300 truncate">The Celluloid Dream</h3>
+<div class="flex items-center gap-3">
+<span class="bg-royal-crimson text-parchment-text px-2 py-0.5 rounded-DEFAULT font-label-small uppercase tracking-wide">Drama</span>
+<div class="flex items-center gap-1 text-antique-gold">
+<span class="material-symbols-outlined text-[16px]" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-data-mono text-sm">4.8</span>
+</div>
+<span class="font-data-mono text-muted-text text-sm ml-auto">142 MIN</span>
+</div>
+</div>
+</article>
+<!-- Movie Card 2 -->
+<article class="group cursor-pointer flex flex-col gap-5">
+<div class="relative aspect-[2/3] rounded-DEFAULT overflow-hidden bg-surface-container-highest ring-1 ring-white/5">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105" data-alt="A moody, high-contrast architectural shot serving as a movie poster background. Deep black shadows contrast sharply with striking crimson and bronze neon lights reflecting off wet pavement. The aesthetic is heavily Art Deco, featuring geometric skyscrapers towering into a void-like night sky. It captures a tactile, premium atmosphere reminiscent of a classic 1920s metropolitan thriller, designed to pop on OLED displays." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD6u0pn2qMaTaz1h-H0cxRnlN5Fpkit8ht3jR3vuk_olRrGcNwh4c382mSLdxAN8L3F-tR1TUxBo9X10F1_hwBKHli4eOnbFfSYdIlRGn82vjGrK_8Nj1yv_14ljrV2ukx2L-LZShECMOi6ziXVvd1LUhA012sRg5rzLlTOFBlehrDmQd2gCLiBCIcTqwfgaknmfo_Bqskzu-go8riFgaueHtwyxj5uc4GsC4yNjqjZI-IQ5IrRpHmrhkbT6UtbXPsl4IOOGuNRGMho');">
+</div>
+<div class="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-gold-foil opacity-0 -translate-x-2 -translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+<div class="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-gold-foil opacity-0 translate-x-2 -translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+<div class="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-gold-foil opacity-0 -translate-x-2 translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+<div class="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-gold-foil opacity-0 translate-x-2 translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-display-hero text-parchment-text group-hover:text-gold-foil transition-colors duration-300 truncate">Midnight Metropolis</h3>
+<div class="flex items-center gap-3">
+<span class="bg-royal-crimson text-parchment-text px-2 py-0.5 rounded-DEFAULT font-label-small uppercase tracking-wide">Thriller</span>
+<div class="flex items-center gap-1 text-antique-gold">
+<span class="material-symbols-outlined text-[16px]" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-data-mono text-sm">4.5</span>
+</div>
+<span class="font-data-mono text-muted-text text-sm ml-auto">118 MIN</span>
+</div>
+</div>
+</article>
+<!-- Movie Card 3 -->
+<article class="group cursor-pointer flex flex-col gap-5">
+<div class="relative aspect-[2/3] rounded-DEFAULT overflow-hidden bg-surface-container-highest ring-1 ring-white/5">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105" data-alt="A vintage, tactile movie poster design featuring a close-up of a classic brass telescope pointing towards a dark, starlit sky. The palette is dominated by void blacks and rich, luminous gold foil accents, adhering to the Grand Cinema design system. The lighting simulates a soft glow in a hushed, darkened auditorium, bringing out the metallic textures. It exudes a sense of prestige, cosmic scale, and classic editorial elegance." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDZKStFj4uVz0PKns59ZPl8FznILHKf63QML72n2U6iMVkhvsDz9gR0p04Gwi6esSqKboIySG8p4qrsAQodnVD2veqApTjG4N_dkhWuPNIMvZ_qkgWAXtQSrNHgkKsPlt5VY-bDuoUkPDP1ges1bwvJiAwBmIT5CJ_aeFX7Gc6dQ7on6QW0L-ff2yCDPVTWUKqTsfNuvamoIX2vXG8g5zYv6HjVMdecKXylGtItjP9AzzIYZSdIhOqljyx3qw5dlmJT0PzW_pdS7SrW');">
+</div>
+<div class="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-gold-foil opacity-0 -translate-x-2 -translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+<div class="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-gold-foil opacity-0 translate-x-2 -translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+<div class="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-gold-foil opacity-0 -translate-x-2 translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+<div class="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-gold-foil opacity-0 translate-x-2 translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-400 ease-out z-10 drop-shadow-[0_0_5px_rgba(212,168,67,0.8)]"></div>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="font-display-hero text-parchment-text group-hover:text-gold-foil transition-colors duration-300 truncate">Starlight Sonata</h3>
+<div class="flex items-center gap-3">
+<span class="bg-royal-crimson text-parchment-text px-2 py-0.5 rounded-DEFAULT font-label-small uppercase tracking-wide">Sci-Fi</span>
+<div class="flex items-center gap-1 text-antique-gold">
+<span class="material-symbols-outlined text-[16px]" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-data-mono text-sm">4.9</span>
+</div>
+<span class="font-data-mono text-muted-text text-sm ml-auto">156 MIN</span>
+</div>
+</div>
+</article>
+</div>
+</section>
+<!-- Ornamental Divider -->
+<div class="w-full h-[1px] bg-gradient-ornament my-8"></div>
+<!-- Empty State Example (Alternative View Simulation) -->
+<section class="max-w-3xl mx-auto w-full px-container-padding py-section-gap mb-12 flex flex-col items-center justify-center text-center">
+<div class="w-24 h-24 rounded-full bg-elevated-surface border border-outline/20 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+<span class="material-symbols-outlined text-gold-foil text-[40px] opacity-80" data-icon="search_off">search_off</span>
+</div>
+<h2 class="font-display-hero text-3xl text-parchment-text mb-3 tracking-wide">No Masterpieces Found</h2>
+<p class="font-body-main text-muted-text max-w-md mx-auto mb-8 leading-relaxed">
+                Our projectionists couldn't locate any films matching your exact criteria in the archives. Consider adjusting your genre or language selections.
+            </p>
+<button class="bg-antique-gold text-cinema-black font-body-main font-semibold px-8 py-3 rounded-DEFAULT hover:drop-shadow-[0_0_15px_rgba(245,166,35,0.4)] transition-all duration-300 flex items-center gap-2 group">
+<span class="material-symbols-outlined text-[20px] group-hover:-rotate-90 transition-transform duration-300" data-icon="refresh">refresh</span>
+                Clear All Filters
+            </button>
+</section>
+</main>
+</body></html>

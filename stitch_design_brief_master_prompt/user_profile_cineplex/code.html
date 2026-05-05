@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cineplex - User Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Playfair+Display:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "void-black": "#0D0D0F",
+                      "tertiary": "#9bd9ff",
+                      "primary": "#ffc880",
+                      "surface-container-low": "#211a12",
+                      "on-primary-fixed": "#291800",
+                      "elevated-surface": "#1E1E23",
+                      "surface-dim": "#19120a",
+                      "cinema-black": "#0A0608",
+                      "parchment-text": "#F5F5F7",
+                      "on-primary-fixed-variant": "#633f00",
+                      "surface-tint": "#ffb955",
+                      "on-surface": "#eee0d2",
+                      "outline-variant": "#524534",
+                      "on-tertiary-fixed": "#001e2c",
+                      "stone-text": "#9CA3AF",
+                      "on-error": "#690005",
+                      "ornament-bronze": "#8B7355",
+                      "surface-container-high": "#302920",
+                      "on-secondary-container": "#ff9e98",
+                      "surface": "#19120a",
+                      "recliner-teal": "#06B6D4",
+                      "on-secondary": "#630d10",
+                      "tertiary-container": "#3ac2ff",
+                      "primary-fixed": "#ffddb4",
+                      "tertiary-fixed": "#c4e7ff",
+                      "background": "#19120a",
+                      "seat-red": "#EF4444",
+                      "surface-container-highest": "#3c332a",
+                      "secondary-fixed-dim": "#ffb3ae",
+                      "on-primary-container": "#644000",
+                      "on-error-container": "#ffdad6",
+                      "primary-container": "#f5a623",
+                      "royal-crimson": "#7B1F1F",
+                      "deep-surface": "#161619",
+                      "error": "#ffb4ab",
+                      "secondary-fixed": "#ffdad7",
+                      "antique-gold": "#F5A623",
+                      "primary-fixed-dim": "#ffb955",
+                      "secondary-container": "#862726",
+                      "inverse-primary": "#835500",
+                      "error-container": "#93000a",
+                      "seat-gray": "#6B7280",
+                      "outline": "#9f8e7a",
+                      "on-tertiary-fixed-variant": "#004c69",
+                      "alert-red": "#EF4444",
+                      "inverse-surface": "#eee0d2",
+                      "gold-foil": "#D4A843",
+                      "seat-green": "#22C55E",
+                      "on-tertiary": "#00344a",
+                      "on-surface-variant": "#d7c3ae",
+                      "muted-text": "#8B96A0",
+                      "on-secondary-fixed-variant": "#832524",
+                      "tertiary-fixed-dim": "#7cd0ff",
+                      "surface-bright": "#40382e",
+                      "success-green": "#22C55E",
+                      "premium-purple": "#A855F7",
+                      "on-tertiary-container": "#004d6a",
+                      "on-secondary-fixed": "#410004",
+                      "on-background": "#eee0d2",
+                      "seat-gold": "#F5A623",
+                      "surface-container": "#251e16",
+                      "secondary": "#ffb3ae",
+                      "on-primary": "#452b00",
+                      "inverse-on-surface": "#372f26",
+                      "surface-container-lowest": "#130d06",
+                      "surface-variant": "#3c332a",
+                      "bright-gold": "#F5C842"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "section-gap": "48px",
+                      "container-padding": "24px",
+                      "unit": "8px",
+                      "hero-height": "70vh",
+                      "gutter": "16px"
+              },
+              "fontFamily": {
+                      "display-hero": [
+                              "Playfair Display"
+                      ],
+                      "label-small": [
+                              "Inter"
+                      ],
+                      "data-mono": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-marquee": [
+                              "Inter"
+                      ],
+                      "body-main": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "display-hero": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-small": [
+                              "11px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-marquee": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "0.2em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-main": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "letterSpacing": "0",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .ornamental-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(139, 115, 85, 0.5), transparent);
+            margin-top: 32px;
+            margin-bottom: 32px;
+        }
+    </style>
+</head>
+<body class="bg-void-black text-parchment-text min-h-screen pt-20 pb-20 md:pb-0">
+<!-- TopAppBar (Hidden on Mobile, Visible on Web) -->
+<nav class="hidden md:flex fixed top-0 w-full z-50 justify-between items-center px-8 h-20 bg-[#0D0D0F] border-b border-[#F5A623]/20 shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-all">
+<div class="text-2xl font-serif tracking-[0.4em] text-[#F5A623] drop-shadow-[0_0_10px_rgba(245,166,35,0.3)]">
+            CINEPLEX
+        </div>
+<div class="flex items-center gap-8">
+<a class="font-serif tracking-widest uppercase text-zinc-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all scale-95 active:duration-75" href="#">Home</a>
+<a class="font-serif tracking-widest uppercase text-zinc-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all scale-95 active:duration-75" href="#">Movies</a>
+<a class="font-serif tracking-widest uppercase text-zinc-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all scale-95 active:duration-75" href="#">My Bookings</a>
+<button class="text-[#F5A623] hover:text-[#F5A623] hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all scale-95 active:duration-75 text-[#F5A623] border-b-2 border-[#F5A623] pb-1">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="max-w-4xl mx-auto px-container-padding py-section-gap">
+<!-- Profile Header -->
+<div class="flex flex-col items-center mb-12">
+<div class="w-32 h-32 rounded-full border-2 border-antique-gold bg-deep-surface flex items-center justify-center mb-6 overflow-hidden drop-shadow-[0_0_15px_rgba(245,166,35,0.2)]">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A sophisticated headshot of a person with dramatic, high-contrast lighting reminiscent of 1920s cinema portraits. The background is a deep, void black, allowing the subject to stand out. Subtle golden rim lighting outlines the figure, adding an opulent, prestigious aura that perfectly matches the dark, premium OLED aesthetic of the environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBk5JGODH8d93OgkHaNuEoRLP4s-IgYUgQFsIBbhJq0xuQFV9-6Z6xPKFgxF-XK_aaH4y3kGBh0N3PMKsQ5Glx6n3fYqsNHhZ7HwPMUf_suNxoecReVZJ4ZQJYnNDQMEcSg39mcSPsxSUg6aDfs6Chw58wuNX2T3VXwYAujpJ5NhvEXNnIales6b199miWeICvtxoPu4tzzJfAEPMigD2LhnRdsZ4lHb2TCvn1dk3BSe3QAo0CFV0qW14K0sh0AxNJwm491hnGltx8Q"/>
+</div>
+<h1 class="font-display-hero text-display-hero text-parchment-text mb-2">Julian Sterling</h1>
+<p class="font-label-small text-label-small text-muted-text uppercase tracking-widest">Premium Member since 2022</p>
+</div>
+<!-- Bento Grid Layout for Sections -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+<!-- Left Column: Details & Security -->
+<div class="md:col-span-8 flex flex-col gap-8">
+<!-- Account Details Section -->
+<section class="bg-deep-surface p-8 rounded-lg border border-surface-container-high relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-ornament-bronze to-transparent opacity-30"></div>
+<h2 class="font-headline-marquee text-headline-marquee text-antique-gold mb-8 flex items-center gap-3">
+<span class="material-symbols-outlined text-[18px]">badge</span>
+                        Account Details
+                    </h2>
+<form class="space-y-6">
+<div>
+<label class="block font-label-small text-label-small text-muted-text mb-2">Full Name</label>
+<input class="w-full bg-void-black border border-outline-variant rounded px-4 py-3 font-body-main text-body-main text-parchment-text focus:outline-none focus:border-antique-gold focus:ring-1 focus:ring-antique-gold/50 transition-all shadow-inner" type="text" value="Julian Sterling"/>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-small text-label-small text-muted-text mb-2">Email Address</label>
+<input class="w-full bg-void-black border border-outline-variant rounded px-4 py-3 font-body-main text-body-main text-parchment-text focus:outline-none focus:border-antique-gold focus:ring-1 focus:ring-antique-gold/50 transition-all shadow-inner" type="email" value="julian.sterling@example.com"/>
+</div>
+<div>
+<label class="block font-label-small text-label-small text-muted-text mb-2">Phone Number</label>
+<input class="w-full bg-void-black border border-outline-variant rounded px-4 py-3 font-data-mono text-data-mono text-parchment-text focus:outline-none focus:border-antique-gold focus:ring-1 focus:ring-antique-gold/50 transition-all shadow-inner" type="tel" value="+1 (555) 019-8472"/>
+</div>
+</div>
+</form>
+</section>
+<!-- Security Section -->
+<section class="bg-deep-surface p-8 rounded-lg border border-surface-container-high relative">
+<h2 class="font-headline-marquee text-headline-marquee text-parchment-text mb-6 flex items-center gap-3">
+<span class="material-symbols-outlined text-[18px] text-muted-text">lock</span>
+                        Security
+                    </h2>
+<div class="flex items-center justify-between p-4 bg-void-black border border-outline-variant rounded group hover:border-antique-gold/50 transition-all cursor-pointer">
+<div>
+<p class="font-body-main text-body-main text-parchment-text mb-1">Password</p>
+<p class="font-data-mono text-data-mono text-muted-text">••••••••••••</p>
+</div>
+<button class="font-label-small text-label-small text-antique-gold uppercase tracking-wider group-hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all">Change</button>
+</div>
+</section>
+</div>
+<!-- Right Column: Preferences & Actions -->
+<div class="md:col-span-4 flex flex-col gap-8">
+<!-- Preferences Section -->
+<section class="bg-deep-surface p-8 rounded-lg border border-surface-container-high h-full relative">
+<h2 class="font-headline-marquee text-headline-marquee text-parchment-text mb-6 flex items-center gap-3">
+<span class="material-symbols-outlined text-[18px] text-muted-text">tune</span>
+                        Preferences
+                    </h2>
+<div class="space-y-6">
+<div>
+<label class="block font-label-small text-label-small text-muted-text mb-3">Favorite Genre</label>
+<div class="relative">
+<select class="w-full appearance-none bg-void-black border border-outline-variant rounded px-4 py-3 font-body-main text-body-main text-parchment-text focus:outline-none focus:border-antique-gold focus:ring-1 focus:ring-antique-gold/50 transition-all cursor-pointer">
+<option>Film Noir</option>
+<option>Sci-Fi Spectacle</option>
+<option>Classic Drama</option>
+<option>Avant-Garde</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-muted-text pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+<div class="pt-4 border-t border-surface-container-high">
+<label class="block font-label-small text-label-small text-muted-text mb-4">Notifications</label>
+<label class="flex items-center justify-between mb-4 cursor-pointer group">
+<span class="font-body-main text-body-main text-parchment-text group-hover:text-antique-gold transition-colors">Booking Confirmations</span>
+<div class="relative">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-high rounded-full peer peer-checked:bg-antique-gold/20 peer-checked:border-antique-gold border border-outline-variant transition-all"></div>
+<div class="absolute left-1 top-1 w-3 h-3 bg-muted-text rounded-full peer-checked:translate-x-5 peer-checked:bg-antique-gold transition-all duration-300"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="font-body-main text-body-main text-parchment-text group-hover:text-antique-gold transition-colors">Premiere Alerts</span>
+<div class="relative">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-high rounded-full peer peer-checked:bg-antique-gold/20 peer-checked:border-antique-gold border border-outline-variant transition-all"></div>
+<div class="absolute left-1 top-1 w-3 h-3 bg-muted-text rounded-full peer-checked:translate-x-5 peer-checked:bg-antique-gold transition-all duration-300"></div>
+</div>
+</label>
+</div>
+</div>
+</section>
+</div>
+</div>
+<div class="ornamental-divider"></div>
+<!-- Action Area -->
+<div class="flex flex-col items-center gap-6 mt-8">
+<button class="bg-antique-gold text-void-black px-12 py-4 rounded font-label-small text-label-small uppercase tracking-widest hover:bg-bright-gold hover:drop-shadow-[0_0_15px_rgba(245,166,35,0.4)] transition-all duration-300 w-full md:w-auto">
+                Save Changes
+            </button>
+<button class="font-label-small text-label-small text-muted-text uppercase tracking-wider hover:text-alert-red transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">logout</span>
+                Sign Out
+            </button>
+</div>
+</main>
+<!-- BottomNavBar (Hidden on Web, Visible on Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-4 bg-[#161619] border-t border-[#F5A623]/10 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
+<a class="flex flex-col items-center justify-center text-zinc-600 hover:text-[#F5A623]/80 transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">theater_comedy</span>
+<span class="font-mono text-[10px] uppercase tracking-tighter">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-600 hover:text-[#F5A623]/80 transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">movie</span>
+<span class="font-mono text-[10px] uppercase tracking-tighter">Movies</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-600 hover:text-[#F5A623]/80 transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">confirmation_number</span>
+<span class="font-mono text-[10px] uppercase tracking-tighter">Bookings</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#F5A623] drop-shadow-[0_0_8px_rgba(245,166,35,0.6)] scale-110 transition-transform duration-300" href="#">
+<span class="material-symbols-outlined text-2xl mb-1" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-mono text-[10px] uppercase tracking-tighter">Profile</span>
+</a>
+</nav>
+</body></html>

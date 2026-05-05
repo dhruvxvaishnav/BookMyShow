@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cineplex - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-container": "#f5a623",
+                      "on-primary": "#452b00",
+                      "error": "#ffb4ab",
+                      "on-primary-fixed-variant": "#633f00",
+                      "alert-red": "#EF4444",
+                      "background": "#19120a",
+                      "surface": "#19120a",
+                      "on-secondary": "#630d10",
+                      "on-surface-variant": "#d7c3ae",
+                      "surface-dim": "#19120a",
+                      "on-tertiary-fixed-variant": "#004c69",
+                      "surface-bright": "#40382e",
+                      "surface-container-lowest": "#130d06",
+                      "seat-red": "#EF4444",
+                      "on-tertiary-fixed": "#001e2c",
+                      "deep-surface": "#161619",
+                      "on-primary-fixed": "#291800",
+                      "muted-text": "#8B96A0",
+                      "on-error": "#690005",
+                      "primary-fixed": "#ffddb4",
+                      "ornament-bronze": "#8B7355",
+                      "outline": "#9f8e7a",
+                      "cinema-black": "#0A0608",
+                      "parchment-text": "#F5F5F7",
+                      "royal-crimson": "#7B1F1F",
+                      "primary-fixed-dim": "#ffb955",
+                      "stone-text": "#9CA3AF",
+                      "on-background": "#eee0d2",
+                      "success-green": "#22C55E",
+                      "elevated-surface": "#1E1E23",
+                      "surface-container-high": "#302920",
+                      "tertiary-fixed-dim": "#7cd0ff",
+                      "inverse-primary": "#835500",
+                      "on-secondary-fixed-variant": "#832524",
+                      "error-container": "#93000a",
+                      "surface-container-highest": "#3c332a",
+                      "seat-gold": "#F5A623",
+                      "surface-container-low": "#211a12",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed": "#ffdad7",
+                      "on-secondary-container": "#ff9e98",
+                      "primary": "#ffc880",
+                      "surface-tint": "#ffb955",
+                      "tertiary-container": "#3ac2ff",
+                      "surface-variant": "#3c332a",
+                      "tertiary-fixed": "#c4e7ff",
+                      "tertiary": "#9bd9ff",
+                      "premium-purple": "#A855F7",
+                      "bright-gold": "#F5C842",
+                      "inverse-surface": "#eee0d2",
+                      "on-primary-container": "#644000",
+                      "recliner-teal": "#06B6D4",
+                      "on-tertiary-container": "#004d6a",
+                      "secondary": "#ffb3ae",
+                      "secondary-container": "#862726",
+                      "on-secondary-fixed": "#410004",
+                      "secondary-fixed-dim": "#ffb3ae",
+                      "seat-green": "#22C55E",
+                      "surface-container": "#251e16",
+                      "antique-gold": "#F5A623",
+                      "on-tertiary": "#00344a",
+                      "inverse-on-surface": "#372f26",
+                      "outline-variant": "#524534",
+                      "gold-foil": "#D4A843",
+                      "seat-gray": "#6B7280",
+                      "void-black": "#0D0D0F",
+                      "on-surface": "#eee0d2"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "hero-height": "70vh",
+                      "unit": "8px",
+                      "section-gap": "48px",
+                      "container-padding": "24px"
+              },
+              "fontFamily": {
+                      "data-mono": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-marquee": [
+                              "Inter"
+                      ],
+                      "display-hero": [
+                              "Playfair Display"
+                      ],
+                      "body-main": [
+                              "Inter"
+                      ],
+                      "label-small": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-marquee": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "0.2em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-hero": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-main": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "letterSpacing": "0",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-small": [
+                              "11px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .photo-corner-tl {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            width: 16px;
+            height: 16px;
+            border-top: 2px solid #F5A623;
+            border-left: 2px solid #F5A623;
+            opacity: 0;
+            transition: all 0.3s ease;
+            transform: translate(-4px, -4px);
+        }
+        .photo-corner-tr {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 16px;
+            height: 16px;
+            border-top: 2px solid #F5A623;
+            border-right: 2px solid #F5A623;
+            opacity: 0;
+            transition: all 0.3s ease;
+            transform: translate(4px, -4px);
+        }
+        .photo-corner-bl {
+            position: absolute;
+            bottom: -2px;
+            left: -2px;
+            width: 16px;
+            height: 16px;
+            border-bottom: 2px solid #F5A623;
+            border-left: 2px solid #F5A623;
+            opacity: 0;
+            transition: all 0.3s ease;
+            transform: translate(-4px, 4px);
+        }
+        .photo-corner-br {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 16px;
+            height: 16px;
+            border-bottom: 2px solid #F5A623;
+            border-right: 2px solid #F5A623;
+            opacity: 0;
+            transition: all 0.3s ease;
+            transform: translate(4px, 4px);
+        }
+        .movie-card:hover .photo-corner-tl,
+        .movie-card:hover .photo-corner-tr,
+        .movie-card:hover .photo-corner-bl,
+        .movie-card:hover .photo-corner-br {
+            opacity: 1;
+            transform: translate(0, 0);
+        }
+        .movie-card:hover {
+            filter: drop-shadow(0 0 12px rgba(245, 166, 35, 0.4));
+        }
+        .ornamental-divider {
+            height: 1px;
+            background: linear-gradient(90deg, rgba(139,115,85,0) 0%, rgba(245,166,35,0.8) 50%, rgba(139,115,85,0) 100%);
+        }
+    </style>
+</head>
+<body class="bg-void-black text-on-surface antialiased min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<nav class="hidden md:flex bg-[#161619] dark:bg-[#161619] fixed top-0 w-full z-50 border-b border-[#F5A623]/40 shadow-[0_4px_20px_rgba(0,0,0,0.8)] flex justify-between items-center h-20 px-8">
+<div class="font-serif text-2xl font-black text-[#F5A623] tracking-[0.2em]">CINEPLEX</div>
+<ul class="flex space-x-8 font-serif tracking-widest uppercase text-sm">
+<li>
+<a class="text-[#F5A623] border-b-2 border-[#F5A623] pb-1 block" href="#">Home</a>
+</li>
+<li>
+<a class="text-stone-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all active:scale-95 duration-200 block" href="#">Movies</a>
+</li>
+<li>
+<a class="text-stone-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all active:scale-95 duration-200 block" href="#">My Bookings</a>
+</li>
+</ul>
+<div class="flex items-center space-x-6">
+<button class="text-stone-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<a class="text-stone-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all active:scale-95 duration-200 font-serif tracking-widest uppercase text-sm" href="#">Login</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-0 md:pt-20 pb-safe md:pb-0">
+<!-- Hero Section -->
+<section class="relative h-[870px] w-full overflow-hidden flex items-center justify-center">
+<!-- Blurred Background -->
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover blur-xl opacity-40 scale-110" data-alt="A dramatic, cinematic background featuring a highly blurred, abstract composition of deep void blacks, intense royal crimsons, and subtle gold flares. The aesthetic evokes the grand cinema era with a modern OLED light-glow effect. The mood is opulent, mysterious, and prestigious, heavily relying on the 'Void Black' foundation with 'Antique Gold' light touches." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHM_SkJoh_y2R6vuRk5uKA7nijoxN-Ms2PCQftPOOITCbBKP8ftIeHVoZY8ACyqzDDatMmSVzdzWt_XRKkVUiGSwIlWU2Y0XQSpNjtHnNTtF6E3Vo6VJsgSGFiYOendbf05IHPeLsPXQxUCTmTMC5ww9Zl3WFoMHL_VTuOCVDL5zuE99DVvrQbbC3WiiOFeYdXHvjmaxIWkPBulUgbWUuL0ELUkt1MxWSQrpzLYm_58cdCOHXEhKn2p7cZtoBXoiUZhY6gUwo1eCZY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-void-black via-void-black/60 to-transparent"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-void-black via-transparent to-void-black/80"></div>
+</div>
+<div class="relative z-10 container mx-auto px-container-padding flex flex-col-reverse md:flex-row items-center justify-between h-full gap-section-gap">
+<!-- Left: Movie Details -->
+<div class="w-full md:w-1/2 flex flex-col items-start space-y-6">
+<div class="flex items-center space-x-3">
+<span class="bg-royal-crimson text-parchment-text font-label-small text-label-small px-3 py-1 uppercase tracking-widest">Premiere</span>
+<div class="flex text-antique-gold drop-shadow-[0_0_4px_rgba(245,166,35,0.5)]">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star_half</span>
+</div>
+<span class="text-muted-text font-data-mono text-data-mono">4.8</span>
+</div>
+<h1 class="font-display-hero text-display-hero text-antique-gold drop-shadow-[0_0_15px_rgba(245,166,35,0.3)] max-w-2xl leading-tight">
+                        The Grand Budapest Hotel
+                    </h1>
+<p class="font-body-main text-body-main text-on-surface-variant max-w-xl">
+                        A legendary concierge at a famous European hotel between the first and second World Wars befriends a young employee who becomes his trusted protégé.
+                    </p>
+<div class="flex items-center space-x-4 pt-4">
+<button class="bg-antique-gold text-cinema-black font-headline-marquee text-headline-marquee px-8 py-4 hover:bg-bright-gold transition-colors duration-300 drop-shadow-[0_0_10px_rgba(245,166,35,0.5)]">
+                            BOOK NOW
+                        </button>
+<button class="border border-antique-gold text-antique-gold font-headline-marquee text-headline-marquee px-8 py-4 hover:bg-antique-gold/10 transition-colors duration-300 flex items-center space-x-2">
+<span class="material-symbols-outlined">play_circle</span>
+<span>TRAILER</span>
+</button>
+</div>
+</div>
+<!-- Right: Prominent Poster -->
+<div class="w-full md:w-1/2 flex justify-center md:justify-end perspective-1000">
+<div class="relative w-64 md:w-80 aspect-[2/3] transform md:-rotate-y-12 md:rotate-x-6 drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] transition-transform duration-500 hover:rotate-y-0 hover:rotate-x-0">
+<div class="absolute inset-0 border border-antique-gold/30 z-20 pointer-events-none"></div>
+<img class="w-full h-full object-cover z-10 relative" data-alt="A sharp, prominent movie poster isolated in a dark cinematic void. The poster features intricate art deco design elements, strong geometric shapes, and a palette dominated by 'Royal Crimson', 'Void Black', and 'Antique Gold' foil accents. The lighting highlights the prestige and theatrical nature of the 'Grand Cinema' era aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUXZSkT5osCDeBxuI8Y4gr36ZS_TfHndO6t4KnvS3GW3pc3ngPhhpIJrOk7pyTRP7wwQ-ykLL3kDFZWR2zYX1t2JWUf8niWFTY7o_-ySc_nqYx7E64sMeHvhNzUIbmH0A3RK11G2pKTilamJ4cLIwCVawh_trrIbpCxuBlKpGDJinreJSgyklyBq5MVAeSv1CfsdGCs5P8XWSYMHlVFrrE0ltYb-Qtz0vkB8tDGhZ2vAWqrjq8ghdfPxwPcsiZn7ZMFfIUXLx6yoeg"/>
+<!-- Poster Accent Bar -->
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-royal-crimson via-antique-gold to-royal-crimson z-30"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Now Showing Section -->
+<section class="container mx-auto px-container-padding py-section-gap">
+<!-- Section Header -->
+<div class="flex flex-col items-center justify-center mb-12 space-y-4">
+<h2 class="font-headline-marquee text-headline-marquee text-antique-gold uppercase tracking-[0.3em]">Now Showing</h2>
+<div class="ornamental-divider w-full max-w-md"></div>
+</div>
+<!-- Horizontal Scroll Row -->
+<div class="flex overflow-x-auto space-x-gutter pb-8 snap-x hide-scrollbar" style="scrollbar-width: none; -ms-overflow-style: none;">
+<!-- Movie Card 1 -->
+<div class="movie-card relative flex-none w-48 md:w-64 snap-start cursor-pointer group">
+<div class="photo-corner-tl"></div>
+<div class="photo-corner-tr"></div>
+<div class="photo-corner-bl"></div>
+<div class="photo-corner-br"></div>
+<div class="relative aspect-[2/3] mb-4 overflow-hidden border border-deep-surface">
+<img class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" data-alt="A vertical movie poster showing a dark, moody science fiction scene. Deep void blacks contrast with stark, bright light effects. The overall look fits the premium, theatrical, high-contrast OLED aesthetic of a modern luxury cinema interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRHwGBYTA8nvCR3Mz9jMoNtBq0bqiqJWrFqDUZKpQvSntLOmKxurz8WcGhH3HwH1Jz47GpJvZjzGKc534OAzZLdYQrc3xi2u6BNuQlNDVczWbUBPRus3V2k3oo8mHv0aDdcJZ6t-qc9tPJ-1vhYP9CuUOTrWwDZRYWYiDuOCiT_GomY9u8O53FajwIemy0tjviU1EuXSmtaZ6GPfcdgt9Co2l6-sYXW8TjzPnESnh_0Ir1-Qhp-2rRUUjToxFWFO1Imqy3rVRxx04D"/>
+<div class="absolute inset-0 bg-gradient-to-t from-cinema-black via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-0 left-0 p-3 w-full flex justify-between items-end">
+<span class="bg-royal-crimson/90 backdrop-blur-sm text-parchment-text font-label-small text-[9px] px-2 py-0.5">IMAX</span>
+<span class="font-data-mono text-[10px] text-antique-gold flex items-center drop-shadow-[0_0_2px_rgba(245,166,35,1)]"><span class="material-symbols-outlined text-[12px] mr-1" style="font-variation-settings: 'FILL' 1;">star</span> 4.5</span>
+</div>
+</div>
+<h3 class="font-display-hero text-xl text-parchment-text leading-tight group-hover:text-antique-gold transition-colors">Dune: Part Two</h3>
+<p class="font-data-mono text-xs text-muted-text mt-1">Sci-Fi • 2h 46m</p>
+</div>
+<!-- Movie Card 2 -->
+<div class="movie-card relative flex-none w-48 md:w-64 snap-start cursor-pointer group">
+<div class="photo-corner-tl"></div>
+<div class="photo-corner-tr"></div>
+<div class="photo-corner-bl"></div>
+<div class="photo-corner-br"></div>
+<div class="relative aspect-[2/3] mb-4 overflow-hidden border border-deep-surface">
+<img class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" data-alt="A vintage, classic thriller movie poster concept. The imagery uses heavy shadows, deep crimsons, and stark contrast to evoke mystery and drama, perfectly aligning with the opulent 1920s Grand Cinema identity and Void Black background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCe2YeaYwh50dNsB4IKoN0kHYaQbmLzrmU-hto-BvlySv84l3CM4QeuyckVCC3dvVAEPm8oL22BGqY-S6P8YpMVqiiIEKqr7ZilagH2nWotittRJUpTBb8XzE1A432cI6BLVfYiNOR80HJNowadwVDrzdMyBYhmL0qxPx-oGdXzZrokZ5pAfhdBP716SAzQ55jr_cGf6vAtmWTGxffw0G8Si4IqtqE-f8GYbuQXvcclR3x9ycxx02RGyM1S9oKwA__QV6IxCp0f0ELW"/>
+<div class="absolute inset-0 bg-gradient-to-t from-cinema-black via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-0 left-0 p-3 w-full flex justify-between items-end">
+<span class="bg-deep-surface/90 border border-antique-gold/30 backdrop-blur-sm text-parchment-text font-label-small text-[9px] px-2 py-0.5">STANDARD</span>
+<span class="font-data-mono text-[10px] text-antique-gold flex items-center drop-shadow-[0_0_2px_rgba(245,166,35,1)]"><span class="material-symbols-outlined text-[12px] mr-1" style="font-variation-settings: 'FILL' 1;">star</span> 4.2</span>
+</div>
+</div>
+<h3 class="font-display-hero text-xl text-parchment-text leading-tight group-hover:text-antique-gold transition-colors">Noir Shadows</h3>
+<p class="font-data-mono text-xs text-muted-text mt-1">Thriller • 1h 55m</p>
+</div>
+<!-- Movie Card 3 -->
+<div class="movie-card relative flex-none w-48 md:w-64 snap-start cursor-pointer group">
+<div class="photo-corner-tl"></div>
+<div class="photo-corner-tr"></div>
+<div class="photo-corner-bl"></div>
+<div class="photo-corner-br"></div>
+<div class="relative aspect-[2/3] mb-4 overflow-hidden border border-deep-surface">
+<img class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" data-alt="An action-packed movie poster featuring intense explosions or dynamic movement. The color palette is restricted to high-contrast cinematic tones, primarily deep blacks, burnt oranges, and gold, maintaining the atmospheric depth and premium feel of the design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAV8gHzSkML18tfpUYBvEL-4XBJHK9h_qry9Apm94gEEfKWj3Oo8No346FqcwC_BrpzJSA1zrC4uc4YCoZLOs4V-MwJu4bX6-aKFhOrlDRvQnYY2IqLs8k3qCT4KR4zrLUpTV2x6rWhc4RCKMsCcBhBfuOszK_DL6t9dPfDIQTW1wbsWg_qpOZDv1aHDNZxD0dxbpmpE2M4X9_WieaAP344Af-eWdAftyBxRKu6mbuu6g4TBJXYYk9V5zq5SnyCMx7Yl-wDQa8m_FZp"/>
+<div class="absolute inset-0 bg-gradient-to-t from-cinema-black via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-0 left-0 p-3 w-full flex justify-between items-end">
+<span class="bg-royal-crimson/90 backdrop-blur-sm text-parchment-text font-label-small text-[9px] px-2 py-0.5">3D</span>
+<span class="font-data-mono text-[10px] text-antique-gold flex items-center drop-shadow-[0_0_2px_rgba(245,166,35,1)]"><span class="material-symbols-outlined text-[12px] mr-1" style="font-variation-settings: 'FILL' 1;">star</span> 4.9</span>
+</div>
+</div>
+<h3 class="font-display-hero text-xl text-parchment-text leading-tight group-hover:text-antique-gold transition-colors">Oppenheimer</h3>
+<p class="font-data-mono text-xs text-muted-text mt-1">Drama • 3h 0m</p>
+</div>
+<!-- Movie Card 4 -->
+<div class="movie-card relative flex-none w-48 md:w-64 snap-start cursor-pointer group">
+<div class="photo-corner-tl"></div>
+<div class="photo-corner-tr"></div>
+<div class="photo-corner-bl"></div>
+<div class="photo-corner-br"></div>
+<div class="relative aspect-[2/3] mb-4 overflow-hidden border border-deep-surface">
+<img class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" data-alt="A visually striking poster for an art-house film. The image is abstract and moody, using deep rich textures and subtle gold foil-like lighting effects. It perfectly captures the opulence and high-art editorial aesthetic mandated by the Grand Cinema UI styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDU2JS7zcgUUmFBIozkdxEYkuUIK9BiYzrqQ-y5qhUiLrScZR9V5gGEnDBewfNluVeiScdjyv610mvrh2ONdB3QgZPDV6IIA6-ZWpGweELpVR3pk5EBIg0bSk5a9wpWsSvUCSrvdOXvpjX9Lbjv0Jp0xmXc8vGVPJVcn-Sojg5QIKFqhFdrTvj4WI0YOkiFfU-0womQpoJejGeFmrfkhF1lD-ull8GY6m3qxOmpwIIrxTbzFzK1wK9R24ZeqITLVwApgTv-vXgqWG0C"/>
+<div class="absolute inset-0 bg-gradient-to-t from-cinema-black via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-0 left-0 p-3 w-full flex justify-between items-end">
+<span class="bg-deep-surface/90 border border-antique-gold/30 backdrop-blur-sm text-parchment-text font-label-small text-[9px] px-2 py-0.5">INDIE</span>
+<span class="font-data-mono text-[10px] text-antique-gold flex items-center drop-shadow-[0_0_2px_rgba(245,166,35,1)]"><span class="material-symbols-outlined text-[12px] mr-1" style="font-variation-settings: 'FILL' 1;">star</span> 4.0</span>
+</div>
+</div>
+<h3 class="font-display-hero text-xl text-parchment-text leading-tight group-hover:text-antique-gold transition-colors">The Velvet Void</h3>
+<p class="font-data-mono text-xs text-muted-text mt-1">Art • 1h 40m</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-[#161619] dark:bg-[#161619] fixed bottom-0 w-full z-50 h-20 border-t border-[#F5A623]/30 shadow-[0_-10px_30px_rgba(0,0,0,0.9)] flex justify-around items-center px-4 pb-safe">
+<button class="flex flex-col items-center justify-center text-[#F5A623] drop-shadow-[0_0_5px_#F5A623] active:translate-y-1 transition-transform w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-600 hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">theaters</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Movies</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-600 hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">confirmation_number</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Bookings</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-600 hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Profile</span>
+</button>
+</nav>
+</body></html>

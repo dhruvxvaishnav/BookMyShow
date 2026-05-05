@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cineplex - Movie Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Playfair+Display:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#f5a623",
+                        "on-primary": "#452b00",
+                        "error": "#ffb4ab",
+                        "on-primary-fixed-variant": "#633f00",
+                        "alert-red": "#EF4444",
+                        "background": "#19120a",
+                        "surface": "#19120a",
+                        "on-secondary": "#630d10",
+                        "on-surface-variant": "#d7c3ae",
+                        "surface-dim": "#19120a",
+                        "on-tertiary-fixed-variant": "#004c69",
+                        "surface-bright": "#40382e",
+                        "surface-container-lowest": "#130d06",
+                        "seat-red": "#EF4444",
+                        "on-tertiary-fixed": "#001e2c",
+                        "deep-surface": "#161619",
+                        "on-primary-fixed": "#291800",
+                        "muted-text": "#8B96A0",
+                        "on-error": "#690005",
+                        "primary-fixed": "#ffddb4",
+                        "ornament-bronze": "#8B7355",
+                        "outline": "#9f8e7a",
+                        "cinema-black": "#0A0608",
+                        "parchment-text": "#F5F5F7",
+                        "royal-crimson": "#7B1F1F",
+                        "primary-fixed-dim": "#ffb955",
+                        "stone-text": "#9CA3AF",
+                        "on-background": "#eee0d2",
+                        "success-green": "#22C55E",
+                        "elevated-surface": "#1E1E23",
+                        "surface-container-high": "#302920",
+                        "tertiary-fixed-dim": "#7cd0ff",
+                        "inverse-primary": "#835500",
+                        "on-secondary-fixed-variant": "#832524",
+                        "error-container": "#93000a",
+                        "surface-container-highest": "#3c332a",
+                        "seat-gold": "#F5A623",
+                        "surface-container-low": "#211a12",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#ffdad7",
+                        "on-secondary-container": "#ff9e98",
+                        "primary": "#ffc880",
+                        "surface-tint": "#ffb955",
+                        "tertiary-container": "#3ac2ff",
+                        "surface-variant": "#3c332a",
+                        "tertiary-fixed": "#c4e7ff",
+                        "tertiary": "#9bd9ff",
+                        "premium-purple": "#A855F7",
+                        "bright-gold": "#F5C842",
+                        "inverse-surface": "#eee0d2",
+                        "on-primary-container": "#644000",
+                        "recliner-teal": "#06B6D4",
+                        "on-tertiary-container": "#004d6a",
+                        "secondary": "#ffb3ae",
+                        "secondary-container": "#862726",
+                        "on-secondary-fixed": "#410004",
+                        "secondary-fixed-dim": "#ffb3ae",
+                        "seat-green": "#22C55E",
+                        "surface-container": "#251e16",
+                        "antique-gold": "#F5A623",
+                        "on-tertiary": "#00344a",
+                        "inverse-on-surface": "#372f26",
+                        "outline-variant": "#524534",
+                        "gold-foil": "#D4A843",
+                        "seat-gray": "#6B7280",
+                        "void-black": "#0D0D0F",
+                        "on-surface": "#eee0d2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "hero-height": "70vh",
+                        "unit": "8px",
+                        "section-gap": "48px",
+                        "container-padding": "24px"
+                    },
+                    "fontFamily": {
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-marquee": ["Inter"],
+                        "display-hero": ["Playfair Display"],
+                        "body-main": ["Inter"],
+                        "label-small": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-mono": ["14px", { "lineHeight": "1", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "headline-marquee": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.2em", "fontWeight": "600" }],
+                        "display-hero": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-main": ["16px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }],
+                        "label-small": ["11px", { "lineHeight": "1.4", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #0D0D0F; color: #F5F5F7; }
+        .hero-gradient {
+            background: linear-gradient(to top, #0D0D0F 0%, rgba(13, 13, 15, 0.8) 50%, rgba(13, 13, 15, 0.4) 100%);
+        }
+        .ornamental-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(245, 166, 35, 0.5) 50%, transparent 100%);
+            margin: 48px 0;
+        }
+    </style>
+</head>
+<body class="font-body-main text-body-main text-parchment-text bg-void-black selection:bg-antique-gold selection:text-cinema-black pb-32 md:pb-0">
+<!-- TopAppBar (Web) -->
+<nav class="hidden md:flex justify-between items-center h-20 px-8 w-full bg-[#161619] fixed top-0 z-50 border-b border-[#F5A623]/40 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+<div class="font-serif text-2xl font-black text-[#F5A623] tracking-[0.2em]">CINEPLEX</div>
+<ul class="flex gap-8">
+<li class="font-serif tracking-widest uppercase text-sm text-stone-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all cursor-pointer">Home</li>
+<li class="font-serif tracking-widest uppercase text-sm text-[#F5A623] border-b-2 border-[#F5A623] pb-1 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all cursor-pointer">Movies</li>
+<li class="font-serif tracking-widest uppercase text-sm text-stone-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all cursor-pointer">My Bookings</li>
+</ul>
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined text-[#F5A623] cursor-pointer hover:drop-shadow-[0_0_8px_#F5A623] transition-all">notifications</span>
+<button class="font-serif tracking-widest uppercase text-sm text-[#F5A623] hover:drop-shadow-[0_0_8px_#F5A623] transition-all active:scale-95 duration-200">Login</button>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="md:pt-20">
+<!-- Hero Section -->
+<section class="relative h-[870px] md:h-hero-height w-full overflow-hidden flex items-end">
+<!-- Blurred Backdrop -->
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-40 blur-md scale-105 transform" data-alt="A grand cinematic movie poster backdrop showing a dramatic sci-fi desert scene with twin suns setting over vast dunes. The lighting is moody and cinematic with deep shadows and golden hour highlights. The atmosphere is tense and epic, evoking a high-budget Hollywood blockbuster. The image is designed to fit a dark-mode 1920s cinema aesthetic with deep void blacks and subtle gold glow effects." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBep8JZnb1-8id7E8UpSDLcPx_RUj_kHlarEfg8RFTudrXwjvBdlAPyh7K8bIuOwfLIIEDhAY4UcWG9v9TGB1eOCOj19yVqgOfv9aMgBaAes9dSOy1rLpKBHrooCwXNABUlxepmmMcaEQt-ZjTuxPRP97C3ASt1df1JuLjhbQs7iU_FqTdpC3sH0oniG_Dsai5jV2mq9I99PLIHJDWWDAjfTfvZ0vT3UNoldIV9pij3ZTERpFlBAGTN05Pxvjvxor9DYNSApHRsDRmQ"/>
+<div class="absolute inset-0 hero-gradient"></div>
+</div>
+<!-- Hero Content Container -->
+<div class="relative z-10 container mx-auto px-container-padding pb-section-gap flex flex-col md:flex-row gap-section-gap items-end md:items-start">
+<!-- Poster -->
+<div class="w-48 md:w-[280px] shrink-0 rounded shadow-[0_0_30px_rgba(0,0,0,0.9)] relative group -mt-24 md:mt-0 z-20 self-center md:self-auto">
+<!-- Art Deco Photo Corners (Hover Effect) -->
+<div class="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-antique-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+<div class="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-antique-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+<div class="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-antique-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+<div class="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-antique-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+<img class="w-full h-auto rounded object-cover" data-alt="A high-resolution, sharp movie poster featuring a lone figure standing against a colossal desert landscape under two glowing suns. The styling is highly cinematic and intense, with a rich, high-contrast color grading emphasizing deep blacks and fiery golds. The composition is dramatic, perfectly suited for a premium OLED display in a Grand Cinema themed application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRX5R9dLbmBQNF3MeLs3N8PykkO7qSYmXbK_VxQxm-MHBjTWIWsWso1sQMLw3zzZVWzjf2FA-j7kWZB8vj4Rn0AM1IlCGP0PQQYGW-B_fTeDGreir3rErYLHn5RoUVqaXIeESEFkDUzS92gsQ78v4PEuTaziFN1Km26IGNaTUV7bqiEO0ffMTTAvE0Ki0UtvR7wauVIlnF76dY9zL7A-dpCDpueUPr8YQ2cQ3jYv0ulTUcv3gMGs45H_YA_fKqBBV_wDwzMeEc0tYm"/>
+</div>
+<!-- Movie Details -->
+<div class="flex-1 text-center md:text-left flex flex-col gap-6 w-full">
+<div>
+<h1 class="font-display-hero text-display-hero text-antique-gold drop-shadow-[0_0_15px_rgba(245,166,35,0.3)] mb-4">Dune: Part Two</h1>
+<div class="flex flex-wrap items-center justify-center md:justify-start gap-4 font-data-mono text-data-mono text-stone-text mb-6">
+<span class="px-2 py-1 border border-outline-variant rounded text-parchment-text">PG-13</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> 2h 46m</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">theater_comedy</span> Sci-Fi, Adventure</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">language</span> English</span>
+</div>
+</div>
+<p class="font-body-main text-body-main text-muted-text max-w-3xl leading-relaxed">
+                        Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the known universe, he endeavors to prevent a terrible future only he can foresee.
+                    </p>
+<div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+<button class="bg-antique-gold text-cinema-black font-data-mono px-8 py-4 rounded hover:bg-bright-gold hover:drop-shadow-[0_0_15px_rgba(245,166,35,0.5)] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">local_activity</span>
+                            Book Tickets
+                        </button>
+<button class="border border-antique-gold text-antique-gold bg-transparent font-data-mono px-8 py-4 rounded hover:bg-antique-gold/10 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">play_arrow</span>
+                            Watch Trailer
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Divider -->
+<div class="container mx-auto px-container-padding">
+<div class="ornamental-divider"></div>
+</div>
+<!-- Showtimes Section -->
+<section class="container mx-auto px-container-padding pb-section-gap">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+<div>
+<h2 class="font-display-hero text-3xl text-parchment-text mb-2">Showtimes</h2>
+<p class="font-data-mono text-data-mono text-muted-text">Select a time to view seat map</p>
+</div>
+<!-- Date/City Selector (Simplified for static layout) -->
+<div class="flex gap-4 overflow-x-auto pb-2 w-full md:w-auto">
+<button class="px-6 py-2 rounded border border-antique-gold text-antique-gold bg-elevated-surface font-data-mono whitespace-nowrap shadow-[0_0_10px_rgba(245,166,35,0.2)]">Today, Oct 24</button>
+<button class="px-6 py-2 rounded border border-outline-variant text-muted-text bg-deep-surface hover:border-antique-gold/50 font-data-mono whitespace-nowrap transition-colors">Fri, Oct 25</button>
+<button class="px-6 py-2 rounded border border-outline-variant text-muted-text bg-deep-surface hover:border-antique-gold/50 font-data-mono whitespace-nowrap transition-colors">Sat, Oct 26</button>
+</div>
+</div>
+<!-- Theatres List -->
+<div class="flex flex-col gap-8">
+<!-- Theatre Card 1 -->
+<div class="bg-deep-surface border border-outline-variant rounded p-6 shadow-[0_4px_20px_rgba(0,0,0,0.5)] relative overflow-hidden group hover:border-antique-gold/30 transition-colors">
+<!-- Subtle Accent Bar -->
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-royal-crimson via-antique-gold to-royal-crimson opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex flex-col md:flex-row justify-between items-start gap-6 mb-6">
+<div>
+<h3 class="font-headline-marquee text-headline-marquee text-gold-foil mb-2">CINEPLEX SCOTIABANK THEATRE</h3>
+<p class="font-body-main text-sm text-muted-text flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">location_on</span> 259 Richmond St W, Toronto</p>
+</div>
+<div class="flex gap-2 font-label-small text-label-small uppercase tracking-wider">
+<span class="px-2 py-1 bg-elevated-surface text-parchment-text rounded border border-outline-variant">IMAX</span>
+<span class="px-2 py-1 bg-elevated-surface text-parchment-text rounded border border-outline-variant">AVX</span>
+</div>
+</div>
+<div>
+<p class="font-label-small text-label-small text-stone-text mb-3 uppercase tracking-widest">Standard Showtimes</p>
+<div class="flex flex-wrap gap-4">
+<!-- Available Time -->
+<button class="px-4 py-2 rounded bg-elevated-surface border border-success-green/30 text-success-green font-data-mono text-data-mono hover:bg-success-green/10 hover:shadow-[0_0_10px_rgba(34,197,94,0.2)] transition-all">12:30 PM</button>
+<button class="px-4 py-2 rounded bg-elevated-surface border border-success-green/30 text-success-green font-data-mono text-data-mono hover:bg-success-green/10 hover:shadow-[0_0_10px_rgba(34,197,94,0.2)] transition-all">03:45 PM</button>
+<button class="px-4 py-2 rounded bg-elevated-surface border border-success-green/30 text-success-green font-data-mono text-data-mono hover:bg-success-green/10 hover:shadow-[0_0_10px_rgba(34,197,94,0.2)] transition-all">07:00 PM</button>
+<!-- Sold Out Time -->
+<button class="px-4 py-2 rounded bg-surface-container text-muted-text border border-surface-container-highest font-data-mono text-data-mono cursor-not-allowed line-through">09:30 PM</button>
+</div>
+</div>
+<div class="mt-6">
+<p class="font-label-small text-label-small text-stone-text mb-3 uppercase tracking-widest">IMAX 70MM</p>
+<div class="flex flex-wrap gap-4">
+<button class="px-4 py-2 rounded bg-elevated-surface border border-antique-gold/50 text-antique-gold font-data-mono text-data-mono hover:bg-antique-gold/10 hover:shadow-[0_0_10px_rgba(245,166,35,0.3)] transition-all relative overflow-hidden">
+<span class="relative z-10">06:15 PM</span>
+<!-- Premium glow hint -->
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-antique-gold/10 to-transparent translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-1000"></div>
+</button>
+<button class="px-4 py-2 rounded bg-elevated-surface border border-antique-gold/50 text-antique-gold font-data-mono text-data-mono hover:bg-antique-gold/10 hover:shadow-[0_0_10px_rgba(245,166,35,0.3)] transition-all">10:00 PM</button>
+</div>
+</div>
+</div>
+<!-- Theatre Card 2 -->
+<div class="bg-deep-surface border border-outline-variant rounded p-6 shadow-[0_4px_20px_rgba(0,0,0,0.5)] relative overflow-hidden group hover:border-antique-gold/30 transition-colors">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-royal-crimson via-antique-gold to-royal-crimson opacity-0 group-hover:opacity-50 transition-opacity"></div>
+<div class="flex flex-col md:flex-row justify-between items-start gap-6 mb-6">
+<div>
+<h3 class="font-headline-marquee text-headline-marquee text-gold-foil mb-2">CINEPLEX VIP YONGE-DUNDAS</h3>
+<p class="font-body-main text-sm text-muted-text flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">location_on</span> 10 Dundas St E, Toronto</p>
+</div>
+<div class="flex gap-2 font-label-small text-label-small uppercase tracking-wider">
+<span class="px-2 py-1 bg-elevated-surface text-premium-purple rounded border border-premium-purple/30">VIP 19+</span>
+<span class="px-2 py-1 bg-elevated-surface text-recliner-teal rounded border border-recliner-teal/30">RECLINERS</span>
+</div>
+</div>
+<div>
+<p class="font-label-small text-label-small text-stone-text mb-3 uppercase tracking-widest">VIP Recliners</p>
+<div class="flex flex-wrap gap-4">
+<button class="px-4 py-2 rounded bg-elevated-surface border border-premium-purple/40 text-premium-purple font-data-mono text-data-mono hover:bg-premium-purple/10 hover:shadow-[0_0_10px_rgba(168,85,247,0.2)] transition-all">05:00 PM</button>
+<button class="px-4 py-2 rounded bg-elevated-surface border border-premium-purple/40 text-premium-purple font-data-mono text-data-mono hover:bg-premium-purple/10 hover:shadow-[0_0_10px_rgba(168,85,247,0.2)] transition-all">08:15 PM</button>
+<button class="px-4 py-2 rounded bg-surface-container text-muted-text border border-surface-container-highest font-data-mono text-data-mono cursor-not-allowed line-through">11:30 PM</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden flex justify-around items-center px-4 pb-safe bg-[#161619] fixed bottom-0 w-full z-50 h-20 border-t border-[#F5A623]/30 shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
+<div class="flex flex-col items-center justify-center text-stone-600 hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform cursor-pointer">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#F5A623] drop-shadow-[0_0_5px_#F5A623] hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">theaters</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Movies</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-600 hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform cursor-pointer">
+<span class="material-symbols-outlined mb-1">confirmation_number</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Bookings</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-600 hover:text-[#F5A623] transition-colors active:translate-y-1 transition-transform cursor-pointer">
+<span class="material-symbols-outlined mb-1">account_circle</span>
+<span class="font-mono text-[10px] tracking-tighter uppercase">Profile</span>
+</div>
+</nav>
+</body></html>

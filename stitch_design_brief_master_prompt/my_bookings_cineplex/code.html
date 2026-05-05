@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cineplex - My Bookings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Playfair+Display:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "void-black": "#0D0D0F",
+                        "tertiary": "#9bd9ff",
+                        "primary": "#ffc880",
+                        "surface-container-low": "#211a12",
+                        "on-primary-fixed": "#291800",
+                        "elevated-surface": "#1E1E23",
+                        "surface-dim": "#19120a",
+                        "cinema-black": "#0A0608",
+                        "parchment-text": "#F5F5F7",
+                        "on-primary-fixed-variant": "#633f00",
+                        "surface-tint": "#ffb955",
+                        "on-surface": "#eee0d2",
+                        "outline-variant": "#524534",
+                        "on-tertiary-fixed": "#001e2c",
+                        "stone-text": "#9CA3AF",
+                        "on-error": "#690005",
+                        "ornament-bronze": "#8B7355",
+                        "surface-container-high": "#302920",
+                        "on-secondary-container": "#ff9e98",
+                        "surface": "#19120a",
+                        "recliner-teal": "#06B6D4",
+                        "on-secondary": "#630d10",
+                        "tertiary-container": "#3ac2ff",
+                        "primary-fixed": "#ffddb4",
+                        "tertiary-fixed": "#c4e7ff",
+                        "background": "#19120a",
+                        "seat-red": "#EF4444",
+                        "surface-container-highest": "#3c332a",
+                        "secondary-fixed-dim": "#ffb3ae",
+                        "on-primary-container": "#644000",
+                        "on-error-container": "#ffdad6",
+                        "primary-container": "#f5a623",
+                        "royal-crimson": "#7B1F1F",
+                        "deep-surface": "#161619",
+                        "error": "#ffb4ab",
+                        "secondary-fixed": "#ffdad7",
+                        "antique-gold": "#F5A623",
+                        "primary-fixed-dim": "#ffb955",
+                        "secondary-container": "#862726",
+                        "inverse-primary": "#835500",
+                        "error-container": "#93000a",
+                        "seat-gray": "#6B7280",
+                        "outline": "#9f8e7a",
+                        "on-tertiary-fixed-variant": "#004c69",
+                        "alert-red": "#EF4444",
+                        "inverse-surface": "#eee0d2",
+                        "gold-foil": "#D4A843",
+                        "seat-green": "#22C55E",
+                        "on-tertiary": "#00344a",
+                        "on-surface-variant": "#d7c3ae",
+                        "muted-text": "#8B96A0",
+                        "on-secondary-fixed-variant": "#832524",
+                        "tertiary-fixed-dim": "#7cd0ff",
+                        "surface-bright": "#40382e",
+                        "success-green": "#22C55E",
+                        "premium-purple": "#A855F7",
+                        "on-tertiary-container": "#004d6a",
+                        "on-secondary-fixed": "#410004",
+                        "on-background": "#eee0d2",
+                        "seat-gold": "#F5A623",
+                        "surface-container": "#251e16",
+                        "secondary": "#ffb3ae",
+                        "on-primary": "#452b00",
+                        "inverse-on-surface": "#372f26",
+                        "surface-container-lowest": "#130d06",
+                        "surface-variant": "#3c332a",
+                        "bright-gold": "#F5C842"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "section-gap": "48px",
+                        "container-padding": "24px",
+                        "unit": "8px",
+                        "hero-height": "70vh",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "display-hero": ["Playfair Display"],
+                        "label-small": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-marquee": ["Inter"],
+                        "body-main": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-hero": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-small": ["11px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "data-mono": ["14px", { "lineHeight": "1", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "headline-marquee": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.2em", "fontWeight": "600" }],
+                        "body-main": ["16px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-void-black text-parchment-text min-h-screen font-body-main text-body-main pb-24 md:pb-0">
+<!-- TopAppBar (Web) -->
+<nav class="hidden md:flex fixed top-0 w-full z-50 justify-between items-center px-8 h-20 bg-[#0D0D0F] border-b border-[#F5A623]/20 shadow-sm drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+<div class="text-2xl font-display-hero text-antique-gold drop-shadow-[0_0_10px_rgba(245,166,35,0.3)] uppercase tracking-[0.4em]">CINEPLEX</div>
+<div class="flex gap-8 font-label-small uppercase tracking-widest">
+<a class="text-zinc-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all" href="#">Home</a>
+<a class="text-zinc-500 hover:text-[#F5A623] hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all" href="#">Movies</a>
+<a class="text-[#F5A623] border-b-2 border-[#F5A623] pb-1 hover:text-[#F5A623] hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all" href="#">My Bookings</a>
+</div>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-[#F5A623] hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all cursor-pointer">account_circle</span>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="pt-10 md:pt-32 px-container-padding max-w-5xl mx-auto">
+<!-- Header Section -->
+<header class="mb-12">
+<h1 class="font-display-hero text-display-hero text-parchment-text mb-6">My Bookings</h1>
+<!-- Tabs -->
+<div class="flex gap-8 border-b border-surface-container-highest">
+<button class="pb-3 border-b-2 border-antique-gold text-antique-gold font-headline-marquee text-headline-marquee uppercase drop-shadow-[0_0_8px_rgba(245,166,35,0.4)]">Upcoming</button>
+<button class="pb-3 border-b-2 border-transparent text-muted-text font-headline-marquee text-headline-marquee uppercase hover:text-parchment-text transition-colors">Past</button>
+</div>
+</header>
+<!-- Bookings List (Bento/Card approach) -->
+<div class="space-y-6">
+<!-- Active Booking Card -->
+<div class="group relative bg-deep-surface border border-surface-container-high rounded-DEFAULT overflow-hidden flex flex-col md:flex-row shadow-[0_4px_24px_rgba(0,0,0,0.5)] hover:border-antique-gold/50 transition-all duration-300">
+<!-- Gold Accent Top Border (Premium indicator) -->
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-royal-crimson via-antique-gold to-royal-crimson opacity-80"></div>
+<!-- Poster -->
+<div class="w-full md:w-48 h-64 md:h-auto flex-shrink-0 relative">
+<img alt="Movie Poster" class="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-500" data-alt="A dramatic movie poster featuring a silhouette of a person standing against a massive glowing orange sun in a barren sci-fi landscape. The dark void black surroundings contrast sharply with the intense gold and orange light. The scene feels epic, mysterious, and grand, fitting a 1920s cinema aesthetic reimagined for modern screens." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBshjcR-BbakoCT1USIzGaAdkCFSYV2vCeTZulkKPYGcSMuvE4wiQzm2gO6HGQkh_NFb9kFc-UgR6HdxudW0ViUYLh4ooscclylHAHK2wzWggzykTlCNkNvMKJs_FoyKQorzKVh9p-fX5fHt3L2Ww-3gdZcz3-Rrru0gDd-If5TAD5Mx4Q8pmialcUkBJ7pYLq3kG0hQTwekU-5GEa08TkYI2fjMiDPS6yRwe0boUYRxciaAhducAIaSgamytLyLmUDuK8p0UgB4QlF"/>
+<div class="absolute inset-0 bg-gradient-to-t from-deep-surface to-transparent md:bg-gradient-to-l opacity-80"></div>
+</div>
+<!-- Content -->
+<div class="flex-1 p-6 flex flex-col justify-between relative z-10">
+<!-- Top row: Title and Stub details -->
+<div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
+<div>
+<h2 class="font-display-hero text-2xl md:text-3xl text-parchment-text mb-2 group-hover:text-antique-gold transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Dune: Part Two</h2>
+<p class="font-label-small text-label-small text-stone-text uppercase tracking-widest">Grand Stellar Auditorium</p>
+</div>
+<div class="text-left md:text-right">
+<span class="inline-block px-3 py-1 bg-success-green/10 border border-success-green/30 text-success-green font-data-mono text-data-mono rounded-DEFAULT mb-2">Confirmed</span>
+<div class="font-data-mono text-data-mono text-parchment-text">Total: <span class="text-antique-gold font-bold">$42.00</span></div>
+</div>
+</div>
+<!-- Divider -->
+<div class="h-px w-full bg-gradient-to-r from-transparent via-ornament-bronze/30 to-transparent my-4"></div>
+<!-- Bottom row: Data -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div>
+<p class="font-label-small text-label-small text-muted-text uppercase mb-1">Date</p>
+<p class="font-data-mono text-data-mono text-parchment-text">Oct 24, 2023</p>
+</div>
+<div>
+<p class="font-label-small text-label-small text-muted-text uppercase mb-1">Time</p>
+<p class="font-data-mono text-data-mono text-parchment-text">19:30</p>
+</div>
+<div>
+<p class="font-label-small text-label-small text-muted-text uppercase mb-1">Seats</p>
+<p class="font-data-mono text-data-mono text-antique-gold">J14, J15</p>
+</div>
+<div class="text-right flex items-end justify-end">
+<button class="font-headline-marquee text-headline-marquee text-antique-gold border border-antique-gold px-4 py-2 rounded-DEFAULT hover:bg-antique-gold hover:text-void-black transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">confirmation_number</span> E-Ticket
+                            </button>
+</div>
+</div>
+<!-- Decorative Corner Brackets (Art Deco) -->
+<div class="absolute top-4 right-4 w-4 h-4 border-t border-r border-antique-gold/0 group-hover:border-antique-gold/50 transition-all duration-300"></div>
+<div class="absolute bottom-4 left-4 w-4 h-4 border-b border-l border-antique-gold/0 group-hover:border-antique-gold/50 transition-all duration-300"></div>
+</div>
+</div>
+<!-- Pending Booking Card -->
+<div class="group relative bg-deep-surface border border-surface-container-high rounded-DEFAULT overflow-hidden flex flex-col md:flex-row shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+<!-- Poster -->
+<div class="w-full md:w-48 h-64 md:h-auto flex-shrink-0 relative">
+<img alt="Movie Poster" class="w-full h-full object-cover grayscale opacity-50" data-alt="A vintage 1920s style film camera capturing a scene in a dark room. The lighting is moody, with a single spotlight illuminating the brass details of the camera. The background is a void black, emphasizing the antique gold tones and deep rich textures of the equipment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAukvZT2D2w8qjoeDy0SkvNH4ARMLO6-3nld4Pm4dcMp5ywWXdcQCzctrG48pbOOkqEYKYlYeOs0KiJlJARp5AF5O83R7gCABHaX5LPyLI9nncNN0KVyHINH0ad_Mv51mkwF1GhJU_9lJwYwLZ2JV56cdTlzRd1RuCAxigAe-RYgAcjuBVFIaJBTrpJaEFOr-8rf3fR183L28qt-aO_CBbGPY0h9EDKo9k-HtyWRZZeWIBifqdskYUMvJfYxTXB4NHfiXxTxklup2Jf"/>
+<div class="absolute inset-0 bg-gradient-to-t from-deep-surface to-transparent md:bg-gradient-to-l opacity-80"></div>
+</div>
+<!-- Content -->
+<div class="flex-1 p-6 flex flex-col justify-between relative z-10">
+<div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
+<div>
+<h2 class="font-display-hero text-2xl md:text-3xl text-parchment-text mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Oppenheimer</h2>
+<p class="font-label-small text-label-small text-stone-text uppercase tracking-widest">IMAX 70mm Dome</p>
+</div>
+<div class="text-left md:text-right">
+<span class="inline-block px-3 py-1 bg-antique-gold/10 border border-antique-gold/30 text-antique-gold font-data-mono text-data-mono rounded-DEFAULT mb-2">Awaiting Payment</span>
+<div class="font-data-mono text-data-mono text-parchment-text">Total: <span class="font-bold text-parchment-text">$55.00</span></div>
+</div>
+</div>
+<div class="h-px w-full bg-gradient-to-r from-transparent via-ornament-bronze/30 to-transparent my-4"></div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div>
+<p class="font-label-small text-label-small text-muted-text uppercase mb-1">Date</p>
+<p class="font-data-mono text-data-mono text-parchment-text">Nov 02, 2023</p>
+</div>
+<div>
+<p class="font-label-small text-label-small text-muted-text uppercase mb-1">Time</p>
+<p class="font-data-mono text-data-mono text-parchment-text">20:00</p>
+</div>
+<div>
+<p class="font-label-small text-label-small text-muted-text uppercase mb-1">Seats</p>
+<p class="font-data-mono text-data-mono text-parchment-text">K01, K02</p>
+</div>
+<div class="text-right flex items-end justify-end">
+<button class="font-headline-marquee text-headline-marquee bg-antique-gold text-void-black px-4 py-2 rounded-DEFAULT hover:bg-bright-gold transition-all shadow-[0_0_10px_rgba(245,166,35,0.3)]">
+                                Pay Now
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Ornamental Divider -->
+<div class="flex items-center justify-center py-section-gap">
+<div class="h-px w-1/3 bg-gradient-to-r from-transparent via-ornament-bronze to-antique-gold"></div>
+<div class="mx-4 flex gap-1">
+<div class="w-1.5 h-1.5 bg-antique-gold rotate-45"></div>
+<div class="w-1.5 h-1.5 bg-antique-gold rotate-45 opacity-50"></div>
+</div>
+<div class="h-px w-1/3 bg-gradient-to-l from-transparent via-ornament-bronze to-antique-gold"></div>
+</div>
+<!-- Pagination -->
+<div class="flex justify-center items-center gap-6 pb-section-gap font-data-mono text-data-mono">
+<button class="text-muted-text hover:text-antique-gold hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all flex items-center">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<span class="text-parchment-text tracking-widest">1 <span class="text-muted-text mx-2">of</span> 5</span>
+<button class="text-parchment-text hover:text-antique-gold hover:drop-shadow-[0_0_5px_rgba(245,166,35,0.5)] transition-all flex items-center">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-4 bg-[#161619] border-t border-[#F5A623]/10 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
+<a class="flex flex-col items-center justify-center text-zinc-600 hover:text-[#F5A623]/80 transition-transform duration-300" href="#">
+<span class="material-symbols-outlined mb-1">theater_comedy</span>
+<span class="font-label-small text-[10px] uppercase tracking-tighter">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-600 hover:text-[#F5A623]/80 transition-transform duration-300" href="#">
+<span class="material-symbols-outlined mb-1">movie</span>
+<span class="font-label-small text-[10px] uppercase tracking-tighter">Movies</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#F5A623] drop-shadow-[0_0_8px_rgba(245,166,35,0.6)] scale-110 transition-transform duration-300" href="#">
+<span class="material-symbols-outlined mb-1">confirmation_number</span>
+<span class="font-label-small text-[10px] uppercase tracking-tighter">Bookings</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-600 hover:text-[#F5A623]/80 transition-transform duration-300" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-small text-[10px] uppercase tracking-tighter">Profile</span>
+</a>
+</nav>
+</body></html>
