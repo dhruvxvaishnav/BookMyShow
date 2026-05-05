@@ -11,7 +11,10 @@ pub struct MovieService {
 
 impl MovieService {
     pub fn new(movie_repo: Arc<dyn MovieRepository>, show_repo: Arc<dyn ShowRepository>) -> Self {
-        Self { movie_repo, show_repo }
+        Self {
+            movie_repo,
+            show_repo,
+        }
     }
 
     pub async fn create_movie(

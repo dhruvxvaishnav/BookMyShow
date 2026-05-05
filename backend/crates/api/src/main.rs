@@ -231,7 +231,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Seed demo movies, venues, and shows so the home page isn't empty on first boot.
-async fn seed_demo_data(show_svc: &ShowService, movie_svc: &MovieService, venue_svc: &VenueService) {
+async fn seed_demo_data(
+    show_svc: &ShowService,
+    movie_svc: &MovieService,
+    venue_svc: &VenueService,
+) {
     let existing = show_svc.list_shows().await.unwrap_or_default();
     if !existing.is_empty() {
         tracing::info!(count = existing.len(), "shows already exist, skipping seed");
@@ -245,7 +249,11 @@ async fn seed_demo_data(show_svc: &ShowService, movie_svc: &MovieService, venue_
             "Nexus Mall, Koramangala, Bengaluru".to_string(),
             "Bengaluru".to_string(),
             6,
-            vec!["Dolby Atmos".to_string(), "4DX".to_string(), "Food Court".to_string()],
+            vec![
+                "Dolby Atmos".to_string(),
+                "4DX".to_string(),
+                "Food Court".to_string(),
+            ],
         )
         .await
         .expect("seed venue PVR failed");
@@ -267,7 +275,11 @@ async fn seed_demo_data(show_svc: &ShowService, movie_svc: &MovieService, venue_
             "Phoenix MarketCity, Whitefield, Bengaluru".to_string(),
             "Bengaluru".to_string(),
             2,
-            vec!["Recliner Seats".to_string(), "Premium Dining".to_string(), "Valet Parking".to_string()],
+            vec![
+                "Recliner Seats".to_string(),
+                "Premium Dining".to_string(),
+                "Valet Parking".to_string(),
+            ],
         )
         .await
         .expect("seed venue Gold Class failed");
@@ -356,10 +368,26 @@ async fn seed_demo_data(show_svc: &ShowService, movie_svc: &MovieService, venue_
             venue_id: Some(venue_pvr.venue_id.clone()),
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig { row: "A".to_string(), seats: 10, seat_type: "Standard".to_string() },
-                    RowConfig { row: "B".to_string(), seats: 10, seat_type: "Standard".to_string() },
-                    RowConfig { row: "C".to_string(), seats: 10, seat_type: "Standard".to_string() },
-                    RowConfig { row: "D".to_string(), seats: 10, seat_type: "Standard".to_string() },
+                    RowConfig {
+                        row: "A".to_string(),
+                        seats: 10,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "B".to_string(),
+                        seats: 10,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "C".to_string(),
+                        seats: 10,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "D".to_string(),
+                        seats: 10,
+                        seat_type: "Standard".to_string(),
+                    },
                 ],
             },
         },
@@ -374,12 +402,36 @@ async fn seed_demo_data(show_svc: &ShowService, movie_svc: &MovieService, venue_
             venue_id: Some(venue_imax.venue_id.clone()),
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig { row: "A".to_string(), seats: 12, seat_type: "Premium".to_string() },
-                    RowConfig { row: "B".to_string(), seats: 12, seat_type: "Premium".to_string() },
-                    RowConfig { row: "C".to_string(), seats: 12, seat_type: "Standard".to_string() },
-                    RowConfig { row: "D".to_string(), seats: 12, seat_type: "Standard".to_string() },
-                    RowConfig { row: "E".to_string(), seats: 12, seat_type: "Standard".to_string() },
-                    RowConfig { row: "F".to_string(), seats: 12, seat_type: "Recliner".to_string() },
+                    RowConfig {
+                        row: "A".to_string(),
+                        seats: 12,
+                        seat_type: "Premium".to_string(),
+                    },
+                    RowConfig {
+                        row: "B".to_string(),
+                        seats: 12,
+                        seat_type: "Premium".to_string(),
+                    },
+                    RowConfig {
+                        row: "C".to_string(),
+                        seats: 12,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "D".to_string(),
+                        seats: 12,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "E".to_string(),
+                        seats: 12,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "F".to_string(),
+                        seats: 12,
+                        seat_type: "Recliner".to_string(),
+                    },
                 ],
             },
         },
@@ -394,9 +446,21 @@ async fn seed_demo_data(show_svc: &ShowService, movie_svc: &MovieService, venue_
             venue_id: Some(venue_gold.venue_id.clone()),
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig { row: "A".to_string(), seats: 8, seat_type: "Recliner".to_string() },
-                    RowConfig { row: "B".to_string(), seats: 8, seat_type: "Recliner".to_string() },
-                    RowConfig { row: "C".to_string(), seats: 8, seat_type: "Recliner".to_string() },
+                    RowConfig {
+                        row: "A".to_string(),
+                        seats: 8,
+                        seat_type: "Recliner".to_string(),
+                    },
+                    RowConfig {
+                        row: "B".to_string(),
+                        seats: 8,
+                        seat_type: "Recliner".to_string(),
+                    },
+                    RowConfig {
+                        row: "C".to_string(),
+                        seats: 8,
+                        seat_type: "Recliner".to_string(),
+                    },
                 ],
             },
         },
@@ -411,14 +475,46 @@ async fn seed_demo_data(show_svc: &ShowService, movie_svc: &MovieService, venue_
             venue_id: Some(venue_retro.venue_id.clone()),
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig { row: "A".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "B".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "C".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "D".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "E".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "F".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "G".to_string(), seats: 15, seat_type: "Standard".to_string() },
-                    RowConfig { row: "H".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig {
+                        row: "A".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "B".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "C".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "D".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "E".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "F".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "G".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
+                    RowConfig {
+                        row: "H".to_string(),
+                        seats: 15,
+                        seat_type: "Standard".to_string(),
+                    },
                 ],
             },
         },

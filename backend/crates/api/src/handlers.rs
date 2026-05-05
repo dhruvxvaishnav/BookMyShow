@@ -375,28 +375,40 @@ pub async fn health() -> Json<ApiResponse<HealthResponse>> {
 
 async fn make_show_response(show: domain::Show, state: &AppState) -> ShowResponse {
     let movie = if let Some(mid) = &show.movie_id {
-        state.movie_svc.get_movie(mid).await.ok().flatten().map(|m| MovieResponse {
-            movie_id: m.movie_id,
-            title: m.title,
-            genre: m.genre,
-            language: m.language,
-            duration_minutes: m.duration_minutes,
-            poster_url: m.poster_url,
-            rating: m.rating,
-            description: m.description,
-        })
+        state
+            .movie_svc
+            .get_movie(mid)
+            .await
+            .ok()
+            .flatten()
+            .map(|m| MovieResponse {
+                movie_id: m.movie_id,
+                title: m.title,
+                genre: m.genre,
+                language: m.language,
+                duration_minutes: m.duration_minutes,
+                poster_url: m.poster_url,
+                rating: m.rating,
+                description: m.description,
+            })
     } else {
         None
     };
     let venue = if let Some(vid) = &show.venue_id {
-        state.venue_svc.get_venue(vid).await.ok().flatten().map(|v| VenueResponse {
-            venue_id: v.venue_id,
-            name: v.name,
-            address: v.address,
-            city: v.city,
-            screen_count: v.screen_count,
-            amenities: v.amenities,
-        })
+        state
+            .venue_svc
+            .get_venue(vid)
+            .await
+            .ok()
+            .flatten()
+            .map(|v| VenueResponse {
+                venue_id: v.venue_id,
+                name: v.name,
+                address: v.address,
+                city: v.city,
+                screen_count: v.screen_count,
+                amenities: v.amenities,
+            })
     } else {
         None
     };
@@ -439,7 +451,9 @@ pub async fn get_show(
         .await?
         .ok_or_else(|| common::AppError::ShowNotFound(show_id.clone()))?;
 
-    Ok(Json(ApiResponse::ok(make_show_response(show, &state).await)))
+    Ok(Json(ApiResponse::ok(
+        make_show_response(show, &state).await,
+    )))
 }
 
 #[derive(Deserialize)]
@@ -944,7 +958,10 @@ pub async fn create_show(
     tracing::info!(show_id = %show.show_id, seat_count = seats.len(), "admin created show");
 
     let response = make_show_response(show, &state).await;
-    Ok((axum::http::StatusCode::CREATED, Json(ApiResponse::ok(response))))
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ApiResponse::ok(response)),
+    ))
 }
 
 pub async fn cancel_show(
@@ -1310,7 +1327,13 @@ pub async fn admin_create_venue(
 
     let venue = state
         .venue_svc
-        .create_venue(req.name, req.address, req.city, req.screen_count, req.amenities)
+        .create_venue(
+            req.name,
+            req.address,
+            req.city,
+            req.screen_count,
+            req.amenities,
+        )
         .await?;
 
     Ok((

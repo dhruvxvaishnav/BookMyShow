@@ -82,7 +82,10 @@ pub fn create_router(state: AppState) -> Router {
         // ── Movies ────────────────────────────────────────────────────────────
         .route("/movies", get(handlers::list_movies))
         .route("/movies/:movie_id", get(handlers::get_movie))
-        .route("/movies/:movie_id/shows", get(handlers::list_shows_for_movie))
+        .route(
+            "/movies/:movie_id/shows",
+            get(handlers::list_shows_for_movie),
+        )
         .route("/admin/movies", post(handlers::admin_create_movie))
         // ── Venues ────────────────────────────────────────────────────────────
         .route("/venues", get(handlers::list_venues))

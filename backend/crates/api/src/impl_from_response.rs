@@ -60,16 +60,12 @@ impl IntoResponse for ApiError {
                 "QUEUE_ENTRY_NOT_FOUND",
                 self.0.to_string(),
             ),
-            AppError::MovieNotFound(_) => (
-                StatusCode::NOT_FOUND,
-                "MOVIE_NOT_FOUND",
-                self.0.to_string(),
-            ),
-            AppError::VenueNotFound(_) => (
-                StatusCode::NOT_FOUND,
-                "VENUE_NOT_FOUND",
-                self.0.to_string(),
-            ),
+            AppError::MovieNotFound(_) => {
+                (StatusCode::NOT_FOUND, "MOVIE_NOT_FOUND", self.0.to_string())
+            }
+            AppError::VenueNotFound(_) => {
+                (StatusCode::NOT_FOUND, "VENUE_NOT_FOUND", self.0.to_string())
+            }
 
             AppError::SeatsUnavailable(_) => (
                 StatusCode::CONFLICT,

@@ -88,7 +88,10 @@ async fn make_state() -> crate::AppState {
 
     let movie_repo: Arc<dyn MovieRepository> = Arc::new(InMemoryMovieRepository::new());
     let venue_repo: Arc<dyn VenueRepository> = Arc::new(InMemoryVenueRepository::new());
-    let movie_svc = Arc::new(MovieService::new(Arc::clone(&movie_repo), Arc::clone(&show_repo)));
+    let movie_svc = Arc::new(MovieService::new(
+        Arc::clone(&movie_repo),
+        Arc::clone(&show_repo),
+    ));
     let venue_svc = Arc::new(VenueService::new(Arc::clone(&venue_repo)));
 
     crate::AppState::new(
