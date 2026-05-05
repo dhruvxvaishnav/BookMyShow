@@ -22,6 +22,14 @@ chrono = { version = "0.4", features = ["serde"] }
 jsonwebtoken = "9"
 bcrypt = "0.15"
 
+# Observability
+opentelemetry = { version = "0.22", features = ["metrics", "trace"] }
+opentelemetry_sdk = { version = "0.22", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.15", features = ["http-proto", "reqwest-client"] }
+tracing-opentelemetry = "0.23"
+metrics = "0.22"
+metrics-exporter-prometheus = "0.13"
+
 [dev-dependencies]
 tokio-test = "0.4"
 tower = { version = "0.4", features = ["util"] }

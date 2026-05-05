@@ -482,12 +482,12 @@ If you're using this project to learn, here's a map of what's where:
 ## What's Next
 
 - [ ] **Postgres repository** — swap the in-memory layer for real persistence
-- [ ] **Docker + Docker Compose** — one-command deployment
+- [x] **Docker + Docker Compose** — one-command deployment
 - [ ] **Input validation** — `validator` crate on all HTTP request bodies
 - [ ] **Tests for admin endpoints** — analytics, override, bulk bookings
 - [ ] **PostgreSQL transactions** — atomic seat locking at the DB level
-- [ ] **JWT authentication** — replace the `X-User-Id` header
-- [ ] **Metrics** — Prometheus counters for lock contention, booking rate, error rate
+- [x] **JWT authentication** — replace the `X-User-Id` header
+- [x] **Metrics & Tracing** — Prometheus counters for lock contention, booking rate, error rate and OpenTelemetry tracing
 - [ ] **`validator` crate** — validate `show_name`, `email`, `seat_ids` at the HTTP boundary
 
 ---

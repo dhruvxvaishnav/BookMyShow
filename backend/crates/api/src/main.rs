@@ -4,6 +4,13 @@ use std::time::Instant;
 use tokio::time::{Duration, interval};
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
+// Observability
+use metrics_exporter_prometheus::PrometheusBuilder;
+use opentelemetry::KeyValue;
+use opentelemetry_sdk::trace::{self, Sampler};
+use opentelemetry_sdk::Resource;
+use tracing_opentelemetry::OpenTelemetryLayer;
+
 use api::rate_limiter::RateLimiter;
 use api::routes::create_router;
 use api::state::AppState;
@@ -32,27 +39,60 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ── 1. Load configuration ─────────────────────────────────────────────
     let cfg = AppConfig::load().expect("failed to load config");
 
-    // ── 2. Initialise logging ─────────────────────────────────────────────
+    // ── 2. Initialise Observability & Logging ──────────────────────────────
+    // Prometheus Metrics
+    let prometheus_port = std::env::var("METRICS_PORT")
+        .unwrap_or_else(|_| "9000".to_string())
+        .parse()
+        .unwrap_or(9000);
+    PrometheusBuilder::new()
+        .with_http_listener(([0, 0, 0, 0], prometheus_port))
+        .install()
+        .expect("failed to install Prometheus recorder");
+
+    // OpenTelemetry Tracing
+    let tracer = opentelemetry_otlp::new_pipeline()
+        .tracing()
+        .with_exporter(opentelemetry_otlp::new_exporter().tonic())
+        .with_trace_config(
+            trace::config()
+                .with_sampler(Sampler::AlwaysOn)
+                .with_resource(Resource::new(vec![KeyValue::new("service.name", "bookmyshow-api")])),
+        )
+        .install_batch(opentelemetry_sdk::runtime::Tokio)
+        .ok(); // ok() because OTLP collector might not be present in dev
+
     let filter =
         EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&cfg.app.log_level));
 
     // LOG_FORMAT=text switches to human-readable output (useful in dev).
     // Default is JSON for production / structured log ingestion.
     if std::env::var("LOG_FORMAT").as_deref() == Ok("text") {
-        tracing_subscriber::registry()
+        let subscriber = tracing_subscriber::registry()
             .with(filter)
-            .with(tracing_subscriber::fmt::layer())
-            .init();
+            .with(tracing_subscriber::fmt::layer());
+            
+        if let Some(tracer) = tracer {
+            subscriber.with(OpenTelemetryLayer::new(tracer)).init();
+        } else {
+            subscriber.init();
+        }
     } else {
-        tracing_subscriber::registry()
+        let subscriber = tracing_subscriber::registry()
             .with(filter)
-            .with(tracing_subscriber::fmt::layer().json())
-            .init();
+            .with(tracing_subscriber::fmt::layer().json());
+            
+        if let Some(tracer) = tracer {
+            subscriber.with(OpenTelemetryLayer::new(tracer)).init();
+        } else {
+            subscriber.init();
+        }
     }
 
     tracing::info!(
         host = %cfg.app.host,
         port = %cfg.app.port,
+        metrics_port = prometheus_port,
         lock_ttl_secs = %cfg.seat_lock.ttl_seconds,
         "BookMyShow backend starting"
     );
