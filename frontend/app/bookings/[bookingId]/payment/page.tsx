@@ -1,8 +1,7 @@
 'use client';
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock } from 'lucide-react';
-import PageHeader from '@/components/layout/PageHeader';
+import { Lock, X } from 'lucide-react';
 import LockTimer from '@/components/booking/LockTimer';
 import Button from '@/components/forms/Button';
 import Input from '@/components/forms/Input';
@@ -12,7 +11,7 @@ import { getBooking } from '@/api/bookings';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { initiatePayment, mockGatewayPay } from '@/api/payments';
 import { getErrorMessage } from '@/utils/error';
-import { formatPrice } from '@/utils/format';
+import { formatDateTime, formatPrice, formatSeatList } from '@/utils/format';
 import { isFutureCardExpiry, passesLuhn } from '@/utils/validation';
 import type { Booking, PaymentInitiateResponse } from '@/types/api';
 import { loadStripe } from '@stripe/stripe-js';
@@ -126,63 +125,111 @@ export default function PaymentPage({ params }: PageProps) {
 
   if (isLoading) {
     return (
-      <>
-        <PageHeader title="Payment" backHref={`/bookings/${bookingId}`} />
-        <div className="container"><div className={styles.loadingCard} /></div>
-      </>
+      <div className="container">
+        <div className={styles.loadingCard} />
+      </div>
     );
   }
 
+  const seats = booking?.seats ?? [];
+  const seatLabels = seats.length > 0
+    ? seats.map((seat) => seat.seat_number)
+    : booking?.seat_ids ?? [];
+  const subtotal = seats.length > 0
+    ? seats.reduce((sum, seat) => sum + seat.price, 0)
+    : booking?.total_amount ?? payment?.amount ?? 0;
+  const total = payment?.amount ?? booking?.total_amount ?? 0;
+  const convenienceFee = Math.max(total - subtotal, 0);
+
   return (
     <>
-      <PageHeader
-        title="Complete Payment"
-        backHref={`/bookings/${bookingId}`}
-      />
-
       <div className="container">
-        <div className={styles.layout}>
-          {/* Left: form */}
-          <div className={styles.formCard}>
-            {booking && (
-              <LockTimer
-                expiresAt={booking.expires_at}
-                label="Complete payment before"
-              />
-            )}
+        {booking && (
+          <div className={styles.timerBanner}>
+            <LockTimer
+              expiresAt={booking.expires_at}
+              label="Seats release in"
+              sublabel="Complete payment before the countdown ends"
+            />
+          </div>
+        )}
 
-            <div className={styles.form}>
-              <h3 className={styles.formTitle}>Order Summary</h3>
-              <div className={styles.summary}>
-                <div className={styles.summaryRow}>
-                  <span>Seats</span>
-                  <span>{booking?.seat_ids.join(', ')}</span>
-                </div>
-                <div className={styles.summaryRow}>
-                  <span>Amount</span>
-                  <span className={styles.amount}>{payment ? formatPrice(payment.amount) : '—'}</span>
-                </div>
+        <div className={styles.layout}>
+          <section className={styles.summaryCard} aria-label="Order summary">
+            <div className={styles.accentBar} />
+            <div className={styles.cardBody}>
+              <p className={styles.kicker}>Order Summary</p>
+              <h1 className={styles.movieTitle}>{booking?.show?.name ?? 'Cinema Ticket'}</h1>
+
+              <div className={styles.showMeta}>
+                <span>{booking?.show ? formatDateTime(booking.show.start_time) : 'Show time unavailable'}</span>
+                <span>{booking?.show?.theatre_name ?? booking?.show?.venue?.name ?? 'Venue unavailable'}</span>
+                {booking?.show && <span>Screen {booking.show.screen_number}</span>}
               </div>
 
-              <div className={styles.divider} />
+              <div className={styles.seatTable}>
+                <div className={styles.tableHeader}>
+                  <span>Seat</span>
+                  <span>Type</span>
+                  <span>Price</span>
+                </div>
+                {seats.length > 0 ? (
+                  seats.map((seat) => (
+                    <div key={seat.seat_id} className={styles.tableRow}>
+                      <span className={styles.mono}>{seat.seat_number}</span>
+                      <span>{seat.seat_type}</span>
+                      <span>{formatPrice(seat.price)}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles.tableRow}>
+                    <span className={styles.mono}>{formatSeatList(seatLabels)}</span>
+                    <span>{seatLabels.length} selected</span>
+                    <span>{formatPrice(subtotal)}</span>
+                  </div>
+                )}
+              </div>
 
-              <h3 className={styles.formTitle}>Payment Details</h3>
+              <div className={styles.totals}>
+                <div className={styles.summaryRow}>
+                  <span>Subtotal</span>
+                  <span>{formatPrice(subtotal)}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Convenience fee</span>
+                  <span>{formatPrice(convenienceFee)}</span>
+                </div>
+                <div className={styles.totalRow}>
+                  <span>Total</span>
+                  <span>{formatPrice(total)}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className={styles.formCard} aria-label="Payment details">
+            <div className={styles.accentBar} />
+            <div className={styles.form}>
+              <div className={styles.formHeader}>
+                <p className={styles.kicker}>Payment</p>
+                <h2 className={styles.formTitle}>Complete Payment</h2>
+              </div>
 
               {payment?.client_secret ? (
                 <Elements
                   stripe={stripePromise}
-                  options={{
-                    clientSecret: payment.client_secret,
+	                  options={{
+	                    clientSecret: payment.client_secret,
                     appearance: {
                       theme: 'night',
                       variables: {
-                        colorPrimary: '#e11d48',
-                        colorBackground: '#18181b',
-                        colorText: '#f4f4f5',
+                        colorPrimary: '#F5A623',
+                        colorBackground: '#1E1E23',
+                        colorText: '#F5F5F7',
                         colorDanger: '#ef4444',
-                        fontFamily: 'system-ui, sans-serif',
+                        fontFamily: 'Inter, system-ui, sans-serif',
                         spacingUnit: '4px',
-                        borderRadius: '8px',
+                        borderRadius: '4px',
                       },
                     },
                   }}
@@ -194,6 +241,7 @@ export default function PaymentPage({ params }: PageProps) {
                   <Button
                     variant="ghost"
                     onClick={() => router.push(`/bookings/${bookingId}`)}
+                    leftIcon={<X size={16} strokeWidth={1.5} />}
                     style={{ marginTop: '1rem' }}
                   >
                     Cancel Payment
@@ -254,33 +302,14 @@ export default function PaymentPage({ params }: PageProps) {
                   <Button
                     variant="ghost"
                     onClick={() => router.push(`/bookings/${bookingId}`)}
+                    leftIcon={<X size={16} strokeWidth={1.5} />}
                   >
                     Cancel Payment
                   </Button>
                 </>
               )}
             </div>
-          </div>
-
-          {/* Right: visual */}
-          <div className={styles.sideCard}>
-            <div className={styles.cardVisual}>
-              <div className={styles.cardChip} />
-              <div className={styles.cardNum}>
-                {cardNumber || '•••• •••• •••• ••••'}
-              </div>
-              <div className={styles.cardBottom}>
-                <div>
-                  <div className={styles.cardLabel}>VALID THRU</div>
-                  <div className={styles.cardExpiry}>{cardExpiry || 'MM/YY'}</div>
-                </div>
-                <div className={styles.cardBrand}>VISA</div>
-              </div>
-            </div>
-            <p className={styles.secureNote}>
-              Your payment is secured with 256-bit encryption.
-            </p>
-          </div>
+          </section>
         </div>
       </div>
 

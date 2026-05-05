@@ -1,3 +1,9 @@
+.pageWrapper {
+  background: var(--cinema-black);
+  min-height: 100vh;
+  padding-bottom: 120px; /* space for sticky bottom bar */
+}
+
 .srOnly {
   position: absolute;
   width: 1px;
@@ -10,32 +16,217 @@
   border: 0;
 }
 
-.layout {
-  display: flex;
-  gap: var(--space-6);
-  align-items: flex-start;
+/* ── Header ─────────────────────────────────────────────── */
+.headerBar {
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.gridWrap { flex: 1; min-width: 0; }
+.showTitle {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--parchment-text);
+  line-height: 1.2;
+  margin-bottom: var(--space-2);
+}
 
-.panelWrap {
-  position: sticky;
-  top: 88px;
+.showMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.showMetaItem {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted-text);
+  letter-spacing: 0.05em;
+}
+
+.showMetaDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ornament-bronze);
+}
+
+/* ── Queue Banner ───────────────────────────────────────── */
+.queueBannerWrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6) var(--space-5);
+}
+
+/* ── Grid Area ──────────────────────────────────────────── */
+.gridArea {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Sticky Bottom Bar ──────────────────────────────────── */
+.stickyBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--deep-surface);
+  border-top: 1px solid var(--antique-gold);
+  padding: var(--space-3) var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.7);
+  transition: transform 200ms ease-out;
+}
+
+.stickyBarLeft {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.stickyBarLabel {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted-text);
+  white-space: nowrap;
+}
+
+.seatChip {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--antique-gold);
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  border-radius: 3px;
+  padding: 2px 8px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.stickyBarCenter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.breakdownChip {
+  font-size: 0.75rem;
+  color: var(--stone-text);
+  white-space: nowrap;
+}
+
+.breakdownType {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.stickyBarRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
   flex-shrink: 0;
 }
 
-.queueBannerWrap {
-  margin-bottom: var(--space-5);
+.totalLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
-@media (max-width: 900px) {
-  .layout {
-    flex-direction: column;
-  }
+.totalCaption {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted-text);
+  line-height: 1;
+}
 
-  .panelWrap {
-    position: static;
-    width: 100%;
-    max-width: none;
+.totalAmount {
+  font-family: var(--font-mono);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--antique-gold);
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+}
+
+.lockBtn {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cinema-black);
+  background: var(--antique-gold);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  white-space: nowrap;
+}
+
+.lockBtn:hover:not(:disabled) {
+  background: var(--bright-gold);
+  box-shadow: 0 0 20px rgba(245, 166, 35, 0.45);
+  transform: translateY(-1px);
+}
+
+.lockBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.lockBtn:disabled {
+  background: rgba(245, 166, 35, 0.25);
+  color: rgba(245, 166, 35, 0.4);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.stickyEmpty {
+  font-size: 0.8125rem;
+  color: var(--muted-text);
+  font-style: italic;
+}
+
+@media (max-width: 700px) {
+  .stickyBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4);
+  }
+  .stickyBarRight {
+    justify-content: space-between;
+  }
+  .stickyBarCenter {
+    display: none;
+  }
+  .showTitle {
+    font-size: 1.5rem;
   }
 }

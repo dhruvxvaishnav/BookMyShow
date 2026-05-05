@@ -1,48 +1,104 @@
+/* ── Register Page — Art Deco Dark ──────────────────────── */
+
 .page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-primary);
+  background: var(--void-black);
   padding: var(--space-6);
 }
 
+/* ── Card ─────────────────────────────────────────────────── */
 .card {
-  background: var(--bg-surface);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: var(--radius-xl);
-  padding: var(--space-10) var(--space-8);
+  background: var(--deep-surface);
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   box-shadow: var(--shadow-lg);
+  position: relative;
+  border: 1px solid rgba(212, 168, 67, 0.12);
 }
 
-.logo {
+/* Corner bracket decorations */
+.card::before,
+.card::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: var(--gold-foil);
+  border-style: solid;
+  opacity: 0.55;
+}
+
+.card::before {
+  top: 10px;
+  left: 10px;
+  border-width: 1px 0 0 1px;
+}
+
+.card::after {
+  top: 10px;
+  right: 10px;
+  border-width: 1px 1px 0 0;
+}
+
+.cardInner {
+  position: relative;
+  padding: 40px;
+}
+
+.cardInner::before,
+.cardInner::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: var(--gold-foil);
+  border-style: solid;
+  opacity: 0.55;
+  bottom: 10px;
+}
+
+.cardInner::before {
+  left: 10px;
+  border-width: 0 0 1px 1px;
+}
+
+.cardInner::after {
+  right: 10px;
+  border-width: 0 1px 1px 0;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.logoArea {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: var(--space-3);
-  color: var(--accent-gold);
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: var(--space-8);
-  justify-content: center;
+  margin-bottom: var(--space-5);
+}
+
+.logoIcon {
+  color: var(--antique-gold);
+}
+
+.divider {
+  width: 80px;
+  margin: 0 auto var(--space-5);
 }
 
 .title {
-  font-size: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--parchment-text);
   text-align: center;
-  margin: 0 0 var(--space-2);
+  margin: 0 0 var(--space-6);
+  line-height: 1.2;
 }
 
-.subtitle {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  text-align: center;
-  margin: 0 0 var(--space-8);
-}
-
+/* ── Form ─────────────────────────────────────────────────── */
 .form {
   display: flex;
   flex-direction: column;
@@ -56,10 +112,12 @@
 }
 
 .label {
-  font-size: 0.8125rem;
+  font-family: var(--font-body);
+  font-size: 11px;
   font-weight: 600;
-  color: var(--text-secondary);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted-text);
 }
 
 .inputWrap {
@@ -71,80 +129,114 @@
 .inputIcon {
   position: absolute;
   left: 12px;
-  color: var(--text-muted);
+  color: var(--stone-text);
   pointer-events: none;
+  z-index: 1;
+}
+
+.inputIconRight {
+  position: absolute;
+  right: 12px;
+  color: var(--stone-text);
+  cursor: pointer;
+  z-index: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color var(--transition-fast);
+}
+
+.inputIconRight:hover {
+  color: var(--antique-gold);
 }
 
 .input {
   width: 100%;
-  background: var(--bg-elevated);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--elevated-surface);
+  border: 1px solid rgba(212, 168, 67, 0.15);
   border-radius: var(--radius-md);
-  padding: 10px 12px 10px 38px;
+  padding: 11px 40px 11px 40px;
   font-size: 0.9375rem;
-  color: var(--text-primary);
+  color: var(--parchment-text);
   outline: none;
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   font-family: var(--font-body);
   box-sizing: border-box;
 }
 
 .input::placeholder {
-  color: var(--text-muted);
+  color: var(--muted-text);
 }
 
 .input:focus {
-  border-color: var(--accent-gold);
+  border-color: var(--antique-gold);
+  box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.18);
 }
 
+.inputPassword {
+  padding-right: 40px;
+}
+
+/* ── Error ────────────────────────────────────────────────── */
 .error {
   font-size: 0.8125rem;
   color: var(--danger);
   text-align: center;
   padding: var(--space-2) var(--space-3);
-  background: rgba(239, 68, 68, 0.08);
+  background: rgba(123, 31, 31, 0.2);
+  border: 1px solid rgba(123, 31, 31, 0.4);
   border-radius: var(--radius-md);
   margin: 0;
+  font-family: var(--font-body);
 }
 
+/* ── Primary Button ───────────────────────────────────────── */
 .button {
   width: 100%;
-  padding: 12px;
-  background: var(--accent-gold);
-  color: #000;
+  padding: 13px 12px;
+  background: var(--antique-gold);
+  color: var(--void-black);
   border: none;
   border-radius: var(--radius-md);
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 700;
-  cursor: pointer;
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
   font-family: var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   margin-top: var(--space-2);
 }
 
 .button:hover:not(:disabled) {
-  opacity: 0.9;
+  background: var(--gold-foil);
+  box-shadow: var(--shadow-gold);
   transform: translateY(-1px);
 }
 
 .button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
+/* ── Footer Links ─────────────────────────────────────────── */
 .footer {
   text-align: center;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--stone-text);
   margin: var(--space-6) 0 0;
+  font-family: var(--font-body);
 }
 
 .link {
-  color: var(--accent-gold);
+  color: var(--antique-gold);
   text-decoration: none;
   font-weight: 600;
+  transition: color var(--transition-fast);
 }
 
 .link:hover {
-  text-decoration: underline;
+  color: var(--bright-gold);
 }

@@ -1,70 +1,105 @@
+/* ── Button — Art Deco Dark ───────────────────────────────── */
+
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: 700;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast),
-    color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
   white-space: nowrap;
   text-decoration: none;
 }
 
 .btn:active:not(:disabled) { transform: scale(0.98); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Sizes */
-.sm { padding: 6px 14px; font-size: 0.8125rem; }
-.md { padding: 10px 20px; font-size: 0.9375rem; }
-.lg { padding: 14px 28px; font-size: 1rem; }
+/* ── Sizes ────────────────────────────────────────────────── */
+.sm {
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 
-/* Primary — gold */
+.md {
+  padding: 10px 20px;
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lg {
+  padding: 14px 28px;
+  font-size: 0.875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── Primary — antique-gold bg, void-black text ────────────── */
 .primary {
-  background: var(--accent-gold);
-  border-color: var(--accent-gold);
-  color: #0D0D0F;
-}
-.primary:hover:not(:disabled) {
-  background: var(--accent-gold-dim);
-  border-color: var(--accent-gold-dim);
-  box-shadow: var(--shadow-gold);
+  background: var(--antique-gold);
+  border-color: var(--antique-gold);
+  color: var(--void-black);
 }
 
-/* Secondary — outlined */
+.primary:hover:not(:disabled) {
+  background: var(--gold-foil);
+  border-color: var(--gold-foil);
+  box-shadow: var(--shadow-gold);
+  transform: translateY(-1px);
+}
+
+/* ── Secondary — subtle outline ───────────────────────────── */
 .secondary {
   background: transparent;
-  border-color: rgba(255,255,255,0.15);
-  color: var(--text-primary);
-}
-.secondary:hover:not(:disabled) {
-  background: var(--bg-elevated);
-  border-color: rgba(255,255,255,0.25);
+  border-color: rgba(212, 168, 67, 0.25);
+  color: var(--parchment-text);
 }
 
-/* Danger */
+.secondary:hover:not(:disabled) {
+  background: rgba(212, 168, 67, 0.06);
+  border-color: rgba(212, 168, 67, 0.45);
+  color: var(--antique-gold);
+}
+
+/* ── Danger — crimson ─────────────────────────────────────── */
 .danger {
-  background: rgba(239,68,68,0.12);
-  border-color: rgba(239,68,68,0.3);
+  background: rgba(123, 31, 31, 0.18);
+  border-color: rgba(239, 68, 68, 0.3);
   color: #EF4444;
 }
+
 .danger:hover:not(:disabled) {
-  background: rgba(239,68,68,0.2);
+  background: rgba(123, 31, 31, 0.3);
   border-color: #EF4444;
 }
 
-/* Ghost */
+/* ── Ghost — transparent + gold border ───────────────────── */
 .ghost {
   background: transparent;
-  border-color: transparent;
-  color: var(--text-secondary);
-}
-.ghost:hover:not(:disabled) {
-  background: var(--bg-surface);
-  color: var(--text-primary);
+  border-color: rgba(212, 168, 67, 0.4);
+  color: var(--gold-foil);
 }
 
-.icon { display: flex; align-items: center; flex-shrink: 0; }
+.ghost:hover:not(:disabled) {
+  background: rgba(212, 168, 67, 0.07);
+  border-color: var(--antique-gold);
+  color: var(--antique-gold);
+}
+
+/* ── Icon slot ────────────────────────────────────────────── */
+.icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}

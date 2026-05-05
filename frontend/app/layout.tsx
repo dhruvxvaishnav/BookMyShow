@@ -5,8 +5,8 @@ import AppShell from '@/components/layout/AppShell';
 import { AuthProvider } from '@/contexts/AuthContext';
 
 export const metadata: Metadata = {
-  title: 'BookMyShow — Cinematic Seat Booking',
-  description: 'Book your favourite movie seats with a premium cinema experience.',
+  title: 'Cineplex — Royal Cinema Booking',
+  description: 'Book your seats at the grandest cinema experience. Dark. Theatrical. Gold.',
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>",
   },

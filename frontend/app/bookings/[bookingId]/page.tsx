@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock, CreditCard, X, AlertTriangle } from 'lucide-react';
+import { CreditCard, X, AlertTriangle } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import LockTimer from '@/components/booking/LockTimer';
 import Modal from '@/components/layout/Modal';
@@ -10,10 +10,10 @@ import Badge from '@/components/common/Badge';
 import { BookingSkeleton } from '@/components/common/LoadingSkeleton';
 import EmptyState from '@/components/common/EmptyState';
 import { useToast } from '@/components/layout/Toast';
-import { getBooking, extendLock, cancelBooking, releaseLock } from '@/api/bookings';
+import { getBooking, extendLock, cancelBooking } from '@/api/bookings';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { getErrorMessage } from '@/utils/error';
-import { formatPrice, formatSeatList, formatDateTime } from '@/utils/format';
+import { formatPrice, formatDateTime } from '@/utils/format';
 import type { Booking, BookingStatus } from '@/types/api';
 import styles from './page.module.css';
 
@@ -144,15 +144,17 @@ export default function BookingDetailsPage({ params }: PageProps) {
 
   return (
     <>
-      <PageHeader
-        title="Your Booking"
-        subtitle={booking.show ? `${booking.show.name} · ${booking.show.theatre_name}` : undefined}
-        backHref="/"
-        actions={<Badge variant={badgeVariant}>{booking.status}</Badge>}
-      />
-
-      <div className="container">
+      <div className={`container ${styles.page}`}>
         <div className={styles.card}>
+          {/* Card header */}
+          <div className={styles.cardHeader}>
+            <div>
+              <div className={styles.bookingIdLabel}>Booking Reference</div>
+              <div className={styles.bookingId}>{bookingId.slice(0, 16).toUpperCase()}</div>
+            </div>
+            <Badge variant={badgeVariant}>{booking.status}</Badge>
+          </div>
+
           {/* Lock Timer */}
           {isPending && (
             <div className={styles.timerSection}>
@@ -167,13 +169,11 @@ export default function BookingDetailsPage({ params }: PageProps) {
           {/* Show details */}
           {booking.show && (
             <div className={styles.showSection}>
-              <div className={styles.showInfo}>
-                <h2 className={styles.showName}>{booking.show.name}</h2>
-                <p className={styles.showMeta}>
-                  {booking.show.theatre_name} · Screen {booking.show.screen_number}
-                </p>
-                <p className={styles.showTime}>{formatDateTime(booking.show.start_time)}</p>
-              </div>
+              <h2 className={styles.showName}>{booking.show.name}</h2>
+              <p className={styles.showMeta}>
+                {booking.show.theatre_name} · Screen {booking.show.screen_number}
+              </p>
+              <p className={styles.showTime}>{formatDateTime(booking.show.start_time)}</p>
             </div>
           )}
 

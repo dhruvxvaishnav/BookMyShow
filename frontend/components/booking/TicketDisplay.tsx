@@ -1,6 +1,7 @@
 'use client';
+import { QRCodeSVG } from 'qrcode.react';
 import type { Booking } from '@/types/api';
-import { formatDateTime, formatPrice, formatSeatList, formatBookingId } from '@/utils/format';
+import { formatDateTime, formatPrice, formatBookingId } from '@/utils/format';
 import styles from './TicketDisplay.module.css';
 
 interface TicketDisplayProps {
@@ -10,67 +11,67 @@ interface TicketDisplayProps {
 export default function TicketDisplay({ booking }: TicketDisplayProps) {
   const show = booking.show;
   const seats = booking.seats ?? [];
+  const seatLabels = seats.length > 0
+    ? seats.map((seat) => seat.seat_number)
+    : booking.seat_ids.map((seatId) => seatId.slice(0, 8));
 
   return (
     <div className={styles.ticket}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.star} />
-        <h2 className={styles.title}>Booking Confirmed!</h2>
-        <div className={styles.star} />
-      </div>
+      <div className={styles.accentStripe} />
 
-      {/* Movie info */}
-      <div className={styles.movie}>
-        <h3 className={styles.movieName}>{show?.name ?? 'Show'}</h3>
-        <p className={styles.movieDetail}>
-          {show?.theatre_name} · Screen {show?.screen_number}
-        </p>
-        <p className={styles.movieTime}>
-          {show ? formatDateTime(show.start_time) : ''}
-        </p>
-      </div>
-
-      <div className={styles.dashes}>
-        <span className={styles.dashCircle} />
-        <span className={styles.dashLine} />
-        <span className={styles.dashCircle} />
-      </div>
-
-      {/* Seats */}
-      <div className={styles.section}>
-        <span className={styles.sectionLabel}>Seats</span>
-        <span className={styles.seatList}>
-          {seats.length > 0 ? formatSeatList(seats.map((s) => s.seat_number)) : formatSeatList(booking.seat_ids)}
-        </span>
-      </div>
-
-      <div className={styles.dashes}>
-        <span className={styles.dashCircle} />
-        <span className={styles.dashLine} />
-        <span className={styles.dashCircle} />
-      </div>
-
-      {/* Payment details */}
-      <div className={styles.details}>
-        <div className={styles.detailRow}>
-          <span>Amount Paid</span>
-          <span className={styles.amount}>{formatPrice(booking.total_amount)}</span>
+      <div className={styles.mainStub}>
+        <div className={styles.header}>
+          <p className={styles.kicker}>Admit One</p>
+          <h2 className={styles.movieName}>{show?.name ?? 'Show'}</h2>
         </div>
-        <div className={styles.detailRow}>
-          <span>Booking ID</span>
-          <span className={styles.bookingId}>{formatBookingId(booking.booking_id)}</span>
-        </div>
-        {booking.payment_id && (
-          <div className={styles.detailRow}>
-            <span>Payment ID</span>
-            <span className={styles.paymentId}>{booking.payment_id.slice(0, 12)}...</span>
+
+        <div className={styles.ticketGrid}>
+          <div>
+            <span className={styles.sectionLabel}>Venue</span>
+            <p>{show?.theatre_name ?? 'Cineplex'} · Screen {show?.screen_number ?? '-'}</p>
           </div>
-        )}
+          <div>
+            <span className={styles.sectionLabel}>Show Time</span>
+            <p className={styles.mono}>{show ? formatDateTime(show.start_time) : '-'}</p>
+          </div>
+        </div>
+
+        <div className={styles.seatSection}>
+          <span className={styles.sectionLabel}>Seats</span>
+          <div className={styles.seatChips}>
+            {seatLabels.map((seat) => (
+              <span key={seat} className={styles.seatChip}>{seat}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.detailFooter}>
+          <div>
+            <span className={styles.sectionLabel}>Amount Paid</span>
+            <p className={styles.amount}>{formatPrice(booking.total_amount)}</p>
+          </div>
+          <div>
+            <span className={styles.sectionLabel}>Booking Ref</span>
+            <p className={styles.bookingId}>{formatBookingId(booking.booking_id)}</p>
+          </div>
+        </div>
       </div>
 
-      <div className={styles.footer}>
-        <p>Thank you for booking with BookMyShow</p>
+      <div className={styles.perforation} aria-hidden="true" />
+
+      <div className={styles.qrStub}>
+        <QRCodeSVG
+          value={booking.booking_id}
+          size={112}
+          bgColor="transparent"
+          fgColor="#F5A623"
+          level="M"
+        />
+        <span className={styles.qrLabel}>Entry Code</span>
+        <span className={styles.qrRef}>{formatBookingId(booking.booking_id)}</span>
+        {booking.payment_id && (
+          <span className={styles.paymentId}>{booking.payment_id.slice(0, 12)}...</span>
+        )}
       </div>
     </div>
   );

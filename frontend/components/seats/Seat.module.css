@@ -2,8 +2,8 @@
 
 .seat {
   width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
+  height: 30px;
+  border-radius: 4px 4px 0 0;
   border: 1px solid transparent;
   display: flex;
   align-items: center;
@@ -21,66 +21,83 @@
 .seat:hover:not(:disabled) { transform: scale(1.1); }
 .seat:active:not(:disabled) { animation: seatBounce 200ms ease-out; }
 
-@keyframes seatBounce {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(0.95); }
-  70%  { transform: scale(1.02); }
-  100% { transform: scale(1); }
-}
-
 .seat:disabled { cursor: not-allowed; }
 
 .seat:focus-visible {
-  outline: 2px solid var(--text-primary);
+  outline: 2px solid var(--antique-gold);
   outline-offset: 3px;
 }
 
 .label {
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0;
   pointer-events: none;
   user-select: none;
+  line-height: 1;
 }
 
 /* ── States ──────────────────────────────────────────────── */
 .available {
-  background: var(--seat-available);
-  border-color: var(--seat-available);
-  color: var(--bg-primary);
+  background: rgba(34, 197, 94, 0.15);
+  border-color: #22C55E;
+  color: #22C55E;
+}
+
+.available.typePremium {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: #A855F7;
+  color: #A855F7;
+}
+
+.available.typeRecliner {
+  background: rgba(6, 182, 212, 0.12);
+  border-color: #06B6D4;
+  color: #06B6D4;
 }
 
 .selected {
-  background: var(--bg-surface);
-  border-color: var(--accent-gold);
-  color: var(--accent-gold);
+  background: var(--antique-gold);
+  border-color: var(--antique-gold);
+  color: var(--cinema-black);
+  box-shadow: 0 0 10px rgba(245, 166, 35, 0.5), 0 0 20px rgba(245, 166, 35, 0.25);
 }
 
 .locked-you {
   background: var(--seat-locked-you);
   border-color: var(--seat-locked-you);
-  color: var(--bg-primary);
-  box-shadow: 0 0 8px var(--accent-gold-glow);
+  color: var(--cinema-black);
+  box-shadow: 0 0 10px rgba(245, 166, 35, 0.5), 0 0 20px rgba(245, 166, 35, 0.25);
   animation: lockAcquiredPulse 400ms ease-out forwards;
 }
 
 @keyframes lockAcquiredPulse {
-  0%   { box-shadow: 0 0 0px var(--accent-gold-glow); }
-  50%  { box-shadow: 0 0 24px var(--accent-gold-glow); }
-  100% { box-shadow: 0 0 12px var(--accent-gold-glow); }
+  0%   { box-shadow: 0 0 0px rgba(245, 166, 35, 0); }
+  50%  { box-shadow: 0 0 24px rgba(245, 166, 35, 0.6); }
+  100% { box-shadow: 0 0 12px rgba(245, 166, 35, 0.4); }
 }
 
 .locked-other {
-  background: var(--seat-locked-other);
-  border-color: var(--seat-locked-other);
-  color: var(--text-primary);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: rgba(239, 68, 68, 0.6);
+  cursor: not-allowed;
 }
 
 .booked {
-  background: var(--seat-booked);
-  border-color: var(--seat-booked);
-  color: var(--bg-surface);
+  background: rgba(107, 114, 128, 0.1);
+  border-color: rgba(107, 114, 128, 0.25);
+  color: rgba(107, 114, 128, 0.4);
+  cursor: not-allowed;
+}
+
+.booked.typePremium {
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.booked.typeRecliner {
+  border-color: rgba(6, 182, 212, 0.2);
 }
 
 /* Conflict highlight */
@@ -92,7 +109,7 @@
 
 @keyframes conflictPulse {
   from { outline-color: #EF4444; }
-  to   { outline-color: rgba(239,68,68,0.4); }
+  to   { outline-color: rgba(239, 68, 68, 0.4); }
 }
 
 /* ── Tooltip ────────────────────────────────────────────── */
@@ -101,8 +118,8 @@
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--bg-elevated);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--elevated-surface);
+  border: 1px solid rgba(245, 166, 35, 0.2);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
   display: flex;
@@ -112,13 +129,10 @@
   z-index: 50;
   pointer-events: none;
   box-shadow: var(--shadow-md);
-  animation: fadeIn 100ms ease-out;
   opacity: 0;
   visibility: hidden;
   transition: opacity var(--transition-fast), visibility var(--transition-fast);
 }
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .wrapper:hover .tooltip,
 .wrapper:focus-within .tooltip {
@@ -129,12 +143,13 @@
 .tooltip strong {
   font-family: var(--font-mono);
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--antique-gold);
+  font-weight: 700;
 }
 
 .tooltip span {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--stone-text);
 }
 
 .srOnly {

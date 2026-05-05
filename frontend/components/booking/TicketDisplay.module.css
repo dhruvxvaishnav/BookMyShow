@@ -1,169 +1,202 @@
 .ticket {
-  background: var(--bg-surface);
-  border: 1px solid rgba(245,166,35,0.25);
-  border-radius: var(--radius-xl);
+  position: relative;
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) 1px 180px;
+  max-width: 760px;
+  width: 100%;
+  min-height: 300px;
+  background: var(--deep-surface);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-lg), var(--shadow-gold);
-  max-width: 480px;
-  width: 100%;
-  animation: ticketIn 400ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: ticketIn 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 @keyframes ticketIn {
-  from { opacity: 0; transform: scale(0.92) translateY(20px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity: 0; transform: translateY(40px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Header */
-.header {
-  background: linear-gradient(135deg, rgba(245,166,35,0.15), rgba(184,134,11,0.08));
-  padding: var(--space-5) var(--space-6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  border-bottom: 1px solid rgba(245,166,35,0.15);
+.accentStripe {
+  background: linear-gradient(to bottom, var(--royal-crimson), var(--antique-gold), var(--royal-crimson));
 }
 
-.star {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent-gold);
-  opacity: 0.7;
-}
-
-.title {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--accent-gold);
-}
-
-/* Movie */
-.movie {
-  padding: var(--space-6);
-  text-align: center;
+.mainStub {
+  padding: var(--space-8);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-6);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.kicker,
+.sectionLabel,
+.qrLabel {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-foil);
 }
 
 .movieName {
+  margin: 0;
   font-family: var(--font-display);
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.02em;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.05;
+  color: var(--parchment-text);
 }
 
-.movieDetail {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+.ticketGrid,
+.detailFooter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
 }
 
-.movieTime {
+.ticketGrid p,
+.detailFooter p {
+  margin: var(--space-1) 0 0;
+  color: var(--stone-text);
+}
+
+.mono,
+.bookingId,
+.paymentId,
+.qrRef {
   font-family: var(--font-mono);
-  font-size: 0.875rem;
-  color: var(--accent-gold);
 }
 
-/* Dashes */
-.dashes {
-  display: flex;
-  align-items: center;
-  padding: 0 var(--space-4);
-}
-
-.dashCircle {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--bg-primary);
-  border: 1px solid rgba(255,255,255,0.08);
-  flex-shrink: 0;
-}
-
-.dashLine {
-  flex: 1;
-  height: 1px;
-  border-top: 1px dashed rgba(255,255,255,0.1);
-}
-
-/* Sections */
-.section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-5) var(--space-6);
-}
-
-.sectionLabel {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-.seatList {
-  font-family: var(--font-mono);
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  text-align: center;
-}
-
-/* Details */
-.details {
-  padding: var(--space-5) var(--space-6);
+.seatSection {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  padding: var(--space-5) 0;
+  border-top: 1px solid rgba(245, 166, 35, 0.12);
+  border-bottom: 1px solid rgba(245, 166, 35, 0.12);
 }
 
-.detailRow {
+.seatChips {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.seatChip {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 5px 10px;
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  border-radius: var(--radius-sm);
+  color: var(--antique-gold);
+  font-family: var(--font-mono);
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-weight: 700;
 }
 
 .amount {
+  color: var(--antique-gold) !important;
   font-family: var(--font-mono);
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--accent-gold);
 }
 
 .bookingId {
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
+  color: var(--parchment-text) !important;
   font-weight: 700;
-  color: var(--text-primary);
   letter-spacing: 0.05em;
 }
 
-.paymentId {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--text-muted);
+.perforation {
+  width: 1px;
+  background-image: linear-gradient(to bottom, rgba(245, 166, 35, 0.36) 50%, transparent 50%);
+  background-size: 1px 14px;
 }
 
-/* Footer */
-.footer {
-  background: rgba(245,166,35,0.06);
-  border-top: 1px solid rgba(245,166,35,0.12);
-  padding: var(--space-3) var(--space-6);
+.qrStub {
+  position: relative;
+  padding: var(--space-8) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  background:
+    radial-gradient(circle at 50% 0, rgba(245, 166, 35, 0.08), transparent 42%),
+    rgba(0, 0, 0, 0.18);
   text-align: center;
 }
 
-.footer p {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-style: italic;
+.qrStub::before,
+.qrStub::after {
+  content: '';
+  position: absolute;
+  left: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--void-black);
+  border: 1px solid rgba(245, 166, 35, 0.22);
+}
+
+.qrStub::before {
+  top: -9px;
+}
+
+.qrStub::after {
+  bottom: -9px;
+}
+
+.qrRef {
+  color: var(--parchment-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.paymentId {
+  color: var(--muted-text);
+  font-size: 0.6875rem;
+}
+
+@media (max-width: 720px) {
+  .ticket {
+    grid-template-columns: 8px 1fr;
+  }
+
+  .perforation {
+    display: none;
+  }
+
+  .qrStub {
+    grid-column: 1 / -1;
+    border-top: 1px dashed rgba(245, 166, 35, 0.26);
+  }
+
+  .qrStub::before,
+  .qrStub::after {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .mainStub {
+    padding: var(--space-5);
+  }
+
+  .ticketGrid,
+  .detailFooter {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media print {
@@ -174,45 +207,22 @@
     border: 2px solid #ccc;
     max-width: none;
     width: 100%;
-    margin: 0 auto;
   }
 
-  .title, .movieName, .movieTime, .amount, .bookingId {
-    color: #000;
+  .accentStripe {
+    background: #ccc;
   }
 
-  .seatList {
-    color: #000;
+  .movieName,
+  .bookingId,
+  .amount,
+  .qrRef {
+    color: #000 !important;
   }
 
-  .dashCircle {
-    background: #fff;
-    border-color: #ccc;
-  }
-
-  .dashLine {
-    border-color: #ccc;
-  }
-
-  .header {
-    background: none;
-    border-bottom: 2px solid #ccc;
-  }
-
-  .footer {
-    background: none;
-    border-top: 2px solid #ccc;
-  }
-
-  .footer p {
-    color: #555;
-  }
-  
-  .movieDetail, .sectionLabel, .detailRow, .paymentId {
+  .ticketGrid p,
+  .detailFooter p,
+  .paymentId {
     color: #333;
-  }
-  
-  .star {
-    background: #000;
   }
 }

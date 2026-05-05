@@ -1,21 +1,72 @@
+/* ── Badge — Art Deco Dark ────────────────────────────────── */
+
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 100px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   white-space: nowrap;
+  border: 1px solid transparent;
 }
 
-.success  { background: rgba(34,197,94,0.15);   color: #22C55E; }
-.error    { background: rgba(239,68,68,0.15);    color: #EF4444; }
-.warning  { background: rgba(245,158,11,0.15);   color: #F59E0B; }
-.info     { background: rgba(59,130,246,0.15);  color: #3B82F6; }
-.muted    { background: rgba(107,114,128,0.15); color: #9CA3AF; }
-.gold     { background: rgba(245,166,35,0.15);  color: #F5A623; }
-.purple   { background: rgba(168,85,247,0.15);  color: #A855F7; }
-.cyan     { background: rgba(6,182,212,0.15);  color: #06B6D4; }
+/* Success — green tint */
+.success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22C55E;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+/* Error / danger — crimson tint */
+.error {
+  background: rgba(123, 31, 31, 0.2);
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+/* Warning — amber tint */
+.warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.22);
+}
+
+/* Info — blue tint */
+.info {
+  background: rgba(59, 130, 246, 0.1);
+  color: #60A5FA;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Muted — stone */
+.muted {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--stone-text);
+  border-color: rgba(107, 114, 128, 0.2);
+}
+
+/* Gold — antique gold */
+.gold {
+  background: rgba(245, 166, 35, 0.1);
+  color: var(--antique-gold);
+  border-color: rgba(245, 166, 35, 0.22);
+}
+
+/* Purple */
+.purple {
+  background: rgba(168, 85, 247, 0.1);
+  color: #A855F7;
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+/* Cyan */
+.cyan {
+  background: rgba(6, 182, 212, 0.1);
+  color: #06B6D4;
+  border-color: rgba(6, 182, 212, 0.2);
+}

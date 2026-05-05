@@ -2,12 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, BarChart2, TrendingUp } from 'lucide-react';
-import PageHeader from '@/components/layout/PageHeader';
-import Button from '@/components/forms/Button';
-import EmptyState from '@/components/common/EmptyState';
-import Badge from '@/components/common/Badge';
-import { CardSkeleton } from '@/components/common/LoadingSkeleton';
+import {
+  Plus, DollarSign, CheckCircle, Lock, CalendarDays,
+  ChevronLeft, ChevronRight, Filter, Film,
+} from 'lucide-react';
 import { getShows, getShowAvailability } from '@/api/shows';
 import { getAdminBookings } from '@/api/admin';
 import { useRequireAdmin } from '@/hooks/useRequireAuth';
@@ -15,12 +13,16 @@ import type { Show, ShowAvailability, Booking } from '@/types/api';
 import { formatDateTime, formatPrice } from '@/utils/format';
 import styles from './page.module.css';
 
+const PAGE_SIZE = 8;
+
 export default function AdminDashboardPage() {
   const isAdmin = useRequireAdmin();
+  const router = useRouter();
   const [shows, setShows] = useState<Show[]>([]);
   const [availabilities, setAvailabilities] = useState<Record<string, ShowAvailability>>({});
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
     Promise.all([
@@ -42,138 +44,204 @@ export default function AdminDashboardPage() {
 
   if (!isAdmin) return null;
 
-  const todayBookings = bookings.filter((b) => b.status === 'Success');
-  const totalRevenue = todayBookings.reduce((sum, b) => sum + b.total_amount, 0);
+  const successBookings = bookings.filter((b) => b.status === 'Success');
+  const totalRevenue = successBookings.reduce((sum, b) => sum + b.total_amount, 0);
   const activeLocks = bookings.filter((b) => b.status === 'Pending' || b.status === 'PaymentPending').length;
 
+  // Pagination for shows table
+  const totalPages = Math.ceil(shows.length / PAGE_SIZE);
+  const pagedShows = shows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
   return (
-    <>
-      <PageHeader
-        title="Admin Dashboard"
-        subtitle="Manage shows, bookings, and analytics"
-        actions={
-          <Link href="/admin/shows/new">
-            <Button variant="primary" leftIcon={<Plus size={16} strokeWidth={1.5} />}>
-              Create Show
-            </Button>
-          </Link>
-        }
-      />
+    <div className={styles.page}>
+      {/* Header */}
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.pageTitle}>Performance Overview</h1>
+          <p className={styles.pageSubtitle}>Last updated: Just now</p>
+        </div>
+        <Link href="/admin/shows/new" className={styles.createBtn}>
+          <Plus size={16} strokeWidth={2} />
+          Create Show
+        </Link>
+      </div>
 
-      <div className="container">
-        {/* Stats cards */}
-        <div className={styles.statsRow}>
-          <StatCard label="Total Shows" value={shows.length.toString()} icon={<BarChart2 size={20} strokeWidth={1.5} />} />
-          <StatCard label="Bookings Today" value={todayBookings.length.toString()} icon={<TrendingUp size={20} strokeWidth={1.5} />} />
-          <StatCard label="Revenue" value={formatPrice(totalRevenue)} icon={<TrendingUp size={20} strokeWidth={1.5} />} />
-          <StatCard label="Active Locks" value={activeLocks.toString()} icon={<BarChart2 size={20} strokeWidth={1.5} />} />
+      {/* KPI Cards */}
+      <div className={styles.kpiRow}>
+        <KpiCard
+          label="Total Revenue"
+          value={formatPrice(totalRevenue)}
+          note="+12.5% vs last week"
+          noteType="success"
+          icon={<DollarSign size={22} strokeWidth={1.5} />}
+          iconColor="#F5A623"
+          iconBg="rgba(245,166,35,0.12)"
+        />
+        <KpiCard
+          label="Active Bookings"
+          value={successBookings.length.toString()}
+          note="Confirmed bookings"
+          noteType="success"
+          icon={<CheckCircle size={22} strokeWidth={1.5} />}
+          iconColor="#22C55E"
+          iconBg="rgba(34,197,94,0.12)"
+        />
+        <KpiCard
+          label="Currently Locked"
+          value={activeLocks.toString()}
+          note="Awaiting payment"
+          noteType="warning"
+          icon={<Lock size={22} strokeWidth={1.5} />}
+          iconColor="#F59E0B"
+          iconBg="rgba(245,158,11,0.12)"
+        />
+        <KpiCard
+          label="Total Shows"
+          value={shows.length.toString()}
+          note="Scheduled today"
+          noteType="info"
+          icon={<CalendarDays size={22} strokeWidth={1.5} />}
+          iconColor="#3B82F6"
+          iconBg="rgba(59,130,246,0.12)"
+        />
+      </div>
+
+      {/* Show Performance Table */}
+      <div className={styles.tableSection}>
+        <div className={styles.tableSectionHeader}>
+          <span className="marquee-label">Show Performance</span>
+          <button className={styles.filterBtn}>
+            <Filter size={14} strokeWidth={1.5} />
+            Filter
+          </button>
         </div>
 
-        {/* Shows table */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Shows</h2>
+        <div className={styles.table}>
+          <div className={styles.tableHead}>
+            <span>Show Name</span>
+            <span>Occupancy</span>
+            <span>Revenue</span>
+            <span>Status</span>
+          </div>
+
           {isLoading ? (
-            <div className={styles.table}>
-              {[...Array(3)].map((_, i) => <CardSkeleton key={i} />)}
-            </div>
-          ) : shows.length === 0 ? (
-            <EmptyState
-              title="No shows yet"
-              description="Create your first show to get started."
-              icon="clapperboard"
-              action={
-                <Link href="/admin/shows/new">
-                  <Button variant="primary" leftIcon={<Plus size={16} strokeWidth={1.5} />}>
-                    Create Show
-                  </Button>
-                </Link>
-              }
-            />
-          ) : (
-            <div className={styles.table}>
-              <div className={styles.tableHead}>
-                <span>Show</span>
-                <span>Screen</span>
-                <span>Time</span>
-                <span>Occupancy</span>
-                <span>Actions</span>
-              </div>
-              {shows.map((show) => {
-                const avail = availabilities[show.show_id];
-                const occupancy = avail?.occupancy_percent ?? 0;
-                return (
-                  <div key={show.show_id} className={styles.tableRow}>
-                    <div className={styles.showInfo}>
-                      <span className={styles.showName}>{show.name}</span>
-                      <span className={styles.showTheatre}>{show.theatre_name}</span>
-                    </div>
-                    <span className={styles.mono}>{show.screen_number}</span>
-                    <span className={styles.mono}>{formatDateTime(show.start_time)}</span>
-                    <div className={styles.occupancy}>
-                      <div className={styles.occupancyBar}>
-                        <div className={styles.occupancyFill} style={{ width: `${occupancy}%` }} />
-                      </div>
-                      <span>{occupancy}%</span>
-                    </div>
-                    <Link href={`/admin/shows/${show.show_id}`}>
-                      <Button variant="secondary" size="sm">
-                        Analytics
-                      </Button>
-                    </Link>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Recent bookings */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Recent Bookings</h2>
-          {bookings.length === 0 ? (
-            <p className={styles.emptyText}>No bookings yet.</p>
-          ) : (
-            <div className={styles.table}>
-              <div className={styles.tableHead}>
-                <span>Booking ID</span>
-                <span>Show</span>
-                <span>Status</span>
-                <span>Amount</span>
-              </div>
-              {bookings.slice(0, 10).map((b) => (
-                <div key={b.booking_id} className={styles.tableRow}>
-                  <Link href={`/admin/bookings/${b.booking_id}`} className={styles.mono}>
-                    {b.booking_id.slice(0, 8)}...
-                  </Link>
-                  <span className={styles.mono}>{b.show_id.slice(0, 8)}...</span>
-                  <Badge variant={statusVariant(b.status)}>{b.status}</Badge>
-                  <span className={styles.mono}>{formatPrice(b.total_amount)}</span>
+            <>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className={`${styles.tableRow} ${styles.shimmerRow}`}>
+                  <div className={styles.shimmerCell} />
+                  <div className={styles.shimmerCell} style={{ width: '60%' }} />
+                  <div className={styles.shimmerCell} style={{ width: '40%' }} />
+                  <div className={styles.shimmerCell} style={{ width: '30%' }} />
                 </div>
               ))}
-            </div>
+            </>
+          ) : pagedShows.length === 0 ? (
+            <div className={styles.emptyRow}>No shows found. Create one to get started.</div>
+          ) : (
+            pagedShows.map((show) => {
+              const avail = availabilities[show.show_id];
+              const occupancy = avail?.occupancy_percent ?? 0;
+              const revenue = successBookings
+                .filter((b) => b.show_id === show.show_id)
+                .reduce((sum, b) => sum + b.total_amount, 0);
+              const isActive = show.end_time > Date.now() / 1000;
+              return (
+                <div
+                  key={show.show_id}
+                  className={styles.tableRow}
+                  onClick={() => router.push(`/admin/shows/${show.show_id}`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && router.push(`/admin/shows/${show.show_id}`)}
+                >
+                  <div className={styles.showCell}>
+                    <div className={styles.showIcon}>
+                      <Film size={14} strokeWidth={1.5} />
+                    </div>
+                    <div className={styles.showInfo}>
+                      <span className={styles.showName}>{show.name}</span>
+                      <span className={styles.showMeta}>
+                        {show.theatre_name} · Screen {show.screen_number}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={styles.occupancyCell}>
+                    <div className={styles.occupancyBar}>
+                      <div
+                        className={styles.occupancyFill}
+                        style={{
+                          width: `${occupancy}%`,
+                          background: occupancy > 70 ? '#22C55E' : occupancy > 40 ? '#F59E0B' : '#EF4444',
+                        }}
+                      />
+                    </div>
+                    <span className={styles.occupancyPct}>{occupancy}%</span>
+                  </div>
+
+                  <span className={styles.revenueMono}>{formatPrice(revenue)}</span>
+
+                  <span className={`${styles.statusBadge} ${isActive ? styles.statusActive : styles.statusCancelled}`}>
+                    {isActive ? 'Active' : 'Ended'}
+                  </span>
+                </div>
+              );
+            })
           )}
         </div>
-      </div>
-    </>
-  );
-}
 
-function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
-  return (
-    <div className={styles.statCard}>
-      <div className={styles.statIcon}>{icon}</div>
-      <div>
-        <div className={styles.statValue}>{value}</div>
-        <div className={styles.statLabel}>{label}</div>
+        {/* Pagination */}
+        {shows.length > 0 && (
+          <div className={styles.pagination}>
+            <span className={styles.paginationInfo}>
+              Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, shows.length)} of {shows.length} shows
+            </span>
+            <div className={styles.paginationBtns}>
+              <button
+                className={styles.pageBtn}
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={16} strokeWidth={1.5} />
+              </button>
+              <button
+                className={styles.pageBtn}
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => p + 1)}
+                aria-label="Next page"
+              >
+                <ChevronRight size={16} strokeWidth={1.5} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-const statusVariant = (status: string): 'success' | 'error' | 'warning' | 'muted' | 'gold' => {
-  const map: Record<string, 'success' | 'error' | 'warning' | 'muted' | 'gold'> = {
-    Success: 'success', Pending: 'warning', PaymentPending: 'gold',
-    Expired: 'muted', Cancelled: 'error', PartialSuccess: 'warning',
-  };
-  return map[status] ?? 'muted';
-};
+interface KpiCardProps {
+  label: string;
+  value: string;
+  note: string;
+  noteType: 'success' | 'warning' | 'info' | 'muted';
+  icon: React.ReactNode;
+  iconColor: string;
+  iconBg: string;
+}
+
+function KpiCard({ label, value, note, noteType, icon, iconColor, iconBg }: KpiCardProps) {
+  return (
+    <div className={styles.kpiCard}>
+      <div className={styles.kpiContent}>
+        <p className={styles.kpiLabel}>{label}</p>
+        <p className={styles.kpiValue}>{value}</p>
+        <p className={`${styles.kpiNote} ${styles[`note_${noteType}`]}`}>{note}</p>
+      </div>
+      <div className={styles.kpiIcon} style={{ color: iconColor, background: iconBg }}>
+        {icon}
+      </div>
+    </div>
+  );
+}

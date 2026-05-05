@@ -1,3 +1,5 @@
+/* ── EmptyState — Art Deco Dark ──────────────────────────── */
+
 .wrapper {
   display: flex;
   flex-direction: column;
@@ -5,38 +7,71 @@
   justify-content: center;
   padding: var(--space-16) var(--space-6);
   text-align: center;
-  animation: fadeIn 300ms ease-out;
+  animation: fadeIn 300ms ease-out both;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Gold film icon container — Art Deco square, no circle */
 .icon {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 80px;
   height: 80px;
-  border-radius: 50%;
-  background: var(--bg-surface);
-  border: 1px solid rgba(255,255,255,0.06);
-  color: var(--text-muted);
-  margin-bottom: var(--space-5);
+  background: var(--deep-surface);
+  border: 1px solid rgba(212, 168, 67, 0.2);
+  border-radius: var(--radius-lg);
+  color: var(--antique-gold);
+  margin-bottom: var(--space-6);
+  position: relative;
 }
 
+/* Corner bracket accents */
+.icon::before,
+.icon::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: var(--gold-foil);
+  border-style: solid;
+  opacity: 0.5;
+}
+
+.icon::before {
+  top: 5px;
+  left: 5px;
+  border-width: 1px 0 0 1px;
+}
+
+.icon::after {
+  bottom: 5px;
+  right: 5px;
+  border-width: 0 1px 1px 0;
+}
+
+/* Playfair Display title */
 .title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: var(--space-2);
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--parchment-text);
+  margin: 0 0 var(--space-3);
+  line-height: 1.2;
 }
 
 .desc {
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  color: var(--text-secondary);
+  color: var(--stone-text);
   max-width: 360px;
+  line-height: 1.6;
 }
 
-.action { margin-top: var(--space-6); }
+.action {
+  margin-top: var(--space-6);
+}

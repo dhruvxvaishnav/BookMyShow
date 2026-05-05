@@ -41,16 +41,23 @@ export default function Seat({
     booked: 'booked',
   };
 
+  // Type-specific modifier class
+  const typeClass =
+    seat.seat_type === 'Premium' ? styles.typePremium
+    : seat.seat_type === 'Recliner' ? styles.typeRecliner
+    : '';
+
   return (
     <div className={styles.wrapper}>
       <button
         ref={buttonRef}
         type="button"
-        className={`
-          ${styles.seat}
-          ${styles[displayState]}
-          ${isConflicting ? styles.conflicting : ''}
-        `}
+        className={[
+          styles.seat,
+          styles[displayState],
+          typeClass,
+          isConflicting ? styles.conflicting : '',
+        ].join(' ')}
         data-seat-id={seat.seat_id}
         onClick={handleClick}
         onFocus={onFocus}

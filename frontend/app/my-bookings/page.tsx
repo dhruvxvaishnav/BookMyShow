@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import PageHeader from '@/components/layout/PageHeader';
+import Link from 'next/link';
 import BookingCard from '@/components/booking/BookingCard';
 import EmptyState from '@/components/common/EmptyState';
 import { BookingSkeleton } from '@/components/common/LoadingSkeleton';
@@ -57,95 +57,113 @@ export default function MyBookingsPage() {
   const paginated = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return (
-    <>
-      <PageHeader
-        title="My Bookings"
-        subtitle={userId ? `User ID: ${userId.slice(0, 8)}...` : undefined}
-      />
+    <div className="container" style={{ paddingTop: 'var(--space-10)', paddingBottom: 'var(--space-16)' }}>
+      <h1 className={styles.pageHeading}>My Bookings</h1>
 
-      <div className="container">
-        {/* Filter tabs */}
-        <div className={styles.tabs} role="tablist" aria-label="Filter bookings by status">
-          {TABS.map((tab) => {
-            const count = tab === 'All' ? bookings.length : bookings.filter((b) => b.status === tab).length;
-            return (
-              <button
-                key={tab}
-                role="tab"
-                aria-selected={activeTab === tab}
-                className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ''}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-                {count > 0 && <span className={styles.tabCount}>{count}</span>}
-              </button>
-            );
-          })}
-        </div>
-
-        {isLoading ? (
-          <div className={styles.grid}>
-            {[...Array(3)].map((_, i) => <BookingSkeleton key={i} />)}
-          </div>
-        ) : error ? (
-          <div className={styles.errorRow}>
-            <p>{error}</p>
-            <button onClick={loadBookings}>Retry</button>
-          </div>
-        ) : sorted.length === 0 ? (
-          <EmptyState
-            title={activeTab === 'All' ? 'No bookings yet' : `No ${activeTab.toLowerCase()} bookings`}
-            description="Browse shows to get started with your cinema experience."
-            icon="clapperboard"
-          />
-        ) : (
-          <>
-            <div className={styles.grid}>
-              {paginated.map((booking) => (
-                <BookingCard key={booking.booking_id} booking={booking} />
-              ))}
-            </div>
-
-            {totalPages > 1 && (
-              <div className={styles.pagination} role="navigation" aria-label="Booking pages">
-                <button
-                  className={styles.pageBtn}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={safePage === 1}
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft size={16} strokeWidth={2} />
-                </button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    className={`${styles.pageBtn} ${p === safePage ? styles.pageBtnActive : ''}`}
-                    onClick={() => setPage(p)}
-                    aria-label={`Page ${p}`}
-                    aria-current={p === safePage ? 'page' : undefined}
-                  >
-                    {p}
-                  </button>
-                ))}
-
-                <button
-                  className={styles.pageBtn}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={safePage === totalPages}
-                  aria-label="Next page"
-                >
-                  <ChevronRight size={16} strokeWidth={2} />
-                </button>
-
-                <span className={styles.pageInfo}>
-                  {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, sorted.length)} of {sorted.length}
-                </span>
-              </div>
-            )}
-          </>
-        )}
+      {/* Filter tabs */}
+      <div className={styles.tabsRow} role="tablist" aria-label="Filter bookings by status">
+        {TABS.map((tab) => {
+          const count = tab === 'All' ? bookings.length : bookings.filter((b) => b.status === tab).length;
+          return (
+            <button
+              key={tab}
+              role="tab"
+              aria-selected={activeTab === tab}
+              className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'PaymentPending' ? 'Awaiting' : tab}
+              {count > 0 && <span className={styles.tabCount}>{count}</span>}
+            </button>
+          );
+        })}
       </div>
-    </>
+
+      <hr className={`ornamental-divider ${styles.tabDivider}`} />
+
+      {isLoading ? (
+        <div className={styles.grid}>
+          {[...Array(3)].map((_, i) => <BookingSkeleton key={i} />)}
+        </div>
+      ) : error ? (
+        <div className={styles.errorRow}>
+          <p>{error}</p>
+          <button onClick={loadBookings}>Retry</button>
+        </div>
+      ) : sorted.length === 0 ? (
+        <EmptyState
+          title={activeTab === 'All' ? 'No bookings yet' : `No ${activeTab.toLowerCase()} bookings`}
+          description="Browse shows to get started with your cinema experience."
+          icon="clapperboard"
+          action={
+            <Link
+              href="/"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '10px 24px',
+                background: 'var(--antique-gold)',
+                color: 'var(--void-black)',
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.8125rem',
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                borderRadius: 'var(--radius-md)',
+              }}
+            >
+              Browse Movies
+            </Link>
+          }
+        />
+      ) : (
+        <>
+          <div className={styles.grid}>
+            {paginated.map((booking) => (
+              <BookingCard key={booking.booking_id} booking={booking} />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className={styles.pagination} role="navigation" aria-label="Booking pages">
+              <button
+                className={styles.pageBtn}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={16} strokeWidth={2} />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  className={`${styles.pageBtn} ${p === safePage ? styles.pageBtnActive : ''}`}
+                  onClick={() => setPage(p)}
+                  aria-label={`Page ${p}`}
+                  aria-current={p === safePage ? 'page' : undefined}
+                >
+                  {p}
+                </button>
+              ))}
+
+              <button
+                className={styles.pageBtn}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                aria-label="Next page"
+              >
+                <ChevronRight size={16} strokeWidth={2} />
+              </button>
+
+              <span className={styles.pageInfo}>
+                {safePage} of {totalPages}
+              </span>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }

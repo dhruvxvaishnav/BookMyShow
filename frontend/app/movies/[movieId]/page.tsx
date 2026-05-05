@@ -1,15 +1,14 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Film, Star, Clock, Globe, MapPin, Monitor, Ticket } from 'lucide-react';
+import { ArrowLeft, Film, Star, Clock, Globe, MapPin, Monitor } from 'lucide-react';
 import { getMovie, getMovieShows } from '@/api/movies';
 import { getShowAvailability } from '@/api/shows';
 import type { Movie, Show, ShowAvailability } from '@/types/api';
-import Badge from '@/components/common/Badge';
 import { CardSkeleton } from '@/components/common/LoadingSkeleton';
 import EmptyState from '@/components/common/EmptyState';
-import { formatDateTime, formatPrice } from '@/utils/format';
+import { formatDate, formatTime, formatPrice } from '@/utils/format';
 import styles from './page.module.css';
 
 export default function MovieDetailPage({ params }: { params: Promise<{ movieId: string }> }) {
@@ -20,6 +19,8 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cityFilter, setCityFilter] = useState('All');
+  const [selectedDate, setSelectedDate] = useState<string>('All');
+  const showtimesRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -47,165 +48,309 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // Derive available dates from shows
+  const availableDates = ['All', ...Array.from(
+    new Set(shows.map((s) => formatDate(s.start_time)))
+  )];
+
   const cities = ['All', ...Array.from(new Set(shows.map((s) => s.venue?.city).filter(Boolean) as string[]))];
-  const filteredShows = shows.filter((s) =>
-    cityFilter === 'All' || s.venue?.city === cityFilter
-  );
+
+  const filteredShows = shows.filter((s) => {
+    const matchCity = cityFilter === 'All' || s.venue?.city === cityFilter;
+    const matchDate = selectedDate === 'All' || formatDate(s.start_time) === selectedDate;
+    return matchCity && matchDate;
+  });
+
+  // Group shows by theatre
+  const showsByTheatre = filteredShows.reduce<Record<string, Show[]>>((acc, show) => {
+    const key = show.venue?.venue_id ?? show.theatre_name;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(show);
+    return acc;
+  }, {});
+
+  function scrollToShowtimes() {
+    showtimesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   if (isLoading) {
     return (
-      <div className="container">
-        <div className={styles.skeletonHeader} />
-        <div className={styles.grid}>
-          {[...Array(3)].map((_, i) => <CardSkeleton key={i} />)}
+      <>
+        <div className={styles.heroSkeleton} aria-busy="true" />
+        <div className="container">
+          <div className={styles.skeletonGrid}>
+            {[...Array(3)].map((_, i) => <CardSkeleton key={i} />)}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error || !movie) {
     return (
-      <div className="container">
-        <EmptyState title="Movie not found" description={error ?? 'This movie could not be loaded.'} icon="clapperboard" />
+      <div className="container" style={{ paddingTop: '48px' }}>
+        <EmptyState
+          title="Movie not found"
+          description={error ?? 'This movie could not be loaded.'}
+          icon="clapperboard"
+        />
       </div>
     );
   }
 
   return (
     <>
-      {/* Movie hero */}
-      <div className={styles.hero}>
-        <div className={styles.heroBg}>
+      {/* ── Hero ─────────────────────────────────────────── */}
+      <section className={styles.hero} aria-label={`${movie.title} details`}>
+        {/* Blurred backdrop */}
+        <div className={styles.heroBg} aria-hidden="true">
           {movie.poster_url && (
-            <img src={movie.poster_url} alt="" className={styles.heroBgImg} aria-hidden="true" />
+            <img src={movie.poster_url} alt="" className={styles.heroBgImg} />
           )}
           <div className={styles.heroBgOverlay} />
         </div>
+
         <div className={`container ${styles.heroContent}`}>
+          {/* Back link */}
           <Link href="/movies" className={styles.backLink}>
-            <ArrowLeft size={16} strokeWidth={2} />
+            <ArrowLeft size={15} strokeWidth={2} aria-hidden="true" />
             All Movies
           </Link>
+
           <div className={styles.heroBody}>
-            <div className={styles.posterWrap}>
+            {/* Poster */}
+            <div className={styles.posterFrame} aria-hidden="true">
               {movie.poster_url ? (
                 <img src={movie.poster_url} alt={movie.title} className={styles.posterImg} />
               ) : (
-                <div className={styles.posterPlaceholder}><Film size={48} strokeWidth={1} /></div>
+                <div className={styles.posterPlaceholder}>
+                  <Film size={48} strokeWidth={0.75} />
+                </div>
               )}
             </div>
+
+            {/* Info */}
             <div className={styles.heroInfo}>
               <h1 className={styles.movieTitle}>{movie.title}</h1>
-              <div className={styles.badges}>
-                <span className={styles.genreBadge}>{movie.genre}</span>
-                <span className={styles.langBadge}>{movie.language}</span>
-              </div>
-              <div className={styles.heroMeta}>
-                <span className={styles.rating}>
-                  <Star size={14} strokeWidth={2} />
-                  {movie.rating.toFixed(1)} / 10
+
+              {/* Badges row */}
+              <div className={styles.badgeRow}>
+                {/* Rating */}
+                <span className={styles.ratingBadge} aria-label={`Rating: ${movie.rating.toFixed(1)} out of 10`}>
+                  <Star size={13} strokeWidth={2} aria-hidden="true" />
+                  {movie.rating.toFixed(1)}&thinsp;/&thinsp;10
                 </span>
-                <span className={styles.duration}>
-                  <Clock size={14} strokeWidth={1.5} />
+
+                {/* Genre */}
+                <span className={styles.genreBadge}>{movie.genre}</span>
+              </div>
+
+              {/* Meta line */}
+              <div className={styles.metaLine}>
+                <span className={styles.metaItem}>
+                  <Globe size={13} strokeWidth={1.5} aria-hidden="true" />
+                  {movie.language}
+                </span>
+                <span className={styles.metaDot} aria-hidden="true" />
+                <span className={styles.metaItem}>
+                  <Clock size={13} strokeWidth={1.5} aria-hidden="true" />
                   {movie.duration_minutes} min
                 </span>
               </div>
+
+              {/* Description */}
               <p className={styles.description}>{movie.description}</p>
+
+              {/* CTA */}
+              <button
+                className={styles.bookTicketsBtn}
+                onClick={scrollToShowtimes}
+                aria-label="Jump to showtimes section"
+              >
+                Book Tickets
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Shows section */}
-      <div className="container">
-        <div className={styles.showsHeader}>
-          <h2 className={styles.showsTitle}>Available Shows</h2>
-          {cities.length > 1 && (
-            <select
-              className={styles.citySelect}
-              value={cityFilter}
-              onChange={(e) => setCityFilter(e.target.value)}
-              aria-label="Filter shows by city"
-            >
-              {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          )}
+      {/* ── Showtimes Section ─────────────────────────────── */}
+      <div className="container" ref={showtimesRef}>
+        <hr className="ornamental-divider" />
+
+        <div className={styles.showtimesHeader}>
+          <span className="marquee-label">Showtimes</span>
+
+          <div className={styles.showtimesFilters}>
+            {/* Date pills */}
+            {availableDates.length > 1 && (
+              <div className={styles.datePills} role="group" aria-label="Filter by date">
+                {availableDates.map((d) => (
+                  <button
+                    key={d}
+                    className={selectedDate === d ? `${styles.datePill} ${styles.datePillActive}` : styles.datePill}
+                    onClick={() => setSelectedDate(d)}
+                    aria-pressed={selectedDate === d}
+                  >
+                    {d === 'All' ? 'All Dates' : d}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* City filter */}
+            {cities.length > 1 && (
+              <select
+                className={styles.citySelect}
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                aria-label="Filter shows by city"
+              >
+                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            )}
+          </div>
         </div>
 
         {filteredShows.length === 0 ? (
           <EmptyState
             title="No shows available"
-            description="There are no upcoming shows for this movie in the selected city."
+            description="There are no upcoming shows for this movie matching your selection."
             icon="clapperboard"
           />
         ) : (
-          <div className={styles.grid}>
-            {filteredShows.map((show) => (
-              <ShowCard
-                key={show.show_id}
-                show={show}
-                availability={availabilities[show.show_id]}
-              />
-            ))}
+          <div className={styles.theatreList} role="list">
+            {Object.entries(showsByTheatre).map(([key, theatreShows]) => {
+              const representativeShow = theatreShows[0];
+              return (
+                <TheatreShowGroup
+                  key={key}
+                  shows={theatreShows}
+                  availabilities={availabilities}
+                  representativeShow={representativeShow}
+                />
+              );
+            })}
           </div>
         )}
+
+        {/* Bottom padding */}
+        <div style={{ height: 'var(--space-12)' }} />
       </div>
     </>
   );
 }
 
-function ShowCard({ show, availability }: { show: Show; availability?: ShowAvailability }) {
-  const pct = availability
-    ? availability.occupancy_percent ?? Math.round(((availability.total_seats - availability.available_seats) / availability.total_seats) * 100)
-    : 0;
-  const badge = availability
-    ? pct >= 80
-      ? <Badge variant="error">{availability.available_seats} left</Badge>
-      : pct >= 50
-        ? <Badge variant="warning">{availability.available_seats} left</Badge>
-        : <Badge variant="success">{availability.available_seats} seats</Badge>
-    : null;
-
+function TheatreShowGroup({
+  shows,
+  availabilities,
+  representativeShow,
+}: {
+  shows: Show[];
+  availabilities: Record<string, ShowAvailability>;
+  representativeShow: Show;
+}) {
   return (
-    <div className={styles.showCard}>
-      <div className={styles.showCardTop}>
-        <div className={styles.venueInfo}>
-          <p className={styles.venueName}>{show.venue?.name ?? show.theatre_name}</p>
-          {show.venue && (
-            <p className={styles.venueAddress}>
-              <MapPin size={12} strokeWidth={1.5} />
-              {show.venue.address}
+    <div className={styles.theatreGroup} role="listitem">
+      {/* Theatre header */}
+      <div className={styles.theatreHeader}>
+        <div className={styles.theatreInfo}>
+          <p className={styles.theatreName}>
+            {representativeShow.venue?.name ?? representativeShow.theatre_name}
+          </p>
+          {representativeShow.venue?.address && (
+            <p className={styles.theatreAddress}>
+              <MapPin size={11} strokeWidth={1.5} aria-hidden="true" />
+              {representativeShow.venue.address}
             </p>
           )}
         </div>
-        <div className={styles.screenBadge}>
-          <Monitor size={14} strokeWidth={1.5} />
-          Screen {show.screen_number}
-        </div>
+
+        {/* Amenity badges */}
+        {representativeShow.venue?.amenities && representativeShow.venue.amenities.length > 0 && (
+          <div className={styles.amenities} aria-label="Theatre amenities">
+            {representativeShow.venue.amenities.slice(0, 4).map((a) => (
+              <span key={a} className={styles.amenityBadge}>{a}</span>
+            ))}
+          </div>
+        )}
       </div>
-      <div className={styles.showCardMid}>
-        <span className={styles.showTime}>
-          <Clock size={13} strokeWidth={1.5} />
-          {formatDateTime(show.start_time)}
-        </span>
-        <span className={styles.showPrice}>
-          <Ticket size={13} strokeWidth={1.5} />
-          {formatPrice(show.price_per_seat)} / seat
-        </span>
-      </div>
-      {show.venue?.amenities && show.venue.amenities.length > 0 && (
-        <div className={styles.amenities}>
-          {show.venue.amenities.slice(0, 3).map((a) => (
-            <span key={a} className={styles.amenity}>{a}</span>
-          ))}
-        </div>
-      )}
-      <div className={styles.showCardBottom}>
-        <div>{badge}</div>
-        <Link href={`/shows/${show.show_id}`} className={styles.bookBtn}>
-          Select Seats
-        </Link>
+
+      {/* Showtime pills */}
+      <div className={styles.showtimePills} role="list" aria-label="Available showtimes">
+        {shows.map((show) => {
+          const avail = availabilities[show.show_id];
+          const isSoldOut = avail
+            ? avail.available_seats === 0
+            : false;
+          const isAlmostFull = avail
+            ? (avail.occupancy_percent ?? 0) >= 80 && avail.available_seats > 0
+            : false;
+
+          return (
+            <ShowtimePill
+              key={show.show_id}
+              show={show}
+              isSoldOut={isSoldOut}
+              isAlmostFull={isAlmostFull}
+              availability={avail}
+            />
+          );
+        })}
       </div>
     </div>
+  );
+}
+
+function ShowtimePill({
+  show,
+  isSoldOut,
+  isAlmostFull,
+  availability,
+}: {
+  show: Show;
+  isSoldOut: boolean;
+  isAlmostFull: boolean;
+  availability?: ShowAvailability;
+}) {
+  const pillClass = [
+    styles.showtimePill,
+    isSoldOut ? styles.showtimePillSoldOut : '',
+    isAlmostFull ? styles.showtimePillAlmostFull : '',
+    !isSoldOut && !isAlmostFull ? styles.showtimePillAvailable : '',
+  ].filter(Boolean).join(' ');
+
+  const content = (
+    <>
+      <span className={styles.showtimeTime}>{formatTime(show.start_time)}</span>
+      <span className={styles.showtimePrice}>{formatPrice(show.price_per_seat)}</span>
+      {availability && !isSoldOut && (
+        <span className={styles.showtimeSeats}>
+          {availability.available_seats} left
+        </span>
+      )}
+      {isSoldOut && (
+        <span className={styles.soldOutLabel}>Sold Out</span>
+      )}
+    </>
+  );
+
+  if (isSoldOut) {
+    return (
+      <div className={pillClass} role="listitem" aria-label={`${formatTime(show.start_time)} - Sold Out`} aria-disabled="true">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={`/shows/${show.show_id}`}
+      className={pillClass}
+      role="listitem"
+      aria-label={`Book ${formatTime(show.start_time)} show at ${formatPrice(show.price_per_seat)} per seat`}
+    >
+      {content}
+    </Link>
   );
 }

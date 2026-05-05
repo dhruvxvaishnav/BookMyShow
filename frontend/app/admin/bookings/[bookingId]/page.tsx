@@ -45,7 +45,7 @@ export default function AdminBookingDetailPage({ params }: PageProps) {
       <PageHeader
         title="Booking Detail"
         subtitle={booking ? booking.booking_id : bookingId}
-        backHref="/admin"
+        backHref="/admin/bookings"
       />
 
       <div className="container">
@@ -64,7 +64,7 @@ export default function AdminBookingDetailPage({ params }: PageProps) {
                 <Detail label="Show" value={booking.show_id} mono />
                 <Detail label="Seats" value={booking.seat_ids.join(', ')} />
                 <Detail label="Payment" value={booking.payment_id ?? 'None'} mono />
-                <Detail label="Created" value={formatDateTime(Number(booking.created_at))} />
+                <Detail label="Created" value={formatBookingDate(booking.created_at)} />
                 <Detail label="Expires" value={formatDateTime(booking.expires_at)} />
               </div>
             </section>
@@ -127,12 +127,20 @@ function formatEvent(eventType: string) {
 
 const statusVariant = (status: string): 'success' | 'error' | 'warning' | 'muted' | 'gold' => {
   const map: Record<string, 'success' | 'error' | 'warning' | 'muted' | 'gold'> = {
-    success: 'success',
-    pending: 'warning',
-    payment_pending: 'gold',
-    expired: 'muted',
-    cancelled: 'error',
-    success_partial: 'warning',
+    Success: 'success',
+    Pending: 'warning',
+    PaymentPending: 'gold',
+    Expired: 'muted',
+    Cancelled: 'error',
+    PartialSuccess: 'warning',
   };
   return map[status] ?? 'muted';
 };
+
+function formatBookingDate(value: string) {
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) return formatDateTime(numeric);
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return value;
+  return formatDateTime(Math.floor(parsed / 1000));
+}

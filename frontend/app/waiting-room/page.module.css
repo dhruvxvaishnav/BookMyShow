@@ -1,0 +1,166 @@
+.page {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-6);
+  background:
+    radial-gradient(ellipse at top, rgba(123, 31, 31, 0.24), transparent 48%),
+    var(--cinema-black);
+}
+
+.panel {
+  width: min(100%, 620px);
+  background: var(--deep-surface);
+  border: 1px solid rgba(245, 166, 35, 0.22);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg), 0 0 48px rgba(123, 31, 31, 0.14);
+}
+
+.goldBar {
+  height: 4px;
+  background: linear-gradient(to right, var(--royal-crimson), var(--antique-gold), var(--royal-crimson));
+}
+
+.content {
+  padding: var(--space-10);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  text-align: center;
+}
+
+.iconWrap {
+  width: 86px;
+  height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(245, 166, 35, 0.28);
+  border-radius: 50%;
+  color: var(--antique-gold);
+  background: rgba(245, 166, 35, 0.08);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(245, 166, 35, 0.18); }
+  50% { box-shadow: 0 0 32px rgba(245, 166, 35, 0.38); }
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  color: var(--gold-foil);
+  line-height: 1.08;
+}
+
+.showCard {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(245, 166, 35, 0.14);
+  border-radius: var(--radius-md);
+  color: var(--antique-gold);
+  text-align: left;
+}
+
+.showCard div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.showCard strong {
+  color: var(--parchment-text);
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+}
+
+.showCard span {
+  color: var(--muted-text);
+  font-size: 0.8125rem;
+}
+
+.positionPanel {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  padding: var(--space-6);
+  min-width: 230px;
+  border: 1px solid rgba(245, 166, 35, 0.16);
+  border-radius: var(--radius-md);
+  background: var(--elevated-surface);
+}
+
+.positionLabel {
+  color: var(--muted-text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.positionValue {
+  font-family: var(--font-mono);
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--antique-gold);
+  font-weight: 700;
+}
+
+.statusBadge {
+  padding: 3px 10px;
+  border: 1px solid rgba(245, 166, 35, 0.24);
+  border-radius: var(--radius-sm);
+  color: var(--gold-foil);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(to right, var(--royal-crimson), var(--antique-gold));
+  border-radius: 3px;
+  transition: width var(--transition-slow);
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.875rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+  .content {
+    padding: var(--space-6);
+  }
+
+  .showCard {
+    align-items: flex-start;
+  }
+}

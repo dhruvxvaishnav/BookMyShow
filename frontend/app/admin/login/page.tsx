@@ -40,53 +40,73 @@ export default function AdminLoginPage() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <div className={styles.logo}>
-          <Shield size={32} />
-          <span>Admin Portal</span>
+        {/* Gold accent bar */}
+        <div className="gold-accent-bar" />
+
+        <div className={styles.cardInner}>
+          {/* Logo / badge */}
+          <div className={styles.logoWrap}>
+            <div className={styles.shieldCircle}>
+              <Shield size={28} strokeWidth={1.5} />
+            </div>
+            <span className={`marquee-label ${styles.portalLabel}`}>Admin Portal</span>
+          </div>
+
+          <div className="ornamental-divider" style={{ margin: '0 0 28px' }} />
+
+          <h1 className={styles.title}>Administrator Sign In</h1>
+          <p className={styles.subtitle}>Restricted access — authorised personnel only</p>
+
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="admin-email">Email Address</label>
+              <div className={styles.inputWrap}>
+                <Mail size={15} className={styles.inputIcon} />
+                <input
+                  id="admin-email"
+                  type="email"
+                  className={styles.input}
+                  placeholder="admin@cineplex.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="admin-password">Password</label>
+              <div className={styles.inputWrap}>
+                <Lock size={15} className={styles.inputIcon} />
+                <input
+                  id="admin-password"
+                  type="password"
+                  className={styles.input}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className={styles.errorBox} role="alert">
+                {error}
+              </div>
+            )}
+
+            <button type="submit" className={styles.submitBtn} disabled={isLoading}>
+              {isLoading ? (
+                <span className={styles.loadingDots}>Authenticating</span>
+              ) : (
+                'Sign In to Dashboard'
+              )}
+            </button>
+          </form>
         </div>
-
-        <h1 className={styles.title}>Admin sign in</h1>
-        <p className={styles.subtitle}>BookMyShow management dashboard</p>
-
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.field}>
-            <label className={styles.label}>Email</label>
-            <div className={styles.inputWrap}>
-              <Mail size={16} className={styles.inputIcon} />
-              <input
-                type="email"
-                className={styles.input}
-                placeholder="admin@bookmyshow.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>Password</label>
-            <div className={styles.inputWrap}>
-              <Lock size={16} className={styles.inputIcon} />
-              <input
-                type="password"
-                className={styles.input}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
-            </div>
-          </div>
-
-          {error && <p className={styles.error}>{error}</p>}
-
-          <button type="submit" className={styles.button} disabled={isLoading}>
-            {isLoading ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
       </div>
     </div>
   );

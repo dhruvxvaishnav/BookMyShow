@@ -1,14 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Ticket, Clock, Monitor, Film } from 'lucide-react';
+import { Film, Star, Clock, Ticket } from 'lucide-react';
 import { getShows, getShowAvailability } from '@/api/shows';
 import type { Show, ShowAvailability } from '@/types/api';
 import Badge from '@/components/common/Badge';
 import { CardSkeleton } from '@/components/common/LoadingSkeleton';
 import EmptyState from '@/components/common/EmptyState';
-import PageHeader from '@/components/layout/PageHeader';
-import { formatDateTime, formatPrice } from '@/utils/format';
+import { formatTime, formatPrice } from '@/utils/format';
 import styles from './page.module.css';
 
 export default function HomePage() {
@@ -48,6 +47,8 @@ export default function HomePage() {
     s.theatre_name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const featured = shows[0] ?? null;
+
   function availabilityBadge(showId: string) {
     const a = availabilities[showId];
     if (!a) return null;
@@ -60,17 +61,110 @@ export default function HomePage() {
 
   return (
     <>
-      <PageHeader
-        title="Now Showing"
-        subtitle="Select a show to book your seats"
-        actions={
-          <div className={styles.headerActions}>
-            <Link href="/movies" className={styles.moviesLink}>
-              <Film size={15} strokeWidth={1.5} />
-              Browse Movies
-            </Link>
+      {/* ── Hero ─────────────────────────────────────────── */}
+      <section className={styles.hero} aria-label="Featured show">
+        {/* Blurred backdrop */}
+        <div className={styles.heroBg}>
+          {featured?.movie?.poster_url ? (
+            <img
+              src={featured.movie.poster_url}
+              alt=""
+              className={styles.heroBgImg}
+              aria-hidden="true"
+            />
+          ) : (
+            <div className={styles.heroBgGradient} aria-hidden="true" />
+          )}
+          <div className={styles.heroBgOverlay} aria-hidden="true" />
+        </div>
+
+        <div className={`container ${styles.heroContent}`}>
+          {isLoading ? (
+            <div className={styles.heroSkeleton} aria-busy="true" />
+          ) : featured ? (
+            <div className={styles.heroInner}>
+              {/* Left column */}
+              <div className={styles.heroLeft}>
+                <p className="marquee-label" style={{ marginBottom: '16px' }}>Now Featuring</p>
+
+                <h1 className={styles.heroTitle}>
+                  {featured.movie?.title ?? featured.name}
+                </h1>
+
+                <p className={styles.heroSubtitle}>
+                  {featured.venue?.name ?? featured.theatre_name}
+                </p>
+
+                <div className={styles.heroBadges}>
+                  {featured.movie?.genre && (
+                    <span className={styles.genreBadge}>{featured.movie.genre}</span>
+                  )}
+                  {featured.movie?.rating != null && (
+                    <span className={styles.ratingBadge}>
+                      <Star size={12} strokeWidth={2} aria-hidden="true" />
+                      {featured.movie.rating.toFixed(1)}
+                    </span>
+                  )}
+                  {featured.start_time && (
+                    <span className={styles.timeBadge}>
+                      <Clock size={12} strokeWidth={1.5} aria-hidden="true" />
+                      {formatTime(featured.start_time)}
+                    </span>
+                  )}
+                </div>
+
+                {featured.movie?.description && (
+                  <p className={styles.heroDescription}>
+                    {featured.movie.description.slice(0, 160)}
+                    {featured.movie.description.length > 160 ? '…' : ''}
+                  </p>
+                )}
+
+                <div className={styles.heroActions}>
+                  <Link href={`/shows/${featured.show_id}`} className={styles.bookNowBtn}>
+                    <Ticket size={16} strokeWidth={1.5} aria-hidden="true" />
+                    Book Now
+                  </Link>
+                  <Link href="/movies" className={styles.viewAllBtn}>
+                    View All Shows
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right column — poster */}
+              <div className={styles.heroRight} aria-hidden="true">
+                {featured.movie?.poster_url ? (
+                  <div className={styles.heroPosterFrame}>
+                    <img
+                      src={featured.movie.poster_url}
+                      alt={featured.movie?.title ?? featured.name}
+                      className={styles.heroPosterImg}
+                    />
+                  </div>
+                ) : (
+                  <div className={styles.filmStripPlaceholder}>
+                    <Film size={64} strokeWidth={0.75} />
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : error ? null : (
+            <div className={styles.heroEmpty}>
+              <Film size={48} strokeWidth={0.75} />
+              <p>No featured shows at the moment.</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <hr className="ornamental-divider" style={{ margin: '0 24px' }} />
+
+      {/* ── Now Showing ──────────────────────────────────── */}
+      <section className={styles.nowShowingSection} aria-label="Now Showing">
+        <div className="container">
+          <div className={styles.sectionHeader}>
+            <span className="marquee-label">Now Showing</span>
             <div className={styles.searchWrap}>
-              <Search size={16} strokeWidth={1.5} className={styles.searchIcon} />
               <input
                 className={styles.search}
                 placeholder="Search shows or theatres..."
@@ -80,48 +174,48 @@ export default function HomePage() {
               />
             </div>
           </div>
-        }
-      />
 
-      <div className="container">
-        {error && (
-          <div className={styles.errorBanner}>
-            <p>{error}</p>
-            <button onClick={loadShows} className={styles.retryBtn}>Retry</button>
-          </div>
-        )}
+          {error && (
+            <div className={styles.errorBanner} role="alert">
+              <p>{error}</p>
+              <button onClick={loadShows} className={styles.retryBtn}>Retry</button>
+            </div>
+          )}
 
-        {isLoading ? (
-          <div className={styles.grid}>
-            {[...Array(6)].map((_, i) => <CardSkeleton key={i} />)}
-          </div>
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            title="No shows available"
-            description={search ? 'Try adjusting your search.' : 'Check back later for upcoming shows.'}
-            icon="clapperboard"
-            action={
-              search ? (
-                <button className={styles.clearBtn} onClick={() => setSearch('')}>
-                  Clear search
-                </button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <div className={styles.grid}>
-            {filtered.map((show, i) => (
-              <ShowCard
-                key={show.show_id}
-                show={show}
-                availability={availabilities[show.show_id]}
-                badge={availabilityBadge(show.show_id)}
-                style={{ animationDelay: `${i * 50}ms` }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+          {isLoading ? (
+            <div className={styles.scrollRow} aria-busy="true">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className={styles.cardSkeleton} />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              title="No shows available"
+              description={search ? 'Try adjusting your search.' : 'Check back later for upcoming shows.'}
+              icon="clapperboard"
+              action={
+                search ? (
+                  <button className={styles.clearBtn} onClick={() => setSearch('')}>
+                    Clear search
+                  </button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <div className={styles.scrollRow} role="list">
+              {filtered.map((show, i) => (
+                <ShowCard
+                  key={show.show_id}
+                  show={show}
+                  availability={availabilities[show.show_id]}
+                  badge={availabilityBadge(show.show_id)}
+                  index={i}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
     </>
   );
 }
@@ -130,45 +224,50 @@ function ShowCard({
   show,
   availability,
   badge,
-  style,
+  index,
 }: {
   show: Show;
   availability?: ShowAvailability;
   badge: React.ReactNode;
-  style?: React.CSSProperties;
+  index: number;
 }) {
+  const poster = show.movie?.poster_url ?? null;
+  const title = show.movie?.title ?? show.name;
+
   return (
-    <div className={styles.card} style={style}>
-      <div className={styles.cardScreen}>
-        <Monitor size={28} strokeWidth={1} />
-        <span>Screen {show.screen_number}</span>
-      </div>
+    <article
+      className={styles.showCard}
+      role="listitem"
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
+      <Link href={`/shows/${show.show_id}`} className={styles.showCardLink} tabIndex={-1} aria-hidden="true">
+        <div className={styles.showCardPoster}>
+          {poster ? (
+            <img src={poster} alt={title} className={styles.showCardPosterImg} />
+          ) : (
+            <div className={styles.showCardPosterPlaceholder}>
+              <Film size={32} strokeWidth={0.75} />
+            </div>
+          )}
+          {badge && <div className={styles.availOverlay}>{badge}</div>}
+        </div>
+      </Link>
 
-      <div className={styles.cardBody}>
-        <h3 className={styles.cardTitle}>{show.name}</h3>
-        <p className={styles.cardTheatre}>{show.venue?.name ?? show.theatre_name}</p>
-        {show.venue?.address && (
-          <p className={styles.cardAddress}>{show.venue.address}</p>
+      <div className={styles.showCardBody}>
+        <h3 className={styles.showCardTitle}>{title}</h3>
+        <p className={styles.showCardTheatre}>{show.venue?.name ?? show.theatre_name}</p>
+        {show.start_time && (
+          <p className={styles.showCardTime}>
+            <Clock size={11} strokeWidth={1.5} aria-hidden="true" />
+            {formatTime(show.start_time)}
+          </p>
         )}
+        <p className={styles.showCardPrice}>{formatPrice(show.price_per_seat)}</p>
 
-        <div className={styles.cardMeta}>
-          <div className={styles.metaItem}>
-            <Clock size={13} strokeWidth={1.5} />
-            <span>{formatDateTime(show.start_time)}</span>
-          </div>
-          <div className={styles.metaItem}>
-            <Ticket size={13} strokeWidth={1.5} />
-            <span>{formatPrice(show.price_per_seat)} / seat</span>
-          </div>
-        </div>
-
-        <div className={styles.cardFooter}>
-          <div className={styles.availBadge}>{badge}</div>
-          <Link href={`/shows/${show.show_id}`} className={styles.bookBtn}>
-            Select Seats
-          </Link>
-        </div>
+        <Link href={`/shows/${show.show_id}`} className={styles.showCardBook} aria-label={`Book ${title}`}>
+          Book
+        </Link>
       </div>
-    </div>
+    </article>
   );
 }
