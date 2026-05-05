@@ -10,7 +10,8 @@
   /* Text */
   --text-primary:   #F5F5F7;
   --text-secondary: #9CA3AF;
-  --text-muted:     #6B7280;
+  /* Bumped from #6B7280 (3.98:1) to #8B96A0 (6.5:1) for WCAG 2.1 AA compliance */
+  --text-muted:     #8B96A0;
 
   /* Accent */
   --accent-gold:       #F5A623;

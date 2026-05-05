@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { QRCodeSVG } from 'qrcode.react';
 import type { Booking } from '@/types/api';
 import Badge from '@/components/common/Badge';
 import { formatDateTime, formatPrice, formatSeatList } from '@/utils/format';
@@ -20,6 +21,7 @@ const statusVariant: Record<string, 'success' | 'error' | 'warning' | 'muted' | 
 
 export default function BookingCard({ booking }: BookingCardProps) {
   const variant = statusVariant[booking.status] ?? 'muted';
+  const isConfirmed = booking.status === 'Success';
 
   return (
     <div className={styles.card}>
@@ -29,15 +31,31 @@ export default function BookingCard({ booking }: BookingCardProps) {
             <>
               <h3 className={styles.showName}>{booking.show.name}</h3>
               <p className={styles.theatre}>
-                {booking.show.theatre_name} · Screen {booking.show.screen_number}
+                {booking.show.venue?.name ?? booking.show.theatre_name} · Screen {booking.show.screen_number}
               </p>
+              {booking.show.venue?.address && (
+                <p className={styles.address}>{booking.show.venue.address}</p>
+              )}
               <p className={styles.time}>{formatDateTime(booking.show.start_time)}</p>
             </>
           ) : (
             <h3 className={styles.showName}>Show #{booking.show_id.slice(0, 8)}</h3>
           )}
         </div>
-        <Badge variant={variant}>{booking.status}</Badge>
+        <div className={styles.rightCol}>
+          <Badge variant={variant}>{booking.status}</Badge>
+          {isConfirmed && (
+            <div className={styles.qrWrap} title="Scan at entry">
+              <QRCodeSVG
+                value={booking.booking_id}
+                size={64}
+                bgColor="transparent"
+                fgColor="#F5A623"
+                level="M"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className={styles.seats}>
@@ -51,9 +69,16 @@ export default function BookingCard({ booking }: BookingCardProps) {
 
       <div className={styles.bottom}>
         <span className={styles.amount}>{formatPrice(booking.total_amount)}</span>
-        <Link href={`/bookings/${booking.booking_id}`} className={styles.viewBtn}>
-          View Details
-        </Link>
+        <div className={styles.actions}>
+          {isConfirmed && (
+            <Link href={`/bookings/${booking.booking_id}/confirmed`} className={styles.downloadBtn}>
+              Download Ticket
+            </Link>
+          )}
+          <Link href={`/bookings/${booking.booking_id}`} className={styles.viewBtn}>
+            View Details
+          </Link>
+        </div>
       </div>
     </div>
   );

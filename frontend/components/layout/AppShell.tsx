@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Clapperboard, User, Shield, LayoutGrid, Check } from 'lucide-react';
+import { Clapperboard, User, Shield, LayoutGrid, Check, Film } from 'lucide-react';
 import styles from './AppShell.module.css';
 
 const ADMIN_TOKEN_KEY = 'bms_admin_token';
@@ -41,9 +41,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <nav className={styles.nav}>
             {!isAdmin && (
               <>
+                <Link href="/movies" className={pathname?.startsWith('/movies') ? styles.navActive : styles.navLink}>
+                  <Film size={16} strokeWidth={1.5} />
+                  Movies
+                </Link>
                 <Link href="/" className={pathname === '/' ? styles.navActive : styles.navLink}>
                   <LayoutGrid size={16} strokeWidth={1.5} />
-                  Browse Shows
+                  Shows
                 </Link>
                 <Link href="/my-bookings" className={pathname === '/my-bookings' ? styles.navActive : styles.navLink}>
                   <User size={16} strokeWidth={1.5} />

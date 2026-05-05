@@ -61,6 +61,12 @@
   color: var(--text-secondary);
 }
 
+.cardAddress {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 .cardMeta {
   display: flex;
   flex-direction: column;
@@ -105,6 +111,30 @@
   transform: scale(1.02);
   color: #0D0D0F !important;
 }
+
+/* Header actions */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.moviesLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 7px 14px;
+  background: rgba(245,166,35,0.1);
+  border: 1px solid rgba(245,166,35,0.25);
+  border-radius: var(--radius-md);
+  color: var(--accent-gold) !important;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.moviesLink:hover { background: rgba(245,166,35,0.18); color: var(--accent-gold) !important; }
 
 /* Search */
 .searchWrap {

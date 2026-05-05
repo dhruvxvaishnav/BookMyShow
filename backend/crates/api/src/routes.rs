@@ -79,6 +79,15 @@ pub fn create_router(state: AppState) -> Router {
             post(handlers::refund_payment),
         )
         .route("/admin/audit", get(handlers::admin_audit))
+        // ── Movies ────────────────────────────────────────────────────────────
+        .route("/movies", get(handlers::list_movies))
+        .route("/movies/:movie_id", get(handlers::get_movie))
+        .route("/movies/:movie_id/shows", get(handlers::list_shows_for_movie))
+        .route("/admin/movies", post(handlers::admin_create_movie))
+        // ── Venues ────────────────────────────────────────────────────────────
+        .route("/venues", get(handlers::list_venues))
+        .route("/venues/:venue_id", get(handlers::get_venue))
+        .route("/admin/venues", post(handlers::admin_create_venue))
         // Attach app state
         .with_state(state)
         // Add tracing middleware

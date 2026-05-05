@@ -1,17 +1,19 @@
 use axum::http::{HeaderName, HeaderValue};
 use common::AppConfig;
 use repository::{
-    BookingRepository, CompensationLogRepository, PaymentRepository, QueueRepository,
-    SeatLockRepository, SeatRepository, ShowRepository, UserRepository,
+    BookingRepository, CompensationLogRepository, MovieRepository, PaymentRepository,
+    QueueRepository, SeatLockRepository, SeatRepository, ShowRepository, UserRepository,
+    VenueRepository,
 };
 use repository_inmemory::{
-    InMemoryBookingRepository, InMemoryCompensationLogRepository, InMemoryPaymentRepository,
-    InMemoryQueueRepository, InMemorySeatLockRepository, InMemorySeatRepository,
-    InMemoryShowRepository, InMemoryUserRepository,
+    InMemoryBookingRepository, InMemoryCompensationLogRepository, InMemoryMovieRepository,
+    InMemoryPaymentRepository, InMemoryQueueRepository, InMemorySeatLockRepository,
+    InMemorySeatRepository, InMemoryShowRepository, InMemoryUserRepository,
+    InMemoryVenueRepository,
 };
 use service::{
-    BookingService, PaymentService, QueueService, SeatLockingService, ShowService,
-    booking_service::BookingServiceTrait, payment_service::PaymentServiceTrait,
+    BookingService, MovieService, PaymentService, QueueService, SeatLockingService, ShowService,
+    VenueService, booking_service::BookingServiceTrait, payment_service::PaymentServiceTrait,
 };
 use std::sync::Arc;
 
@@ -84,12 +86,19 @@ async fn make_state() -> crate::AppState {
         cfg.clone(),
     ));
 
+    let movie_repo: Arc<dyn MovieRepository> = Arc::new(InMemoryMovieRepository::new());
+    let venue_repo: Arc<dyn VenueRepository> = Arc::new(InMemoryVenueRepository::new());
+    let movie_svc = Arc::new(MovieService::new(Arc::clone(&movie_repo), Arc::clone(&show_repo)));
+    let venue_svc = Arc::new(VenueService::new(Arc::clone(&venue_repo)));
+
     crate::AppState::new(
         seat_locking_svc,
         booking_svc as Arc<dyn BookingServiceTrait>,
         payment_svc as Arc<dyn PaymentServiceTrait>,
         show_svc,
         queue_svc,
+        movie_svc,
+        venue_svc,
         user_repo,
         compensation_log_repo,
         email_svc as Arc<dyn service::EmailServiceTrait>,

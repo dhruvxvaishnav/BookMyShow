@@ -9,18 +9,20 @@ use api::routes::create_router;
 use api::state::AppState;
 use common::AppConfig;
 use repository::{
-    BookingRepository, CompensationLogRepository, PaymentRepository, QueueRepository,
-    SeatLockRepository, SeatRepository, ShowRepository, UserRepository,
+    BookingRepository, CompensationLogRepository, MovieRepository, PaymentRepository,
+    QueueRepository, SeatLockRepository, SeatRepository, ShowRepository, UserRepository,
+    VenueRepository,
 };
 use repository_inmemory::{
-    InMemoryBookingRepository, InMemoryCompensationLogRepository, InMemoryPaymentRepository,
-    InMemoryQueueRepository, InMemorySeatLockRepository, InMemorySeatRepository,
-    InMemoryShowRepository, InMemoryUserRepository,
+    InMemoryBookingRepository, InMemoryCompensationLogRepository, InMemoryMovieRepository,
+    InMemoryPaymentRepository, InMemoryQueueRepository, InMemorySeatLockRepository,
+    InMemorySeatRepository, InMemoryShowRepository, InMemoryUserRepository,
+    InMemoryVenueRepository,
 };
 use service::show::{CreateShowRequest, RowConfig, SeatLayoutRequest};
 use service::{
-    BookingService, PaymentService, QueueService, SeatLockingService, ShowService,
-    booking_service::BookingServiceTrait, payment_service::PaymentServiceTrait,
+    BookingService, MovieService, PaymentService, QueueService, SeatLockingService, ShowService,
+    VenueService, booking_service::BookingServiceTrait, payment_service::PaymentServiceTrait,
 };
 
 #[tokio::main]
@@ -80,6 +82,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let user_repo: Arc<dyn UserRepository> = Arc::new(in_memory_user_repo);
     let show_repo: Arc<dyn ShowRepository> = Arc::new(InMemoryShowRepository::new());
+    let movie_repo: Arc<dyn MovieRepository> = Arc::new(InMemoryMovieRepository::new());
+    let venue_repo: Arc<dyn VenueRepository> = Arc::new(InMemoryVenueRepository::new());
     let seat_repo: Arc<dyn SeatRepository> = Arc::new(InMemorySeatRepository::new());
     let booking_repo: Arc<dyn BookingRepository> = Arc::new(InMemoryBookingRepository::new());
     let payment_repo: Arc<dyn PaymentRepository> = Arc::new(InMemoryPaymentRepository::new());
@@ -133,6 +137,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         cfg.clone(),
     ));
 
+    let movie_svc = Arc::new(MovieService::new(
+        Arc::clone(&movie_repo),
+        Arc::clone(&show_repo),
+    ));
+
+    let venue_svc = Arc::new(VenueService::new(Arc::clone(&venue_repo)));
+
     let queue_svc = Arc::new(QueueService::new(
         Arc::clone(&queue_repo),
         Arc::clone(&seat_repo),
@@ -141,8 +152,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         cfg.clone(),
     ));
 
-    // ── 4b. Seed demo shows ──────────────────────────────────────────────────
-    seed_demo_shows(&show_svc).await;
+    // ── 4b. Seed demo data ───────────────────────────────────────────────────
+    seed_demo_data(&show_svc, &movie_svc, &venue_svc).await;
 
     // ── 5. Build app state and router ──────────────────────────────────────
     let rate_limiter = RateLimiter::new();
@@ -153,6 +164,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&payment_svc) as Arc<dyn PaymentServiceTrait>,
         Arc::clone(&show_svc),
         Arc::clone(&queue_svc),
+        Arc::clone(&movie_svc),
+        Arc::clone(&venue_svc),
         Arc::clone(&user_repo),
         Arc::clone(&compensation_log_repo),
         Arc::clone(&email_svc) as Arc<dyn service::EmailServiceTrait>,
@@ -217,126 +230,176 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// Seed 4 demo shows so the home page isn't empty on first boot.
-/// Only seeds if the show repository is empty.
-async fn seed_demo_shows(show_svc: &ShowService) {
-    // Only seed if no shows exist yet
+/// Seed demo movies, venues, and shows so the home page isn't empty on first boot.
+async fn seed_demo_data(show_svc: &ShowService, movie_svc: &MovieService, venue_svc: &VenueService) {
     let existing = show_svc.list_shows().await.unwrap_or_default();
     if !existing.is_empty() {
         tracing::info!(count = existing.len(), "shows already exist, skipping seed");
         return;
     }
 
+    // ── Seed venues ──────────────────────────────────────────────────────────
+    let venue_pvr = venue_svc
+        .create_venue(
+            "PVR Nexus".to_string(),
+            "Nexus Mall, Koramangala, Bengaluru".to_string(),
+            "Bengaluru".to_string(),
+            6,
+            vec!["Dolby Atmos".to_string(), "4DX".to_string(), "Food Court".to_string()],
+        )
+        .await
+        .expect("seed venue PVR failed");
+
+    let venue_imax = venue_svc
+        .create_venue(
+            "IMAX Central".to_string(),
+            "Forum Mall, Koramangala, Bengaluru".to_string(),
+            "Bengaluru".to_string(),
+            3,
+            vec!["IMAX".to_string(), "Laser Projection".to_string()],
+        )
+        .await
+        .expect("seed venue IMAX failed");
+
+    let venue_gold = venue_svc
+        .create_venue(
+            "Gold Class Cinemas".to_string(),
+            "Phoenix MarketCity, Whitefield, Bengaluru".to_string(),
+            "Bengaluru".to_string(),
+            2,
+            vec!["Recliner Seats".to_string(), "Premium Dining".to_string(), "Valet Parking".to_string()],
+        )
+        .await
+        .expect("seed venue Gold Class failed");
+
+    let venue_retro = venue_svc
+        .create_venue(
+            "Retro Cinema".to_string(),
+            "Church Street, Bengaluru".to_string(),
+            "Bengaluru".to_string(),
+            1,
+            vec!["Classic Ambience".to_string()],
+        )
+        .await
+        .expect("seed venue Retro failed");
+
+    tracing::info!("seeded 4 demo venues");
+
+    // ── Seed movies ──────────────────────────────────────────────────────────
+    let movie_avengers = movie_svc
+        .create_movie(
+            "Avengers: Endgame".to_string(),
+            "Action / Superhero".to_string(),
+            "English".to_string(),
+            181,
+            Some("https://upload.wikimedia.org/wikipedia/en/0/0d/Avengers_Endgame_official_poster.jpg".to_string()),
+            8.4,
+            "After the devastating events of Infinity War, the universe is in ruins. The Avengers assemble once more in order to reverse Thanos's actions and restore balance to the universe.".to_string(),
+        )
+        .await
+        .expect("seed movie Avengers failed");
+
+    let movie_dune = movie_svc
+        .create_movie(
+            "Dune: Part Two".to_string(),
+            "Sci-Fi / Adventure".to_string(),
+            "English".to_string(),
+            166,
+            Some("https://upload.wikimedia.org/wikipedia/en/5/52/Dune_Part_Two_poster.jpeg".to_string()),
+            8.5,
+            "Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family.".to_string(),
+        )
+        .await
+        .expect("seed movie Dune failed");
+
+    let movie_spiderman = movie_svc
+        .create_movie(
+            "Spider-Man: No Way Home".to_string(),
+            "Action / Superhero".to_string(),
+            "English".to_string(),
+            148,
+            Some("https://upload.wikimedia.org/wikipedia/en/0/00/Spider-Man_No_Way_Home_poster.jpg".to_string()),
+            8.2,
+            "With Spider-Man's identity now revealed, Peter asks Doctor Strange for help. When a spell goes wrong, dangerous foes from other worlds start to appear.".to_string(),
+        )
+        .await
+        .expect("seed movie Spider-Man failed");
+
+    let movie_budapest = movie_svc
+        .create_movie(
+            "The Grand Budapest Hotel".to_string(),
+            "Comedy / Drama".to_string(),
+            "English".to_string(),
+            100,
+            Some("https://upload.wikimedia.org/wikipedia/en/1/1c/The_Grand_Budapest_Hotel_Poster.jpg".to_string()),
+            8.1,
+            "The adventures of Gustave H, a legendary concierge at a famous hotel between the wars, and Zero Moustafa, the lobby boy who becomes his most trusted friend.".to_string(),
+        )
+        .await
+        .expect("seed movie Budapest failed");
+
+    tracing::info!("seeded 4 demo movies");
+
+    // ── Seed shows ───────────────────────────────────────────────────────────
     let now = chrono::Utc::now();
     let hour = chrono::Duration::hours(1);
-    let two_hours = chrono::Duration::hours(2);
 
     let shows = vec![
-        // Show 1: Standard layout — 4 rows × 10 seats, ₹200/seat
         CreateShowRequest {
             show_name: "Avengers: Endgame".to_string(),
             theatre_name: "PVR Nexus".to_string(),
             screen_number: 1,
             start_time: now + hour,
-            end_time: now + two_hours,
+            end_time: now + hour * 4,
             price_per_seat: 200.0,
+            movie_id: Some(movie_avengers.movie_id.clone()),
+            venue_id: Some(venue_pvr.venue_id.clone()),
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig {
-                        row: "A".to_string(),
-                        seats: 10,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "B".to_string(),
-                        seats: 10,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "C".to_string(),
-                        seats: 10,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "D".to_string(),
-                        seats: 10,
-                        seat_type: "Standard".to_string(),
-                    },
+                    RowConfig { row: "A".to_string(), seats: 10, seat_type: "Standard".to_string() },
+                    RowConfig { row: "B".to_string(), seats: 10, seat_type: "Standard".to_string() },
+                    RowConfig { row: "C".to_string(), seats: 10, seat_type: "Standard".to_string() },
+                    RowConfig { row: "D".to_string(), seats: 10, seat_type: "Standard".to_string() },
                 ],
             },
         },
-        // Show 2: Premium layout — 6 rows × 12 seats, ₹350/seat
         CreateShowRequest {
             show_name: "Dune: Part Two".to_string(),
             theatre_name: "IMAX Central".to_string(),
             screen_number: 2,
             start_time: now + hour * 2,
-            end_time: now + hour * 4,
+            end_time: now + hour * 5,
             price_per_seat: 350.0,
+            movie_id: Some(movie_dune.movie_id.clone()),
+            venue_id: Some(venue_imax.venue_id.clone()),
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig {
-                        row: "A".to_string(),
-                        seats: 12,
-                        seat_type: "Premium".to_string(),
-                    },
-                    RowConfig {
-                        row: "B".to_string(),
-                        seats: 12,
-                        seat_type: "Premium".to_string(),
-                    },
-                    RowConfig {
-                        row: "C".to_string(),
-                        seats: 12,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "D".to_string(),
-                        seats: 12,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "E".to_string(),
-                        seats: 12,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "F".to_string(),
-                        seats: 12,
-                        seat_type: "Recliner".to_string(),
-                    },
+                    RowConfig { row: "A".to_string(), seats: 12, seat_type: "Premium".to_string() },
+                    RowConfig { row: "B".to_string(), seats: 12, seat_type: "Premium".to_string() },
+                    RowConfig { row: "C".to_string(), seats: 12, seat_type: "Standard".to_string() },
+                    RowConfig { row: "D".to_string(), seats: 12, seat_type: "Standard".to_string() },
+                    RowConfig { row: "E".to_string(), seats: 12, seat_type: "Standard".to_string() },
+                    RowConfig { row: "F".to_string(), seats: 12, seat_type: "Recliner".to_string() },
                 ],
             },
         },
-        // Show 3: Recliner-only — 3 rows × 8 seats, ₹500/seat
         CreateShowRequest {
             show_name: "Spider-Man: No Way Home".to_string(),
             theatre_name: "Gold Class Cinemas".to_string(),
             screen_number: 1,
             start_time: now + hour * 3,
-            end_time: now + hour * 5,
+            end_time: now + hour * 6,
             price_per_seat: 500.0,
+            movie_id: Some(movie_spiderman.movie_id.clone()),
+            venue_id: Some(venue_gold.venue_id.clone()),
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig {
-                        row: "A".to_string(),
-                        seats: 8,
-                        seat_type: "Recliner".to_string(),
-                    },
-                    RowConfig {
-                        row: "B".to_string(),
-                        seats: 8,
-                        seat_type: "Recliner".to_string(),
-                    },
-                    RowConfig {
-                        row: "C".to_string(),
-                        seats: 8,
-                        seat_type: "Recliner".to_string(),
-                    },
+                    RowConfig { row: "A".to_string(), seats: 8, seat_type: "Recliner".to_string() },
+                    RowConfig { row: "B".to_string(), seats: 8, seat_type: "Recliner".to_string() },
+                    RowConfig { row: "C".to_string(), seats: 8, seat_type: "Recliner".to_string() },
                 ],
             },
         },
-        // Show 4: Large show — 8 rows × 15 seats, ₹150/seat
         CreateShowRequest {
             show_name: "The Grand Budapest Hotel".to_string(),
             theatre_name: "Retro Cinema".to_string(),
@@ -344,48 +407,18 @@ async fn seed_demo_shows(show_svc: &ShowService) {
             start_time: now + hour * 4,
             end_time: now + hour * 6,
             price_per_seat: 150.0,
+            movie_id: Some(movie_budapest.movie_id.clone()),
+            venue_id: Some(venue_retro.venue_id.clone()),
             seat_layout: SeatLayoutRequest {
                 rows: vec![
-                    RowConfig {
-                        row: "A".to_string(),
-                        seats: 15,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "B".to_string(),
-                        seats: 15,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "C".to_string(),
-                        seats: 15,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "D".to_string(),
-                        seats: 15,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "E".to_string(),
-                        seats: 15,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "F".to_string(),
-                        seats: 15,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "G".to_string(),
-                        seats: 15,
-                        seat_type: "Standard".to_string(),
-                    },
-                    RowConfig {
-                        row: "H".to_string(),
-                        seats: 15,
-                        seat_type: "Standard".to_string(),
-                    },
+                    RowConfig { row: "A".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "B".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "C".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "D".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "E".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "F".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "G".to_string(), seats: 15, seat_type: "Standard".to_string() },
+                    RowConfig { row: "H".to_string(), seats: 15, seat_type: "Standard".to_string() },
                 ],
             },
         },

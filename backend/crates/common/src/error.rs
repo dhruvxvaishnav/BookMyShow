@@ -41,6 +41,12 @@ pub enum AppError {
     #[error("queue entry not found: {0}")]
     QueueEntryNotFound(String),
 
+    #[error("movie not found: {0}")]
+    MovieNotFound(String),
+
+    #[error("venue not found: {0}")]
+    VenueNotFound(String),
+
     // ─── 409 Conflict ──────────────────────────────────────────────────────────
     #[error("seats unavailable: {:?}", .0)]
     SeatsUnavailable(Vec<String>),
@@ -110,6 +116,8 @@ impl AppError {
             AppError::UserNotFound(_) => 404,
             AppError::LockNotFound(_) => 404,
             AppError::QueueEntryNotFound(_) => 404,
+            AppError::MovieNotFound(_) => 404,
+            AppError::VenueNotFound(_) => 404,
 
             AppError::SeatsUnavailable(_) => 409,
             AppError::SeatUnavailable(_) => 409,
@@ -150,6 +158,8 @@ impl AppError {
             AppError::UserNotFound(_) => "USER_NOT_FOUND",
             AppError::LockNotFound(_) => "LOCK_NOT_FOUND",
             AppError::QueueEntryNotFound(_) => "QUEUE_ENTRY_NOT_FOUND",
+            AppError::MovieNotFound(_) => "MOVIE_NOT_FOUND",
+            AppError::VenueNotFound(_) => "VENUE_NOT_FOUND",
 
             AppError::SeatsUnavailable(_) => "SEATS_UNAVAILABLE",
             AppError::SeatUnavailable(_) => "SEAT_UNAVAILABLE",

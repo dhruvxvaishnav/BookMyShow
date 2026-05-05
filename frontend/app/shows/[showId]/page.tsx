@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/layout/PageHeader';
 import SeatGrid from '@/components/seats/SeatGrid';
@@ -32,6 +32,7 @@ export default function SeatSelectionPage({ params }: PageProps) {
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
   const [isLocking, setIsLocking] = useState(false);
   const [conflictingSeats, setConflictingSeats] = useState<string[]>([]);
+  const [srAnnouncement, setSrAnnouncement] = useState('');
 
   // Queue state
   const [queueId, setQueueId] = useState<string | null>(null);
@@ -87,12 +88,15 @@ export default function SeatSelectionPage({ params }: PageProps) {
 
     setSelectedSeatIds((prev) => {
       if (prev.includes(seat.seat_id)) {
+        setSrAnnouncement(`Seat ${seat.seat_number} deselected. ${prev.length - 1} seat${prev.length - 1 !== 1 ? 's' : ''} selected.`);
         return prev.filter((id) => id !== seat.seat_id);
       }
       if (prev.length >= 10) {
         toast.showToast('Maximum 10 seats per booking.', 'warning');
+        setSrAnnouncement('Maximum 10 seats per booking reached.');
         return prev;
       }
+      setSrAnnouncement(`Seat ${seat.seat_number} selected. ${prev.length + 1} seat${prev.length + 1 !== 1 ? 's' : ''} selected.`);
       return [...prev, seat.seat_id];
     });
     setConflictingSeats([]);
@@ -167,6 +171,11 @@ export default function SeatSelectionPage({ params }: PageProps) {
         subtitle={`${show.theatre_name} · Screen ${show.screen_number}`}
         backHref="/"
       />
+
+      {/* Screen reader live region for seat selection announcements */}
+      <div aria-live="polite" aria-atomic="true" className={styles.srOnly}>
+        {srAnnouncement}
+      </div>
 
       <div className="container">
         {queueId && (

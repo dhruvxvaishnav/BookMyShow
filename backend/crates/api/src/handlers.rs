@@ -373,25 +373,57 @@ pub async fn health() -> Json<ApiResponse<HealthResponse>> {
 
 // ─── Show handlers ─────────────────────────────────────────────────────────────
 
+async fn make_show_response(show: domain::Show, state: &AppState) -> ShowResponse {
+    let movie = if let Some(mid) = &show.movie_id {
+        state.movie_svc.get_movie(mid).await.ok().flatten().map(|m| MovieResponse {
+            movie_id: m.movie_id,
+            title: m.title,
+            genre: m.genre,
+            language: m.language,
+            duration_minutes: m.duration_minutes,
+            poster_url: m.poster_url,
+            rating: m.rating,
+            description: m.description,
+        })
+    } else {
+        None
+    };
+    let venue = if let Some(vid) = &show.venue_id {
+        state.venue_svc.get_venue(vid).await.ok().flatten().map(|v| VenueResponse {
+            venue_id: v.venue_id,
+            name: v.name,
+            address: v.address,
+            city: v.city,
+            screen_count: v.screen_count,
+            amenities: v.amenities,
+        })
+    } else {
+        None
+    };
+    ShowResponse {
+        show_id: show.show_id,
+        show_name: show.show_name,
+        theatre_name: show.theatre_name,
+        screen_number: show.screen_number,
+        start_time: show.start_time.timestamp(),
+        end_time: show.end_time.timestamp(),
+        price_per_seat: show.price_per_seat,
+        total_seats: show.total_seats,
+        movie_id: show.movie_id,
+        venue_id: show.venue_id,
+        movie,
+        venue,
+    }
+}
+
 pub async fn list_shows(
     State(state): State<AppState>,
 ) -> Result<Json<ApiResponse<Vec<ShowResponse>>>, crate::impl_from_response::ApiError> {
     let shows = state.show_svc.list_shows().await?;
-
-    let responses: Vec<ShowResponse> = shows
-        .into_iter()
-        .map(|s| ShowResponse {
-            show_id: s.show_id,
-            show_name: s.show_name,
-            theatre_name: s.theatre_name,
-            screen_number: s.screen_number,
-            start_time: s.start_time.timestamp(),
-            end_time: s.end_time.timestamp(),
-            price_per_seat: s.price_per_seat,
-            total_seats: s.total_seats,
-        })
-        .collect();
-
+    let mut responses = Vec::with_capacity(shows.len());
+    for s in shows {
+        responses.push(make_show_response(s, &state).await);
+    }
     Ok(Json(ApiResponse::ok(responses)))
 }
 
@@ -407,16 +439,7 @@ pub async fn get_show(
         .await?
         .ok_or_else(|| common::AppError::ShowNotFound(show_id.clone()))?;
 
-    Ok(Json(ApiResponse::ok(ShowResponse {
-        show_id: show.show_id,
-        show_name: show.show_name,
-        theatre_name: show.theatre_name,
-        screen_number: show.screen_number,
-        start_time: show.start_time.timestamp(),
-        end_time: show.end_time.timestamp(),
-        price_per_seat: show.price_per_seat,
-        total_seats: show.total_seats,
-    })))
+    Ok(Json(ApiResponse::ok(make_show_response(show, &state).await)))
 }
 
 #[derive(Deserialize)]
@@ -912,25 +935,16 @@ pub async fn create_show(
                 })
                 .collect(),
         },
+        movie_id: req.movie_id,
+        venue_id: req.venue_id,
     };
 
     let (show, seats) = state.show_svc.create_show(svc_req).await?;
 
     tracing::info!(show_id = %show.show_id, seat_count = seats.len(), "admin created show");
 
-    Ok((
-        axum::http::StatusCode::CREATED,
-        Json(ApiResponse::ok(ShowResponse {
-            show_id: show.show_id,
-            show_name: show.show_name,
-            theatre_name: show.theatre_name,
-            screen_number: show.screen_number,
-            start_time: show.start_time.timestamp(),
-            end_time: show.end_time.timestamp(),
-            price_per_seat: show.price_per_seat,
-            total_seats: show.total_seats,
-        })),
-    ))
+    let response = make_show_response(show, &state).await;
+    Ok((axum::http::StatusCode::CREATED, Json(ApiResponse::ok(response))))
 }
 
 pub async fn cancel_show(
@@ -1132,4 +1146,182 @@ pub async fn admin_audit(
         .collect();
 
     Ok(Json(ApiResponse::ok(response)))
+}
+
+// ─── Movie handlers ────────────────────────────────────────────────────────────
+
+pub async fn list_movies(
+    State(state): State<AppState>,
+) -> Result<Json<ApiResponse<Vec<MovieResponse>>>, crate::impl_from_response::ApiError> {
+    let movies = state.movie_svc.list_movies().await?;
+    let responses: Vec<MovieResponse> = movies
+        .into_iter()
+        .map(|m| MovieResponse {
+            movie_id: m.movie_id,
+            title: m.title,
+            genre: m.genre,
+            language: m.language,
+            duration_minutes: m.duration_minutes,
+            poster_url: m.poster_url,
+            rating: m.rating,
+            description: m.description,
+        })
+        .collect();
+    Ok(Json(ApiResponse::ok(responses)))
+}
+
+pub async fn get_movie(
+    State(state): State<AppState>,
+    Path(movie_id): Path<String>,
+) -> Result<Json<ApiResponse<MovieResponse>>, crate::impl_from_response::ApiError> {
+    let movie = state
+        .movie_svc
+        .get_movie(&movie_id)
+        .await?
+        .ok_or_else(|| common::AppError::MovieNotFound(movie_id.clone()))?;
+    Ok(Json(ApiResponse::ok(MovieResponse {
+        movie_id: movie.movie_id,
+        title: movie.title,
+        genre: movie.genre,
+        language: movie.language,
+        duration_minutes: movie.duration_minutes,
+        poster_url: movie.poster_url,
+        rating: movie.rating,
+        description: movie.description,
+    })))
+}
+
+pub async fn list_shows_for_movie(
+    State(state): State<AppState>,
+    Path(movie_id): Path<String>,
+) -> Result<Json<ApiResponse<Vec<ShowResponse>>>, crate::impl_from_response::ApiError> {
+    let shows = state.movie_svc.list_shows_for_movie(&movie_id).await?;
+    let mut responses = Vec::with_capacity(shows.len());
+    for s in shows {
+        responses.push(make_show_response(s, &state).await);
+    }
+    Ok(Json(ApiResponse::ok(responses)))
+}
+
+pub async fn admin_create_movie(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<CreateMovieRequest>,
+) -> Result<
+    (axum::http::StatusCode, Json<ApiResponse<MovieResponse>>),
+    crate::impl_from_response::ApiError,
+> {
+    require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
+
+    if req.title.trim().is_empty() {
+        return Err(common::AppError::ValidationError("title is required".to_string()).into());
+    }
+
+    let movie = state
+        .movie_svc
+        .create_movie(
+            req.title,
+            req.genre,
+            req.language,
+            req.duration_minutes,
+            req.poster_url,
+            req.rating,
+            req.description,
+        )
+        .await?;
+
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ApiResponse::ok(MovieResponse {
+            movie_id: movie.movie_id,
+            title: movie.title,
+            genre: movie.genre,
+            language: movie.language,
+            duration_minutes: movie.duration_minutes,
+            poster_url: movie.poster_url,
+            rating: movie.rating,
+            description: movie.description,
+        })),
+    ))
+}
+
+// ─── Venue handlers ────────────────────────────────────────────────────────────
+
+#[derive(Deserialize)]
+pub struct VenueCityQuery {
+    pub city: Option<String>,
+}
+
+pub async fn list_venues(
+    State(state): State<AppState>,
+    Query(query): Query<VenueCityQuery>,
+) -> Result<Json<ApiResponse<Vec<VenueResponse>>>, crate::impl_from_response::ApiError> {
+    let venues = if let Some(city) = &query.city {
+        state.venue_svc.list_venues_by_city(city).await?
+    } else {
+        state.venue_svc.list_venues().await?
+    };
+    let responses: Vec<VenueResponse> = venues
+        .into_iter()
+        .map(|v| VenueResponse {
+            venue_id: v.venue_id,
+            name: v.name,
+            address: v.address,
+            city: v.city,
+            screen_count: v.screen_count,
+            amenities: v.amenities,
+        })
+        .collect();
+    Ok(Json(ApiResponse::ok(responses)))
+}
+
+pub async fn get_venue(
+    State(state): State<AppState>,
+    Path(venue_id): Path<String>,
+) -> Result<Json<ApiResponse<VenueResponse>>, crate::impl_from_response::ApiError> {
+    let venue = state
+        .venue_svc
+        .get_venue(&venue_id)
+        .await?
+        .ok_or_else(|| common::AppError::VenueNotFound(venue_id.clone()))?;
+    Ok(Json(ApiResponse::ok(VenueResponse {
+        venue_id: venue.venue_id,
+        name: venue.name,
+        address: venue.address,
+        city: venue.city,
+        screen_count: venue.screen_count,
+        amenities: venue.amenities,
+    })))
+}
+
+pub async fn admin_create_venue(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(req): Json<CreateVenueRequest>,
+) -> Result<
+    (axum::http::StatusCode, Json<ApiResponse<VenueResponse>>),
+    crate::impl_from_response::ApiError,
+> {
+    require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
+
+    if req.name.trim().is_empty() {
+        return Err(common::AppError::ValidationError("name is required".to_string()).into());
+    }
+
+    let venue = state
+        .venue_svc
+        .create_venue(req.name, req.address, req.city, req.screen_count, req.amenities)
+        .await?;
+
+    Ok((
+        axum::http::StatusCode::CREATED,
+        Json(ApiResponse::ok(VenueResponse {
+            venue_id: venue.venue_id,
+            name: venue.name,
+            address: venue.address,
+            city: venue.city,
+            screen_count: venue.screen_count,
+            amenities: venue.amenities,
+        })),
+    ))
 }

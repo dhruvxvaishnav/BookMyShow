@@ -21,6 +21,12 @@ pub struct Show {
     /// When this show record was created.
     #[serde(with = "chrono::serde::ts_seconds")]
     pub created_at: DateTime<Utc>,
+    /// Linked movie (optional — enriches the show with film metadata).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub movie_id: Option<String>,
+    /// Linked venue (optional — enriches the show with theatre location).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub venue_id: Option<String>,
 }
 
 impl Show {
@@ -45,6 +51,8 @@ impl Show {
             price_per_seat,
             total_seats,
             created_at: Utc::now(),
+            movie_id: None,
+            venue_id: None,
         }
     }
 }

@@ -122,34 +122,39 @@
 
 ---
 
-### PHASE 4 — UX Polish
+### PHASE 4 — UX Polish ✅ DONE
 
 #### 4.1 Accessibility
 - [x] **Frontend:** Add `aria-label` to all icon buttons (seat cells, close buttons, nav)
 - [x] **Frontend:** Keyboard navigation for seat grid (arrow keys, space to select)
 - [x] **Frontend:** Focus management in modals (trap focus, restore on close)
-- [ ] **Frontend:** Color contrast audit (WCAG 2.1 AA minimum)
-- [ ] **Frontend:** Screen reader announcements for seat status changes and timer
+- [x] **Frontend:** Color contrast audit (WCAG 2.1 AA minimum) — bumped `--text-muted` from #6B7280 (3.98:1) to #8B96A0 (6.5:1)
+- [x] **Frontend:** Screen reader announcements for seat status changes (`aria-live="polite"`) and timer warnings (`aria-live="assertive"`)
 
-#### 4.2 Movie / Show Metadata
-- [ ] **Backend:** Add `movie` table: title, genre, language, duration, poster_url, rating, description
-- [ ] **Backend:** Link `show` to `movie` (show is a screening of a movie)
-- [ ] **Backend:** `GET /movies` — browse movies
-- [ ] **Backend:** `GET /movies/:id/shows` — all shows for a movie
-- [ ] **Frontend:** `/movies` home page (movie posters, filter by genre/language/rating)
-- [ ] **Frontend:** `/movies/:id` — movie detail with all upcoming shows
-- [ ] **Frontend:** Update `/` to be movie-first browsing, not show-first
+#### 4.2 Movie / Show Metadata ✅ DONE
+- [x] **Backend:** Add `Movie` domain model: title, genre, language, duration, poster_url, rating, description
+- [x] **Backend:** Link `Show` to `Movie` via optional `movie_id`; enriched in all show responses
+- [x] **Backend:** `GET /movies` — browse movies (alphabetically sorted)
+- [x] **Backend:** `GET /movies/:id/shows` — all shows for a movie
+- [x] **Backend:** `POST /admin/movies` — create movie (admin)
+- [x] **Frontend:** `/movies` home page (movie posters, filter by genre/language/rating)
+- [x] **Frontend:** `/movies/:id` — movie detail with all upcoming shows, city filter
+- [x] **Frontend:** Updated `/` to include "Browse Movies" shortcut + Movies link in nav
+- [x] **Backend:** Fixed `show_name` → `name` serde rename so frontend show names display correctly
 
-#### 4.3 Venue / Theatre Metadata  
-- [ ] **Backend:** Add `venue` table: name, address, city, screen count, amenities
-- [ ] **Backend:** Link `show` to `venue` + `screen`
-- [ ] **Frontend:** Display full venue address on show/booking pages
-- [ ] **Frontend:** Filter shows by city
+#### 4.3 Venue / Theatre Metadata ✅ DONE
+- [x] **Backend:** Add `Venue` domain model: name, address, city, screen count, amenities
+- [x] **Backend:** Link `Show` to `Venue` via optional `venue_id`; enriched in all show responses
+- [x] **Backend:** `GET /venues` — list venues (filter by `?city=`)
+- [x] **Backend:** `GET /venues/:id` — get venue details
+- [x] **Backend:** `POST /admin/venues` — create venue (admin)
+- [x] **Frontend:** Display full venue address on show cards (home page), booking cards, and movie detail page
+- [x] **Frontend:** Filter shows by city on `/movies/:id` page
 
-#### 4.4 My Bookings Enhancements
-- [ ] **Frontend:** Show QR code stub on each booking card
-- [ ] **Frontend:** "Download Ticket" button per booking
-- [ ] **Frontend:** Pagination (currently loads all bookings)
+#### 4.4 My Bookings Enhancements ✅ DONE
+- [x] **Frontend:** Show QR code (gold, `qrcode.react`) on confirmed booking cards — scans to booking ID
+- [x] **Frontend:** "Download Ticket" button on confirmed bookings links to `/bookings/:id/confirmed`
+- [x] **Frontend:** Pagination — 9 bookings per page with prev/next + page number controls
 
 ---
 

@@ -36,6 +36,14 @@ impl ShowRepository for InMemoryShowRepository {
         Ok(r.values().cloned().collect())
     }
 
+    async fn find_by_movie_id(&self, movie_id: &str) -> Result<Vec<Show>, AppError> {
+        let r = self.shows.read().await;
+        Ok(r.values()
+            .filter(|s| s.movie_id.as_deref() == Some(movie_id))
+            .cloned()
+            .collect())
+    }
+
     async fn exists(&self, show_id: &str) -> Result<bool, AppError> {
         let r = self.shows.read().await;
         Ok(r.contains_key(show_id))

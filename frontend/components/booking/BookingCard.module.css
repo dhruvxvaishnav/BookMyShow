@@ -24,7 +24,7 @@
   gap: var(--space-3);
 }
 
-.info { display: flex; flex-direction: column; gap: 2px; }
+.info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 
 .showName {
   font-size: 1rem;
@@ -38,10 +38,31 @@
   color: var(--text-secondary);
 }
 
+.address {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
 .time {
   font-size: 0.8125rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
+}
+
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.qrWrap {
+  padding: 6px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(245,166,35,0.2);
+  border-radius: var(--radius-sm);
+  cursor: default;
 }
 
 .seats {
@@ -72,6 +93,27 @@
   font-size: 1rem;
   font-weight: 700;
   color: var(--accent-gold);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.downloadBtn {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0D0D0F !important;
+  padding: 6px 12px;
+  background: var(--accent-gold);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.downloadBtn:hover {
+  background: var(--accent-gold-dim);
+  color: #0D0D0F !important;
 }
 
 .viewBtn {

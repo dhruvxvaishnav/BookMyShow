@@ -45,7 +45,7 @@ impl ShowService {
 
         let total_seats: u32 = req.seat_layout.rows.iter().map(|r| r.seats).sum();
 
-        let show = Show::new(
+        let mut show = Show::new(
             Uuid::new_v4().to_string(),
             req.show_name.clone(),
             req.theatre_name.clone(),
@@ -55,6 +55,8 @@ impl ShowService {
             req.price_per_seat,
             total_seats,
         );
+        show.movie_id = req.movie_id.clone();
+        show.venue_id = req.venue_id.clone();
 
         // Generate seats
         let mut seats = Vec::new();

@@ -7,6 +7,7 @@ pub trait ShowRepository: Send + Sync {
     async fn save(&self, show: Show) -> Result<Show, AppError>;
     async fn find_by_id(&self, show_id: &str) -> Result<Option<Show>, AppError>;
     async fn find_all(&self) -> Result<Vec<Show>, AppError>;
+    async fn find_by_movie_id(&self, movie_id: &str) -> Result<Vec<Show>, AppError>;
     async fn exists(&self, show_id: &str) -> Result<bool, AppError>;
     async fn delete(&self, show_id: &str) -> Result<(), AppError>;
 }

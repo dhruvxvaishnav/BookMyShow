@@ -37,6 +37,28 @@ export class ApiError extends Error {
   }
 }
 
+// ── Movie ─────────────────────────────────────────────────
+export interface Movie {
+  movie_id: string;
+  title: string;
+  genre: string;
+  language: string;
+  duration_minutes: number;
+  poster_url?: string;
+  rating: number;
+  description: string;
+}
+
+// ── Venue ─────────────────────────────────────────────────
+export interface Venue {
+  venue_id: string;
+  name: string;
+  address: string;
+  city: string;
+  screen_count: number;
+  amenities: string[];
+}
+
 // ── Show ──────────────────────────────────────────────────
 export interface Show {
   show_id: string;
@@ -47,6 +69,10 @@ export interface Show {
   end_time: number;
   price_per_seat: number;
   created_at: string;
+  movie_id?: string;
+  venue_id?: string;
+  movie?: Movie;
+  venue?: Venue;
 }
 
 export interface ShowAvailability {

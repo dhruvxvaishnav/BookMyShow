@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Ticket, Clock, Monitor } from 'lucide-react';
+import { Search, Ticket, Clock, Monitor, Film } from 'lucide-react';
 import { getShows, getShowAvailability } from '@/api/shows';
 import type { Show, ShowAvailability } from '@/types/api';
 import Badge from '@/components/common/Badge';
@@ -64,15 +64,21 @@ export default function HomePage() {
         title="Now Showing"
         subtitle="Select a show to book your seats"
         actions={
-          <div className={styles.searchWrap}>
-            <Search size={16} strokeWidth={1.5} className={styles.searchIcon} />
-            <input
-              className={styles.search}
-              placeholder="Search shows or theatres..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              aria-label="Search shows or theatres"
-            />
+          <div className={styles.headerActions}>
+            <Link href="/movies" className={styles.moviesLink}>
+              <Film size={15} strokeWidth={1.5} />
+              Browse Movies
+            </Link>
+            <div className={styles.searchWrap}>
+              <Search size={16} strokeWidth={1.5} className={styles.searchIcon} />
+              <input
+                className={styles.search}
+                placeholder="Search shows or theatres..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search shows or theatres"
+              />
+            </div>
           </div>
         }
       />
@@ -140,7 +146,10 @@ function ShowCard({
 
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>{show.name}</h3>
-        <p className={styles.cardTheatre}>{show.theatre_name}</p>
+        <p className={styles.cardTheatre}>{show.venue?.name ?? show.theatre_name}</p>
+        {show.venue?.address && (
+          <p className={styles.cardAddress}>{show.venue.address}</p>
+        )}
 
         <div className={styles.cardMeta}>
           <div className={styles.metaItem}>

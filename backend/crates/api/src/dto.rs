@@ -60,6 +60,10 @@ pub struct CreateShowRequestDto {
     pub end_time: i64,
     pub price_per_seat: f64,
     pub seat_layout: SeatLayoutDto,
+    #[serde(default)]
+    pub movie_id: Option<String>,
+    #[serde(default)]
+    pub venue_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -130,6 +134,7 @@ pub struct PaymentResponse {
 #[derive(Debug, Clone, Serialize)]
 pub struct ShowResponse {
     pub show_id: String,
+    #[serde(rename = "name")]
     pub show_name: String,
     pub theatre_name: String,
     pub screen_number: u32,
@@ -137,6 +142,63 @@ pub struct ShowResponse {
     pub end_time: i64,
     pub price_per_seat: f64,
     pub total_seats: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub movie_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub venue_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub movie: Option<MovieResponse>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub venue: Option<VenueResponse>,
+}
+
+/// Response for movie details.
+#[derive(Debug, Clone, Serialize)]
+pub struct MovieResponse {
+    pub movie_id: String,
+    pub title: String,
+    pub genre: String,
+    pub language: String,
+    pub duration_minutes: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub poster_url: Option<String>,
+    pub rating: f32,
+    pub description: String,
+}
+
+/// Response for venue details.
+#[derive(Debug, Clone, Serialize)]
+pub struct VenueResponse {
+    pub venue_id: String,
+    pub name: String,
+    pub address: String,
+    pub city: String,
+    pub screen_count: u32,
+    pub amenities: Vec<String>,
+}
+
+/// Admin: create movie request.
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateMovieRequest {
+    pub title: String,
+    pub genre: String,
+    pub language: String,
+    pub duration_minutes: u32,
+    #[serde(default)]
+    pub poster_url: Option<String>,
+    pub rating: f32,
+    pub description: String,
+}
+
+/// Admin: create venue request.
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateVenueRequest {
+    pub name: String,
+    pub address: String,
+    pub city: String,
+    pub screen_count: u32,
+    #[serde(default)]
+    pub amenities: Vec<String>,
 }
 
 /// Response for seat details.
@@ -200,6 +262,7 @@ pub struct HealthResponse {
 #[derive(Debug, Clone, Serialize)]
 pub struct ShowAnalyticsResponse {
     pub show_id: String,
+    #[serde(rename = "name")]
     pub show_name: String,
     pub total_seats: u32,
     pub available_seats: u32,

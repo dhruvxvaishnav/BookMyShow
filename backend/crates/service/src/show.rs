@@ -8,6 +8,10 @@ pub struct CreateShowRequest {
     pub end_time: chrono::DateTime<chrono::Utc>,
     pub price_per_seat: f64,
     pub seat_layout: SeatLayoutRequest,
+    #[serde(default)]
+    pub movie_id: Option<String>,
+    #[serde(default)]
+    pub venue_id: Option<String>,
 }
 
 /// DTO for seat layout in show creation.

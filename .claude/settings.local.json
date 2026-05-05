@@ -18,7 +18,9 @@
       "Bash(chmod:*)",
       "Bash(bash smoke-test.sh)",
       "Bash(curl -s http://localhost:8080/health)",
-      "Bash(powershell -ExecutionPolicy Bypass -File smoke-test.ps1)"
+      "Bash(powershell -ExecutionPolicy Bypass -File smoke-test.ps1)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\admin\\\\Desktop\\\\BookMyShow\" -Recurse -Directory)",
+      "Bash(Select-Object -First 50 FullName)"
     ]
   }
 }
