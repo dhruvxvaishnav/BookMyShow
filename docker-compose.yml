@@ -1,58 +1,104 @@
 version: '3.8'
 
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/bookmyshow
-      - REDIS_URL=redis://redis:6379/0
-      - APP_PORT=8080
-      # Provide dummy/test values for build/run
-      - JWT_SECRET=super_secret_dev_key
-      - ADMIN_EMAIL=admin@bookmyshow.com
-      - ADMIN_PASSWORD=Admin@123
-    depends_on:
-      - db
-      - redis
-    networks:
-      - app-network
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
-    networks:
-      - app-network
-
   db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=bookmyshow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bookmyshow
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "9000:9000"  # Prometheus metrics
+    environment:
+      APP_HOST: "0.0.0.0"
+      APP_PORT: "8080"
+      METRICS_PORT: "9000"
+      LOG_FORMAT: "json"
+      RUST_LOG: "info"
+      JWT_SECRET: "${JWT_SECRET:-change-me-in-production}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@bookmyshow.com}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-Admin@123}"
+      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-}"
+      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET:-}"
+      EMAIL_API_KEY: "${EMAIL_API_KEY:-}"
+      # Uncomment once DB is wired up:
+      # DATABASE_URL: "postgres://postgres:postgres@db:5432/bookmyshow"
+      # REDIS_URL: "redis://redis:6379/0"
+      OTLP_ENDPOINT: "${OTLP_ENDPOINT:-}"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: "http://backend:8080"
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}"
+      NEXT_PUBLIC_SENTRY_DSN: "${NEXT_PUBLIC_SENTRY_DSN:-}"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres_data:

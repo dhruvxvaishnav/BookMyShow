@@ -1,39 +1,33 @@
-# Base image for building
-FROM rust:1.80-slim-bullseye AS builder
+FROM rust:1.85-slim-bookworm AS builder
 
 WORKDIR /app
 
-# Install build dependencies
 RUN apt-get update && \
-    apt-get install -y pkg-config libssl-dev protobuf-compiler build-essential && \
+    apt-get install -y pkg-config libssl-dev build-essential && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy workspace
+# Copy workspace manifests first so cargo can cache dependencies
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates/
 
-# Build release
+# Build release binary
 RUN cargo build --release --bin api
 
-# Runtime image
-FROM debian:bullseye-slim
+# ── Runtime image ──────────────────────────────────────────────
+FROM debian:bookworm-slim
 
 WORKDIR /app
 
-# Install runtime dependencies (OpenSSL usually required)
 RUN apt-get update && \
-    apt-get install -y libssl1.1 ca-certificates && \
+    apt-get install -y libssl3 ca-certificates curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy compiled binary
 COPY --from=builder /app/target/release/api /app/api
-COPY backend/config.toml /app/config.toml
+COPY config.toml /app/config.toml
 
-# Default environment variables
 ENV RUST_LOG=info
 ENV APP_PORT=8080
 
 EXPOSE 8080
 
-# Run
 CMD ["/app/api"]

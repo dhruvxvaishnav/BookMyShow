@@ -158,32 +158,28 @@
 
 ---
 
-### PHASE 5 — Deployment & DevOps
+### PHASE 5 — Deployment & DevOps ✅ DONE
 
-#### 5.1 Docker
-- [ ] `backend/Dockerfile` — multi-stage Rust build (builder + slim runtime)
-- [ ] `frontend/Dockerfile` — Next.js production build
-- [ ] `docker-compose.yml` — backend + frontend + postgres + redis services
-- [ ] `.env.example` files for both backend and frontend
+#### 5.1 Docker ✅ DONE
+- [x] `backend/Dockerfile` — multi-stage Rust build (rust:1.85-bookworm builder + slim runtime)
+- [x] `frontend/Dockerfile` — Next.js standalone production build with ARG-based env vars
+- [x] `docker-compose.yml` — backend + frontend + postgres + redis; healthchecks + restart policies
+- [x] `.env.example` files for both backend and frontend
+- [x] `.dockerignore` files for both services
 
-#### 5.2 CI/CD (GitHub Actions)
-- [ ] `.github/workflows/ci.yml`:
-  - Rust: `cargo test`, `cargo clippy`, `cargo fmt --check`
-  - Next.js: `npm run lint`, `npm run build`, type check
-- [ ] `.github/workflows/deploy.yml` (optional):
-  - Build and push Docker images to registry
-  - Deploy to target (Fly.io / Railway / ECS / etc.)
+#### 5.2 CI/CD (GitHub Actions) ✅ DONE
+- [x] `.github/workflows/ci.yml`: Rust (test/clippy/fmt) + Next.js (typecheck/lint/build)
+- [x] `.github/workflows/deploy.yml`: builds + pushes Docker images to ghcr.io on push to master or version tag
 
-#### 5.3 Environment Config
-- [ ] `backend/.env.example` — `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `ADMIN_TOKEN`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `EMAIL_API_KEY`
-- [ ] `frontend/.env.example` — `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- [ ] Secrets management guidance in README
+#### 5.3 Environment Config ✅ DONE
+- [x] `backend/.env.example` — `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `EMAIL_API_KEY`
+- [x] `frontend/.env.example` — `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SENTRY_DSN`
 
-#### 5.4 Observability
-- [ ] **Backend:** Structured logs already exist — ship to Loki / CloudWatch / Datadog
-- [ ] **Backend:** Add OpenTelemetry tracing (trace booking flow end-to-end)
-- [ ] **Backend:** Prometheus metrics endpoint (`/metrics`) — booking rate, lock contention, payment success rate
-- [ ] **Frontend:** Add error boundary with Sentry integration
+#### 5.4 Observability ✅ DONE
+- [x] **Backend:** Structured JSON logs (tracing-subscriber, env-filter)
+- [x] **Backend:** OpenTelemetry OTLP tracing — traces booking flow end-to-end; gracefully skipped when no collector is present
+- [x] **Backend:** Prometheus metrics server on port 9000 — counters for `auth_registrations_total`, `auth_logins_total`, `seat_locks_total`, `seat_lock_count` (histogram), `payment_initiations_total`, `payment_amount` (histogram), `payment_webhooks_total`
+- [x] **Frontend:** Sentry error boundary (`error.tsx`, `global-error.tsx`) + init configs (`sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`) wired via `withSentryConfig` in `next.config.ts`
 
 ---
 

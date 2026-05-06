@@ -4,6 +4,7 @@ use axum::{
     http::HeaderMap,
 };
 use common::error::ApiResponse;
+use metrics::{counter, histogram};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -155,6 +156,8 @@ pub async fn register(
         domain::User::new_with_password(user_id.clone(), user_name.clone(), email.clone(), hash);
     state.user_repo.save(user).await?;
 
+    counter!("auth_registrations_total").increment(1);
+
     let secret = &state.cfg.jwt.secret;
     let access_token = encode_access_token(
         &user_id,
@@ -236,6 +239,8 @@ pub async fn login(
         secret,
         state.cfg.jwt.refresh_token_expiry_secs,
     )?;
+
+    counter!("auth_logins_total").increment(1);
 
     Ok(Json(ApiResponse::ok(AuthResponse {
         access_token,
@@ -566,10 +571,14 @@ pub async fn lock_seats(
         return Err(common::AppError::RateLimitExceeded.into());
     }
 
+    let seat_count = req.seat_ids.len() as f64;
     let result = state
         .seat_locking_svc
         .lock_seats(&show_id, req.seat_ids, &user_id)
         .await?;
+
+    counter!("seat_locks_total", "show_id" => show_id.clone()).increment(1);
+    histogram!("seat_lock_count").record(seat_count);
 
     let response = LockSeatsResponse {
         booking_id: result.booking_id,
@@ -739,6 +748,9 @@ pub async fn initiate_payment(
         .initiate_payment(&booking_id, &user_id, idempotency_key)
         .await?;
 
+    counter!("payment_initiations_total").increment(1);
+    histogram!("payment_amount").record(result.amount);
+
     Ok(Json(ApiResponse::ok(PaymentInitiatedResponse {
         payment_id: result.payment_id,
         payment_intent_id: result.payment_intent_id,
@@ -780,17 +792,15 @@ pub async fn stripe_webhook(
     if let Some(type_str) = payload.get("type").and_then(|t| t.as_str())
         && (type_str == "payment_intent.succeeded" || type_str == "payment_intent.payment_failed")
     {
-        let status = if type_str == "payment_intent.succeeded" {
-            "SUCCESS"
-        } else {
-            "FAILED"
-        };
+        let succeeded = type_str == "payment_intent.succeeded";
+        let status = if succeeded { "SUCCESS" } else { "FAILED" };
+
+        counter!("payment_webhooks_total", "status" => status).increment(1);
 
         if let Some(data) = payload.get("data")
             && let Some(object) = data.get("object")
             && let Some(payment_intent_id) = object.get("id").and_then(|i| i.as_str())
         {
-            // Call the existing payment callback logic
             let _ = state
                 .payment_svc
                 .payment_callback(payment_intent_id, status, None)
