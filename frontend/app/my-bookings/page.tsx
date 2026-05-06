@@ -9,13 +9,20 @@ import { useUserId } from '@/hooks/useUserId';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { getUserBookings } from '@/api/bookings';
 import { getErrorMessage } from '@/utils/error';
-import type { Booking, BookingStatus } from '@/types/api';
+import type { Booking } from '@/types/api';
 import styles from './page.module.css';
 
-type FilterTab = 'All' | BookingStatus;
+type FilterTab = 'Upcoming' | 'Past';
 
-const TABS: FilterTab[] = ['All', 'Pending', 'PaymentPending', 'Success', 'Cancelled', 'Expired'];
+const TABS: FilterTab[] = ['Upcoming', 'Past'];
 const PAGE_SIZE = 9;
+
+function isUpcoming(booking: Booking): boolean {
+  if (booking.show?.start_time) {
+    return booking.show.start_time > Date.now() / 1000;
+  }
+  return booking.status === 'Pending' || booking.status === 'PaymentPending';
+}
 
 export default function MyBookingsPage() {
   const isAuthed = useRequireAuth();
@@ -23,7 +30,7 @@ export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<FilterTab>('All');
+  const [activeTab, setActiveTab] = useState<FilterTab>('Upcoming');
   const [page, setPage] = useState(1);
 
   const loadBookings = useCallback(async () => {
@@ -47,7 +54,9 @@ export default function MyBookingsPage() {
 
   if (!isAuthed) return null;
 
-  const filtered = bookings.filter((b) => activeTab === 'All' || b.status === activeTab);
+  const filtered = bookings.filter((b) =>
+    activeTab === 'Upcoming' ? isUpcoming(b) : !isUpcoming(b)
+  );
   const sorted = [...filtered].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
@@ -63,7 +72,9 @@ export default function MyBookingsPage() {
       {/* Filter tabs */}
       <div className={styles.tabsRow} role="tablist" aria-label="Filter bookings by status">
         {TABS.map((tab) => {
-          const count = tab === 'All' ? bookings.length : bookings.filter((b) => b.status === tab).length;
+          const count = tab === 'Upcoming'
+            ? bookings.filter((b) => isUpcoming(b)).length
+            : bookings.filter((b) => !isUpcoming(b)).length;
           return (
             <button
               key={tab}
@@ -72,7 +83,7 @@ export default function MyBookingsPage() {
               className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ''}`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'PaymentPending' ? 'Awaiting' : tab}
+              {tab}
               {count > 0 && <span className={styles.tabCount}>{count}</span>}
             </button>
           );
@@ -92,7 +103,7 @@ export default function MyBookingsPage() {
         </div>
       ) : sorted.length === 0 ? (
         <EmptyState
-          title={activeTab === 'All' ? 'No bookings yet' : `No ${activeTab.toLowerCase()} bookings`}
+          title={activeTab === 'Upcoming' ? 'No upcoming bookings' : 'No past bookings'}
           description="Browse shows to get started with your cinema experience."
           icon="clapperboard"
           action={

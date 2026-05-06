@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, use, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { RefreshCw } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/forms/Button';
 import Badge from '@/components/common/Badge';
@@ -26,6 +27,7 @@ export default function ShowAnalyticsPage({ params }: PageProps) {
   const [seats, setSeats] = useState<Seat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [releasingSeatId, setReleasingSeatId] = useState<string | null>(null);
+  const [confirmReleaseSeat, setConfirmReleaseSeat] = useState<Seat | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
@@ -51,6 +53,7 @@ export default function ShowAnalyticsPage({ params }: PageProps) {
   if (!isAdmin) return null;
 
   const handleForceRelease = async (seatId: string) => {
+    setConfirmReleaseSeat(null);
     setReleasingSeatId(seatId);
     try {
       await forceReleaseSeat(showId, seatId);
@@ -103,6 +106,22 @@ export default function ShowAnalyticsPage({ params }: PageProps) {
           )}
         </div>
 
+        {/* Visual Seat Map */}
+        <div className={styles.section}>
+          <div className={styles.sectionTitleRow}>
+            <h2 className={styles.sectionTitle}>Live Seat Map</h2>
+            <button className={styles.refreshBtn} onClick={load} aria-label="Refresh seat data">
+              <RefreshCw size={14} strokeWidth={1.5} />
+              Refresh
+            </button>
+          </div>
+          <AdminSeatMap
+            seats={seats}
+            releasingSeatId={releasingSeatId}
+            onRelease={(seat) => setConfirmReleaseSeat(seat)}
+          />
+        </div>
+
         {/* Seat override table */}
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Seat Management</h2>
@@ -134,7 +153,7 @@ export default function ShowAnalyticsPage({ params }: PageProps) {
                       variant="danger"
                       size="sm"
                       isLoading={releasingSeatId === seat.seat_id}
-                      onClick={() => handleForceRelease(seat.seat_id)}
+                      onClick={() => setConfirmReleaseSeat(seat)}
                     >
                       Release
                     </Button>
@@ -154,6 +173,30 @@ export default function ShowAnalyticsPage({ params }: PageProps) {
           </Button>
         </div>
       </div>
+
+      {/* Per-seat release confirmation */}
+      <Modal
+        isOpen={!!confirmReleaseSeat}
+        onClose={() => setConfirmReleaseSeat(null)}
+        title="Release Seat Lock?"
+      >
+        <div className={styles.modalBody}>
+          <p>
+            Release the lock on seat <strong style={{ color: 'var(--antique-gold)', fontFamily: 'var(--font-mono)' }}>{confirmReleaseSeat?.seat_number}</strong>?
+            This will make the seat available for other users immediately.
+          </p>
+          <div className={styles.modalActions}>
+            <Button variant="secondary" onClick={() => setConfirmReleaseSeat(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              isLoading={releasingSeatId === confirmReleaseSeat?.seat_id}
+              onClick={() => confirmReleaseSeat && handleForceRelease(confirmReleaseSeat.seat_id)}
+            >
+              Release Seat
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         isOpen={showCancelModal}
@@ -183,6 +226,94 @@ function StatCard({ label, value, total, color }: { label: string; value: string
           <div className={styles.statFill} style={{ backgroundColor: color, width: `${pct}%` }} />
         </div>
       )}
+    </div>
+  );
+}
+
+function AdminSeatMap({
+  seats,
+  releasingSeatId,
+  onRelease,
+}: {
+  seats: Seat[];
+  releasingSeatId: string | null;
+  onRelease: (seat: Seat) => void;
+}) {
+  const rows = useMemo(() => {
+    const grouped: Record<string, Seat[]> = {};
+    for (const seat of seats) {
+      if (!grouped[seat.row_label]) grouped[seat.row_label] = [];
+      grouped[seat.row_label].push(seat);
+    }
+    for (const key of Object.keys(grouped)) {
+      grouped[key].sort((a, b) => a.seat_number.localeCompare(b.seat_number, undefined, { numeric: true }));
+    }
+    return Object.keys(grouped).sort().map((label) => ({ label, seats: grouped[label] }));
+  }, [seats]);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <div className={styles.seatMap}>
+      {/* Screen indicator */}
+      <div className={styles.screenIndicator}>
+        <div className={styles.screenCurve} aria-hidden="true" />
+        <span className={styles.screenLabel}>SCREEN</span>
+      </div>
+
+      {/* Seat rows */}
+      <div className={styles.seatRows}>
+        {rows.map(({ label, seats: rowSeats }) => (
+          <div key={label} className={styles.seatRow}>
+            <span className={styles.rowLabel}>{label}</span>
+            {rowSeats.map((seat) => {
+              const isLocked = seat.status === 'Locked';
+              const isBooked = seat.status === 'Booked';
+              const isReleasing = releasingSeatId === seat.seat_id;
+              const seatClass = [
+                styles.adminSeat,
+                isLocked ? styles.seatLocked : '',
+                isBooked ? styles.seatBooked : '',
+                !isLocked && !isBooked ? styles.seatAvailable : '',
+                seat.seat_type === 'Premium' ? styles.seatTypePremium : '',
+                seat.seat_type === 'Recliner' ? styles.seatTypeRecliner : '',
+              ].filter(Boolean).join(' ');
+
+              return (
+                <div key={seat.seat_id} className={styles.seatCell}>
+                  <div
+                    className={seatClass}
+                    title={`${seat.seat_number} — ${seat.seat_type} — ${seat.status}`}
+                    aria-label={`Seat ${seat.seat_number}, ${seat.seat_type}, ${seat.status}`}
+                  >
+                    <span className={styles.seatNum}>{seat.seat_number.replace(/^[A-Z]+/, '')}</span>
+                  </div>
+                  {isLocked && (
+                    <button
+                      className={`${styles.releaseBtn} ${isReleasing ? styles.releaseBtnLoading : ''}`}
+                      onClick={() => onRelease(seat)}
+                      disabled={isReleasing}
+                      aria-label={`Release seat ${seat.seat_number}`}
+                    >
+                      {isReleasing ? '…' : 'Release'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            <span className={styles.rowLabel}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div className={styles.seatMapLegend}>
+        <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatAvailable}`} /> Available</span>
+        <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatLocked}`} /> Locked</span>
+        <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatBooked}`} /> Booked</span>
+        <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatTypePremium}`} style={{ border: '2px solid #A855F7' }} /> Premium</span>
+        <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatTypeRecliner}`} style={{ border: '2px solid #06B6D4' }} /> Recliner</span>
+      </div>
     </div>
   );
 }

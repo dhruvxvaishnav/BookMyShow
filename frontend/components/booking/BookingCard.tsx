@@ -22,10 +22,17 @@ const statusVariant: Record<string, 'success' | 'error' | 'warning' | 'muted' | 
 export default function BookingCard({ booking }: BookingCardProps) {
   const variant = statusVariant[booking.status] ?? 'muted';
   const isConfirmed = booking.status === 'Success';
+  const posterUrl = booking.show?.movie?.poster_url ?? null;
 
   return (
     <div className={styles.card}>
       <div className={styles.top}>
+        {posterUrl && (
+          <div className={styles.poster} aria-hidden="true">
+            <img src={posterUrl} alt="" className={styles.posterImg} />
+          </div>
+        )}
+
         <div className={styles.info}>
           {booking.show ? (
             <>
