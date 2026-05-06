@@ -58,9 +58,8 @@ services:
       STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-}"
       STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET:-}"
       EMAIL_API_KEY: "${EMAIL_API_KEY:-}"
-      # Uncomment once DB is wired up:
-      # DATABASE_URL: "postgres://postgres:postgres@db:5432/bookmyshow"
-      # REDIS_URL: "redis://redis:6379/0"
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/bookmyshow"
+      REDIS_URL: "redis://redis:6379/0"
       OTLP_ENDPOINT: "${OTLP_ENDPOINT:-}"
     depends_on:
       db:
@@ -85,7 +84,7 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_BASE_URL: "http://backend:8080"
+      NEXT_PUBLIC_API_BASE_URL: "http://localhost:8080"
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}"
       NEXT_PUBLIC_SENTRY_DSN: "${NEXT_PUBLIC_SENTRY_DSN:-}"
     depends_on:

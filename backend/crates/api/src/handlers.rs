@@ -660,6 +660,14 @@ pub async fn get_booking(
         .await?
         .ok_or_else(|| common::AppError::BookingNotFound(booking_id.clone()))?;
 
+    let show = state.show_svc.get_show(&booking.show_id).await.ok().flatten();
+    let show_name = show.as_ref().map(|s| s.show_name.clone());
+    let all_seats = state.show_svc.get_seat_layout(&booking.show_id).await.unwrap_or_default();
+    let seat_numbers: Vec<String> = all_seats.iter()
+        .filter(|s| booking.seat_ids.contains(&s.seat_id))
+        .map(|s| s.seat_number.clone())
+        .collect();
+
     Ok(Json(ApiResponse::ok(BookingResponse {
         booking_id: booking.booking_id,
         user_id: booking.user_id,
@@ -672,6 +680,8 @@ pub async fn get_booking(
         expires_at: booking.expires_at.timestamp(),
         confirmed_at: booking.confirmed_at.map(|dt| dt.timestamp()),
         cancelled_at: booking.cancelled_at.map(|dt| dt.timestamp()),
+        show_name,
+        seat_numbers,
     })))
 }
 
@@ -699,20 +709,33 @@ pub async fn get_user_bookings(
 
     let bookings = state.booking_svc.get_user_bookings(&user_id).await?;
 
+    // Batch-fetch unique shows to get names
+    let mut show_names: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+    for show_id in bookings.iter().map(|b| &b.show_id).collect::<std::collections::HashSet<_>>() {
+        if let Ok(Some(show)) = state.show_svc.get_show(show_id).await {
+            show_names.insert(show_id.clone(), show.show_name.clone());
+        }
+    }
+
     let responses: Vec<BookingResponse> = bookings
         .into_iter()
-        .map(|b| BookingResponse {
-            booking_id: b.booking_id,
-            user_id: b.user_id,
-            show_id: b.show_id,
-            seat_ids: b.seat_ids,
-            status: b.status.to_string(),
-            total_amount: b.total_amount,
-            payment_id: b.payment_id,
-            created_at: b.created_at.timestamp(),
-            expires_at: b.expires_at.timestamp(),
-            confirmed_at: b.confirmed_at.map(|dt| dt.timestamp()),
-            cancelled_at: b.cancelled_at.map(|dt| dt.timestamp()),
+        .map(|b| {
+            let show_name = show_names.get(&b.show_id).cloned();
+            BookingResponse {
+                booking_id: b.booking_id,
+                user_id: b.user_id,
+                show_id: b.show_id,
+                seat_ids: b.seat_ids,
+                status: b.status.to_string(),
+                total_amount: b.total_amount,
+                payment_id: b.payment_id,
+                created_at: b.created_at.timestamp(),
+                expires_at: b.expires_at.timestamp(),
+                confirmed_at: b.confirmed_at.map(|dt| dt.timestamp()),
+                cancelled_at: b.cancelled_at.map(|dt| dt.timestamp()),
+                show_name,
+                seat_numbers: vec![],
+            }
         })
         .collect();
 
@@ -1024,6 +1047,8 @@ pub async fn admin_list_bookings(
             expires_at: b.expires_at.timestamp(),
             confirmed_at: b.confirmed_at.map(|dt| dt.timestamp()),
             cancelled_at: b.cancelled_at.map(|dt| dt.timestamp()),
+            show_name: None,
+            seat_numbers: vec![],
         })
         .collect();
 
@@ -1055,6 +1080,8 @@ pub async fn admin_get_booking(
         expires_at: booking.expires_at.timestamp(),
         confirmed_at: booking.confirmed_at.map(|dt| dt.timestamp()),
         cancelled_at: booking.cancelled_at.map(|dt| dt.timestamp()),
+        show_name: None,
+        seat_numbers: vec![],
     })))
 }
 

@@ -31,8 +31,8 @@ export default function SeatRow({
 }: SeatRowProps) {
   // Detect row type from first seat
   const firstSeat = seats[0];
-  const isPremium = firstSeat?.seat_type === 'Premium';
-  const isRecliner = firstSeat?.seat_type === 'Recliner';
+  const isPremium = firstSeat?.seat_type === 'premium';
+  const isRecliner = firstSeat?.seat_type === 'recliner';
 
   return (
     <div className={styles.row}>

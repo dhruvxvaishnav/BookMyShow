@@ -98,6 +98,6 @@ export default function SeatSelectionPanel({
 }
 
 function BadgeInline({ type }: { type: string }) {
-  const cls = type === 'Premium' ? styles.premiumBadge : type === 'Recliner' ? styles.reclinerBadge : '';
+  const cls = type === 'premium' ? styles.premiumBadge : type === 'recliner' ? styles.reclinerBadge : '';
   return <span className={`${styles.typeBadge} ${cls}`}>{type}</span>;
 }

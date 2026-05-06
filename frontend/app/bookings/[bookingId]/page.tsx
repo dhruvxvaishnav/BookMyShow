@@ -20,12 +20,14 @@ import styles from './page.module.css';
 interface PageProps { params: Promise<{ bookingId: string }> }
 
 const statusBadge: Record<BookingStatus, 'success' | 'error' | 'warning' | 'info' | 'muted' | 'gold'> = {
-  Success: 'success',
-  Pending: 'warning',
-  PaymentPending: 'gold',
-  Expired: 'muted',
-  Cancelled: 'error',
-  PartialSuccess: 'warning',
+  success: 'success',
+  pending: 'warning',
+  payment_pending: 'gold',
+  expired: 'muted',
+  cancelled: 'error',
+  success_partial: 'warning',
+  payment_failed: 'error',
+  queued: 'info',
 };
 
 export default function BookingDetailsPage({ params }: PageProps) {
@@ -52,7 +54,7 @@ export default function BookingDetailsPage({ params }: PageProps) {
       const stored = localStorage.getItem('bms_lock_extensions');
       const exts: Record<string, number> = stored ? JSON.parse(stored) : {};
       setExtensionsUsed(exts[bookingId] ?? 0);
-      if (data.status === 'Expired') setShowExpiredModal(true);
+      if (data.status === 'expired') setShowExpiredModal(true);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -69,7 +71,7 @@ export default function BookingDetailsPage({ params }: PageProps) {
       try {
         const data = await getBooking(bookingId);
         setBooking(data);
-        if (data.status === 'Expired') {
+        if (data.status === 'expired') {
           setShowExpiredModal(true);
           clearInterval(interval);
         }
@@ -138,8 +140,8 @@ export default function BookingDetailsPage({ params }: PageProps) {
     );
   }
 
-  const isPending = booking.status === 'Pending' || booking.status === 'PaymentPending';
-  const expired = booking.status === 'Expired' || booking.status === 'Cancelled';
+  const isPending = booking.status === 'pending' || booking.status === 'payment_pending';
+  const expired = booking.status === 'expired' || booking.status === 'cancelled';
   const badgeVariant = statusBadge[booking.status] ?? 'muted';
 
   return (
@@ -151,6 +153,11 @@ export default function BookingDetailsPage({ params }: PageProps) {
             <div>
               <div className={styles.bookingIdLabel}>Booking Reference</div>
               <div className={styles.bookingId}>{bookingId.slice(0, 16).toUpperCase()}</div>
+              {booking.show_name && (
+                <div style={{ fontSize: '0.75rem', color: 'var(--antique-gold)', marginTop: 4 }}>
+                  {booking.show_name}
+                </div>
+              )}
             </div>
             <Badge variant={badgeVariant}>{booking.status}</Badge>
           </div>
@@ -183,15 +190,12 @@ export default function BookingDetailsPage({ params }: PageProps) {
           <div className={styles.seatsSection}>
             <span className={styles.seatsLabel}>Your Seats</span>
             <div className={styles.seatList}>
-              {booking.seats && booking.seats.length > 0
-                ? booking.seats.map((s) => (
-                    <span key={s.seat_id} className={styles.seatChip}>
-                      {s.seat_number}
-                    </span>
-                  ))
-                : booking.seat_ids.map((id) => (
-                    <span key={id} className={styles.seatChip}>{id.slice(0, 8)}</span>
-                  ))}
+              {(booking.seat_numbers && booking.seat_numbers.length > 0
+                ? booking.seat_numbers
+                : booking.seat_ids.map((id) => id.slice(0, 8))
+              ).map((label) => (
+                <span key={label} className={styles.seatChip}>{label}</span>
+              ))}
             </div>
           </div>
 

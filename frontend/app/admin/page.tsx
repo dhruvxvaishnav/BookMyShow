@@ -44,9 +44,9 @@ export default function AdminDashboardPage() {
 
   if (!isAdmin) return null;
 
-  const successBookings = bookings.filter((b) => b.status === 'Success');
+  const successBookings = bookings.filter((b) => b.status === 'success');
   const totalRevenue = successBookings.reduce((sum, b) => sum + b.total_amount, 0);
-  const activeLocks = bookings.filter((b) => b.status === 'Pending' || b.status === 'PaymentPending').length;
+  const activeLocks = bookings.filter((b) => b.status === 'pending' || b.status === 'payment_pending').length;
 
   // Pagination for shows table
   const totalPages = Math.ceil(shows.length / PAGE_SIZE);

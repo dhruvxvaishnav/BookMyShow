@@ -11,17 +11,19 @@ interface BookingCardProps {
 }
 
 const statusVariant: Record<string, 'success' | 'error' | 'warning' | 'muted' | 'gold' | 'info'> = {
-  Success: 'success',
-  Pending: 'warning',
-  PaymentPending: 'gold',
-  Expired: 'muted',
-  Cancelled: 'error',
-  PartialSuccess: 'warning',
+  success: 'success',
+  pending: 'warning',
+  payment_pending: 'gold',
+  expired: 'muted',
+  cancelled: 'error',
+  success_partial: 'warning',
+  payment_failed: 'error',
+  queued: 'info',
 };
 
 export default function BookingCard({ booking }: BookingCardProps) {
   const variant = statusVariant[booking.status] ?? 'muted';
-  const isConfirmed = booking.status === 'Success';
+  const isConfirmed = booking.status === 'success';
   const posterUrl = booking.show?.movie?.poster_url ?? null;
 
   return (
@@ -45,8 +47,13 @@ export default function BookingCard({ booking }: BookingCardProps) {
               )}
               <p className={styles.time}>{formatDateTime(booking.show.start_time)}</p>
             </>
+          ) : booking.show_name ? (
+            <h3 className={styles.showName}>{booking.show_name}</h3>
           ) : (
             <h3 className={styles.showName}>Show #{booking.show_id.slice(0, 8)}</h3>
+          )}
+          {booking.seat_numbers && booking.seat_numbers.length > 0 && (
+            <p className={styles.theatre}>Seats: {booking.seat_numbers.join(', ')}</p>
           )}
         </div>
         <div className={styles.rightCol}>

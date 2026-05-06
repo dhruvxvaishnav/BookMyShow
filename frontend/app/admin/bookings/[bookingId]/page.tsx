@@ -127,12 +127,14 @@ function formatEvent(eventType: string) {
 
 const statusVariant = (status: string): 'success' | 'error' | 'warning' | 'muted' | 'gold' => {
   const map: Record<string, 'success' | 'error' | 'warning' | 'muted' | 'gold'> = {
-    Success: 'success',
-    Pending: 'warning',
-    PaymentPending: 'gold',
-    Expired: 'muted',
-    Cancelled: 'error',
-    PartialSuccess: 'warning',
+    success: 'success',
+    pending: 'warning',
+    payment_pending: 'gold',
+    expired: 'muted',
+    cancelled: 'error',
+    success_partial: 'warning',
+    payment_failed: 'error',
+    queued: 'muted',
   };
   return map[status] ?? 'muted';
 };

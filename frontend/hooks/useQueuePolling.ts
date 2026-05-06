@@ -12,7 +12,7 @@ export interface UseQueuePollingResult {
 
 /**
  * Poll queue status every 1 second.
- * Returns when status is 'Locked' (with booking_id) or 'Conflict' (with conflict_seats).
+ * Returns when status is 'locked' (with booking_id) or 'conflict' (with conflict_seats).
  */
 export function useQueuePolling(
   queueId: string | null
@@ -43,7 +43,7 @@ export function useQueuePolling(
         setQueueEntry(entry);
         setError(null);
         // Stop polling on terminal states
-        if (entry.status === 'Locked' || entry.status === 'Conflict') {
+        if (entry.status === 'locked' || entry.status === 'conflict') {
           stopPolling();
         }
       } catch (err) {

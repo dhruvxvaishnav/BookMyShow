@@ -35,24 +35,24 @@ export default function WaitingRoomPage() {
 
   useEffect(() => {
     if (!queueEntry) return;
-    if (queueEntry.status === 'Locked' && queueEntry.booking_id) {
+    if (queueEntry.status === 'locked' && queueEntry.booking_id) {
       toast.showToast('Your seats are ready.', 'success');
       router.replace(`/bookings/${queueEntry.booking_id}`);
     }
-    if (queueEntry.status === 'Conflict') {
+    if (queueEntry.status === 'conflict') {
       toast.showToast('Selected seats are no longer available.', 'warning');
     }
   }, [queueEntry, router, toast]);
 
   const position = queueEntry?.position ?? null;
-  const status = queueEntry?.status ?? 'Waiting';
+  const status = queueEntry?.status ?? 'waiting';
 
   const statusText = useMemo(() => {
     if (!queueId) return 'No queue entry found';
-    if (status === 'Processing') return 'Preparing your lock';
-    if (status === 'Locked') return 'Seats ready';
-    if (status === 'Conflict') return 'Seat conflict detected';
-    if (status === 'Expired') return 'Queue entry expired';
+    if (status === 'processing') return 'Preparing your lock';
+    if (status === 'locked') return 'Seats ready';
+    if (status === 'conflict') return 'Seat conflict detected';
+    if (status === 'expired') return 'Queue entry expired';
     return 'Waiting for your turn';
   }, [queueId, status]);
 
@@ -110,14 +110,14 @@ export default function WaitingRoomPage() {
           </div>
 
           {error && <p className={styles.error}>{error}</p>}
-          {status === 'Conflict' && (
+          {status === 'conflict' && (
             <p className={styles.error}>
               Seats affected: {queueEntry?.conflict_seats?.join(', ') || 'selected seats'}
             </p>
           )}
 
           <div className={styles.actions}>
-            {status === 'Conflict' ? (
+            {status === 'conflict' ? (
               <Button
                 variant="primary"
                 onClick={() => router.push(showId ? `/shows/${showId}` : '/movies')}

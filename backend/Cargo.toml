@@ -5,6 +5,7 @@ members = [
     "crates/domain",
     "crates/repository",
     "crates/repository-inmemory",
+    "crates/repository-postgres",
     "crates/service",
     "crates/api",
 ]

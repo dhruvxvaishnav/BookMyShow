@@ -43,8 +43,8 @@ export default function Seat({
 
   // Type-specific modifier class
   const typeClass =
-    seat.seat_type === 'Premium' ? styles.typePremium
-    : seat.seat_type === 'Recliner' ? styles.typeRecliner
+    seat.seat_type === 'premium' ? styles.typePremium
+    : seat.seat_type === 'recliner' ? styles.typeRecliner
     : '';
 
   return (

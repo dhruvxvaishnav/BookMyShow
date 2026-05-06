@@ -81,9 +81,9 @@ export default function ShowAnalyticsPage({ params }: PageProps) {
   };
 
   // Group seats by status
-  const availableCount = seats.filter((s) => s.status === 'Available').length;
-  const lockedCount = seats.filter((s) => s.status === 'Locked').length;
-  const bookedCount = seats.filter((s) => s.status === 'Booked').length;
+  const availableCount = seats.filter((s) => s.status === 'available').length;
+  const lockedCount = seats.filter((s) => s.status === 'locked').length;
+  const bookedCount = seats.filter((s) => s.status === 'booked').length;
   const total = seats.length;
 
   return (
@@ -136,10 +136,10 @@ export default function ShowAnalyticsPage({ params }: PageProps) {
             {seats.map((seat) => (
               <div key={seat.seat_id} className={styles.tableRow}>
                 <span className={styles.mono}>{seat.seat_number}</span>
-                <Badge variant={seat.seat_type === 'Premium' ? 'purple' : seat.seat_type === 'Recliner' ? 'cyan' : 'muted'}>
+                <Badge variant={seat.seat_type === 'premium' ? 'purple' : seat.seat_type === 'recliner' ? 'cyan' : 'muted'}>
                   {seat.seat_type}
                 </Badge>
-                <Badge variant={seat.status === 'Available' ? 'success' : seat.status === 'Locked' ? 'warning' : 'info'}>
+                <Badge variant={seat.status === 'available' ? 'success' : seat.status === 'locked' ? 'warning' : 'info'}>
                   {seat.status}
                 </Badge>
                 <span className={styles.mono}>
@@ -148,7 +148,7 @@ export default function ShowAnalyticsPage({ params }: PageProps) {
                     : '—'}
                 </span>
                 <div>
-                  {seat.status === 'Locked' && (
+                  {seat.status === 'locked' && (
                     <Button
                       variant="danger"
                       size="sm"
@@ -267,16 +267,16 @@ function AdminSeatMap({
           <div key={label} className={styles.seatRow}>
             <span className={styles.rowLabel}>{label}</span>
             {rowSeats.map((seat) => {
-              const isLocked = seat.status === 'Locked';
-              const isBooked = seat.status === 'Booked';
+              const isLocked = seat.status === 'locked';
+              const isBooked = seat.status === 'booked';
               const isReleasing = releasingSeatId === seat.seat_id;
               const seatClass = [
                 styles.adminSeat,
                 isLocked ? styles.seatLocked : '',
                 isBooked ? styles.seatBooked : '',
                 !isLocked && !isBooked ? styles.seatAvailable : '',
-                seat.seat_type === 'Premium' ? styles.seatTypePremium : '',
-                seat.seat_type === 'Recliner' ? styles.seatTypeRecliner : '',
+                seat.seat_type === 'premium' ? styles.seatTypePremium : '',
+                seat.seat_type === 'recliner' ? styles.seatTypeRecliner : '',
               ].filter(Boolean).join(' ');
 
               return (

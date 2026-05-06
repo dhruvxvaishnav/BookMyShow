@@ -47,9 +47,9 @@ export default function SeatGrid({
   const displayStates = useMemo(() => {
     const states: Record<string, SeatDisplayState> = {};
     for (const seat of seats) {
-      if (seat.status === 'Booked') {
+      if (seat.status === 'booked') {
         states[seat.seat_id] = 'booked';
-      } else if (seat.status === 'Locked') {
+      } else if (seat.status === 'locked') {
         if (selectedSeatIds.includes(seat.seat_id) || lockedByYouSeatIds.includes(seat.seat_id)) {
           states[seat.seat_id] = 'locked-you';
         } else {

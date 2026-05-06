@@ -29,7 +29,7 @@ export default function ConfirmedPage({ params }: PageProps) {
     getBooking(bookingId)
       .then((b) => {
         setBooking(b);
-        if (b.status !== 'Success') {
+        if (b.status !== 'success') {
           router.replace(`/bookings/${bookingId}`);
         } else {
           // Fire confetti

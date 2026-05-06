@@ -13,25 +13,25 @@ import type { RowConfig } from '@/types/api';
 import styles from './page.module.css';
 
 const SEAT_TYPE_OPTIONS = [
-  { value: 'Standard', label: 'Standard (1× price)' },
-  { value: 'Premium', label: 'Premium (1.5× price)' },
-  { value: 'Recliner', label: 'Recliner (2× price)' },
+  { value: 'standard', label: 'Standard (1× price)' },
+  { value: 'premium', label: 'Premium (1.5× price)' },
+  { value: 'recliner', label: 'Recliner (2× price)' },
 ];
 
 const PRESETS = [
   { label: 'Standard Cinema (4 rows × 10 seats)', rows: [
-    { row: 'A', seats: 10, seat_type: 'Standard' as const },
-    { row: 'B', seats: 10, seat_type: 'Standard' as const },
-    { row: 'C', seats: 10, seat_type: 'Standard' as const },
-    { row: 'D', seats: 10, seat_type: 'Standard' as const },
+    { row: 'A', seats: 10, seat_type: 'standard' as const },
+    { row: 'B', seats: 10, seat_type: 'standard' as const },
+    { row: 'C', seats: 10, seat_type: 'standard' as const },
+    { row: 'D', seats: 10, seat_type: 'standard' as const },
   ]},
   { label: 'Premium Cinema (6 rows × 12 seats)', rows: [
-    { row: 'A', seats: 12, seat_type: 'Premium' as const },
-    { row: 'B', seats: 12, seat_type: 'Premium' as const },
-    { row: 'C', seats: 12, seat_type: 'Standard' as const },
-    { row: 'D', seats: 12, seat_type: 'Standard' as const },
-    { row: 'E', seats: 12, seat_type: 'Standard' as const },
-    { row: 'F', seats: 12, seat_type: 'Recliner' as const },
+    { row: 'A', seats: 12, seat_type: 'premium' as const },
+    { row: 'B', seats: 12, seat_type: 'premium' as const },
+    { row: 'C', seats: 12, seat_type: 'standard' as const },
+    { row: 'D', seats: 12, seat_type: 'standard' as const },
+    { row: 'E', seats: 12, seat_type: 'standard' as const },
+    { row: 'F', seats: 12, seat_type: 'recliner' as const },
   ]},
 ];
 
@@ -55,7 +55,7 @@ export default function CreateShowPage() {
     const nextLabel = rows.length > 0
       ? String.fromCharCode(rows[rows.length - 1].row.charCodeAt(0) + 1)
       : 'A';
-    setRows([...rows, { row: nextLabel, seats: 10, seat_type: 'Standard' }]);
+    setRows([...rows, { row: nextLabel, seats: 10, seat_type: 'standard' }]);
   };
 
   const removeRow = (index: number) => {
@@ -220,7 +220,7 @@ export default function CreateShowPage() {
                   <Select
                     options={SEAT_TYPE_OPTIONS}
                     value={row.seat_type}
-                    onChange={(e) => updateRow(i, 'seat_type', e.target.value as 'Standard' | 'Premium' | 'Recliner')}
+                    onChange={(e) => updateRow(i, 'seat_type', e.target.value as 'standard' | 'premium' | 'recliner')}
                   />
                   <button
                     className={styles.removeRowBtn}
@@ -253,7 +253,7 @@ export default function CreateShowPage() {
                       {[...Array(row.seats)].map((_, j) => (
                         <div
                           key={j}
-                          className={`${styles.previewSeat} ${row.seat_type !== 'Standard' ? styles[row.seat_type.toLowerCase()] : ''}`}
+                          className={`${styles.previewSeat} ${row.seat_type !== 'standard' ? styles[row.seat_type.toLowerCase()] : ''}`}
                         />
                       ))}
                     </div>

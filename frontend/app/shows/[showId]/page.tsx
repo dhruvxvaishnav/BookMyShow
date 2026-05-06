@@ -74,13 +74,13 @@ export default function SeatSelectionPage({ params }: PageProps) {
   }, [loadSeatLayout]);
 
   const handleSeatClick = (seat: Seat) => {
-    if (seat.status === 'Booked') {
+    if (seat.status === 'booked') {
       toast.showToast(`Seat ${seat.seat_number} is already booked.`, 'warning');
       return;
     }
-    if (seat.status === 'Locked' &&
+    if (seat.status === 'locked' &&
         !selectedSeatIds.includes(seat.seat_id) &&
-        !seats.some(s => s.seat_id === seat.seat_id && s.status === 'Locked' && selectedSeatIds.includes(s.seat_id))) {
+        !seats.some(s => s.seat_id === seat.seat_id && s.status === 'locked' && selectedSeatIds.includes(s.seat_id))) {
       toast.showToast(`Seat ${seat.seat_number} is currently held by another user.`, 'warning');
       return;
     }

@@ -88,8 +88,8 @@ export interface Seat {
   seat_id: string;
   seat_number: string;
   row_label: string;
-  seat_type: 'Standard' | 'Premium' | 'Recliner';
-  status: 'Available' | 'Locked' | 'Booked';
+  seat_type: 'standard' | 'premium' | 'recliner';
+  status: 'available' | 'locked' | 'booked';
   lock_expires_at: number | null; // Unix timestamp seconds
   price: number;
 }
@@ -102,7 +102,7 @@ export interface SeatLayoutResponse {
 }
 
 // ── Booking ──────────────────────────────────────────────
-export type BookingStatus = 'Pending' | 'PaymentPending' | 'Success' | 'Expired' | 'Cancelled' | 'PartialSuccess';
+export type BookingStatus = 'pending' | 'payment_pending' | 'success' | 'success_partial' | 'payment_failed' | 'expired' | 'cancelled' | 'queued';
 
 export interface Booking {
   booking_id: string;
@@ -117,6 +117,8 @@ export interface Booking {
   show?: Show;
   seats?: Seat[];
   payment_id?: string;
+  show_name?: string;
+  seat_numbers?: string[];
 }
 
 // ── Payment ───────────────────────────────────────────────
@@ -150,7 +152,7 @@ export interface MockGatewayPayRequest {
 }
 
 // ── Queue ────────────────────────────────────────────────
-export type QueueStatus = 'Waiting' | 'Processing' | 'Locked' | 'Conflict' | 'Expired';
+export type QueueStatus = 'waiting' | 'processing' | 'locked' | 'conflict' | 'expired';
 
 export interface QueueEntry {
   queue_id: string;
@@ -187,7 +189,7 @@ export interface CreateShowRequest {
 export interface RowConfig {
   row: string;
   seats: number;
-  seat_type: 'Standard' | 'Premium' | 'Recliner';
+  seat_type: 'standard' | 'premium' | 'recliner';
 }
 
 export interface AuditLog {

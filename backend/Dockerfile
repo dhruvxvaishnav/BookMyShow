@@ -1,4 +1,4 @@
-FROM rust:1.85-slim-bookworm AS builder
+FROM rust:1.88-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ RUN apt-get update && \
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates/
 
-# Build release binary
+# Build release binary (migrations are embedded at compile time via sqlx::migrate!)
 RUN cargo build --release --bin api
 
 # ── Runtime image ──────────────────────────────────────────────

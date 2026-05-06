@@ -2,6 +2,7 @@ use axum::{
     Router,
     routing::{delete, get, post},
 };
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 use crate::handlers;
@@ -93,6 +94,11 @@ pub fn create_router(state: AppState) -> Router {
         .route("/admin/venues", post(handlers::admin_create_venue))
         // Attach app state
         .with_state(state)
-        // Add tracing middleware
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods(Any)
+                .allow_headers(Any),
+        )
         .layer(TraceLayer::new_for_http())
 }

@@ -105,6 +105,8 @@ pub struct BookingResponse {
     pub expires_at: i64,
     pub confirmed_at: Option<i64>,
     pub cancelled_at: Option<i64>,
+    pub show_name: Option<String>,
+    pub seat_numbers: Vec<String>,
 }
 
 /// Response for payment initiation.

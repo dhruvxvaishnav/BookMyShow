@@ -45,8 +45,9 @@ export default function PaymentPage({ params }: PageProps) {
     getBooking(bookingId)
       .then((b) => {
         setBooking(b);
-        if (b.status !== 'Pending') {
-          if (b.status === 'Success') router.replace(`/bookings/${bookingId}/confirmed`);
+        // 'payment_pending' is valid here — payment was already initiated
+        if (b.status !== 'pending' && b.status !== 'payment_pending') {
+          if (b.status === 'success') router.replace(`/bookings/${bookingId}/confirmed`);
           else setShowExpiredModal(true);
         }
       })
@@ -54,9 +55,15 @@ export default function PaymentPage({ params }: PageProps) {
       .finally(() => setIsLoading(false));
   }, [bookingId, router, toast]);
 
-  // Initiate payment on load
+  // Initiate payment only if not already initiated
   useEffect(() => {
     if (!booking || payment) return;
+    // Skip if payment was already initiated (page refresh scenario)
+    if (booking.status === 'payment_pending') {
+      setIsInitLoading(false);
+      return;
+    }
+    if (booking.status !== 'pending') return;
     setIsInitLoading(true);
     initiatePayment(bookingId)
       .then((p) => setPayment(p))
@@ -73,10 +80,10 @@ export default function PaymentPage({ params }: PageProps) {
       try {
         const b = await getBooking(bookingId);
         setBooking(b);
-        if (b.status === 'Expired') {
+        if (b.status === 'expired') {
           setShowExpiredModal(true);
           clearInterval(interval);
-        } else if (b.status === 'Success') {
+        } else if (b.status === 'success') {
           router.replace(`/bookings/${bookingId}/confirmed`);
         }
       } catch { /* silent */ }

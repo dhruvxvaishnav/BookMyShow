@@ -13,21 +13,23 @@ import styles from './page.module.css';
 const PAGE_SIZE = 10;
 const STATUSES: Array<'All' | BookingStatus> = [
   'All',
-  'Pending',
-  'PaymentPending',
-  'Success',
-  'PartialSuccess',
-  'Expired',
-  'Cancelled',
+  'pending',
+  'payment_pending',
+  'success',
+  'success_partial',
+  'expired',
+  'cancelled',
 ];
 
 const statusVariant: Record<BookingStatus, 'success' | 'error' | 'warning' | 'muted' | 'gold'> = {
-  Success: 'success',
-  Pending: 'warning',
-  PaymentPending: 'gold',
-  Expired: 'muted',
-  Cancelled: 'error',
-  PartialSuccess: 'warning',
+  success: 'success',
+  pending: 'warning',
+  payment_pending: 'gold',
+  expired: 'muted',
+  cancelled: 'error',
+  success_partial: 'warning',
+  payment_failed: 'error',
+  queued: 'muted',
 };
 
 export default function AdminBookingsPage() {
