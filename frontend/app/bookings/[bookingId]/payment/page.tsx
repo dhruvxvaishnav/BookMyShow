@@ -98,7 +98,7 @@ export default function PaymentPage({ params }: PageProps) {
     const rawCard = cardNumber.replace(/\s/g, '');
     if (!passesLuhn(rawCard)) e.cardNumber = 'Enter a valid card number.';
     if (!isFutureCardExpiry(cardExpiry)) e.cardExpiry = 'Enter a valid future expiry as MM/YY.';
-    if (!/^\d{3,4}$/.test(cardCvv)) e.cardCvv = 'Enter a valid CVV.';
+    if (!/^\d{3}$/.test(cardCvv)) e.cardCvv = 'Enter a valid 3-digit CVV.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -283,9 +283,9 @@ export default function PaymentPage({ params }: PageProps) {
                       placeholder="•••"
                       type="password"
                       value={cardCvv}
-                      onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 3))}
                       error={errors.cardCvv}
-                      maxLength={4}
+                      maxLength={3}
                       inputMode="numeric"
                     />
                   </div>
