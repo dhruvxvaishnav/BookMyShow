@@ -989,6 +989,45 @@ pub async fn create_show(
 > {
     require_admin(get_admin_token(&headers), &state.cfg.jwt.secret)?;
 
+    let movie_id = match req.movie_id.clone().filter(|id| !id.trim().is_empty()) {
+        Some(movie_id) => Some(movie_id),
+        None => {
+            let show_name = req.show_name.trim();
+            if show_name.is_empty() {
+                return Err(
+                    common::AppError::ValidationError("show_name is required".to_string()).into(),
+                );
+            }
+
+            let existing_movie = state
+                .movie_svc
+                .list_movies()
+                .await?
+                .into_iter()
+                .find(|movie| movie.title.eq_ignore_ascii_case(show_name));
+
+            let movie = match existing_movie {
+                Some(movie) => movie,
+                None => {
+                    state
+                        .movie_svc
+                        .create_movie(
+                            show_name.to_string(),
+                            "Drama".to_string(),
+                            "English".to_string(),
+                            120,
+                            None,
+                            8.0,
+                            format!("{show_name} is now showing at Cineplex."),
+                        )
+                        .await?
+                }
+            };
+
+            Some(movie.movie_id)
+        }
+    };
+
     let svc_req = service::show::CreateShowRequest {
         show_name: req.show_name.clone(),
         theatre_name: req.theatre_name.clone(),
@@ -1010,7 +1049,7 @@ pub async fn create_show(
                 })
                 .collect(),
         },
-        movie_id: req.movie_id,
+        movie_id,
         venue_id: req.venue_id,
     };
 

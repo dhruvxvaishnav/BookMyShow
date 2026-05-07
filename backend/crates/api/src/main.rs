@@ -1,4 +1,5 @@
 use domain::User;
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::time::{Duration, interval};
@@ -321,6 +322,7 @@ async fn seed_demo_data(
     let existing = show_svc.list_shows().await.unwrap_or_default();
     if !existing.is_empty() {
         tracing::info!(count = existing.len(), "shows already exist, skipping seed");
+        link_orphan_shows(show_svc, movie_svc).await;
         return;
     }
 
@@ -1163,4 +1165,60 @@ async fn seed_demo_data(
         }
     }
     tracing::info!("seed complete");
+}
+
+async fn link_orphan_shows(show_svc: &ShowService, movie_svc: &MovieService) {
+    let shows = show_svc.list_shows().await.unwrap_or_default();
+    let movies = movie_svc.list_movies().await.unwrap_or_default();
+    let mut movie_ids_by_title: HashMap<String, String> = movies
+        .into_iter()
+        .map(|movie| (movie.title.to_lowercase(), movie.movie_id))
+        .collect();
+    let mut linked_count = 0;
+
+    for mut show in shows.into_iter().filter(|show| show.movie_id.is_none()) {
+        let show_name = show.show_name.trim();
+        if show_name.is_empty() {
+            continue;
+        }
+
+        let movie_key = show_name.to_lowercase();
+        let movie_id = if let Some(movie_id) = movie_ids_by_title.get(&movie_key) {
+            movie_id.clone()
+        } else {
+            match movie_svc
+                .create_movie(
+                    show_name.to_string(),
+                    "Drama".to_string(),
+                    "English".to_string(),
+                    120,
+                    None,
+                    8.0,
+                    format!("{show_name} is now showing at Cineplex."),
+                )
+                .await
+            {
+                Ok(movie) => {
+                    movie_ids_by_title.insert(movie_key, movie.movie_id.clone());
+                    movie.movie_id
+                }
+                Err(error) => {
+                    tracing::warn!(show_id = %show.show_id, error = %error, "failed to create movie for orphan show");
+                    continue;
+                }
+            }
+        };
+
+        show.movie_id = Some(movie_id);
+        match show_svc.show_repo.save(show).await {
+            Ok(_) => linked_count += 1,
+            Err(error) => {
+                tracing::warn!(error = %error, "failed to link orphan show to movie");
+            }
+        }
+    }
+
+    if linked_count > 0 {
+        tracing::info!(count = linked_count, "linked orphan shows to movies");
+    }
 }

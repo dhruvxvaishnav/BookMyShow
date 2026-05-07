@@ -20,6 +20,8 @@ const SEAT_TYPE_OPTIONS = [
   { value: 'recliner', label: 'Recliner (2× price)' },
 ];
 
+const CREATE_NEW_MOVIE = '__create_new_movie__';
+
 const PRESETS = [
   { label: 'Standard Cinema (4 rows × 10 seats)', rows: [
     { row: 'A', seats: 10, seat_type: 'standard' as const },
@@ -43,7 +45,7 @@ export default function CreateShowPage() {
   const toast = useToast();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [selectedMovieId, setSelectedMovieId] = useState('');
+  const [selectedMovieId, setSelectedMovieId] = useState(CREATE_NEW_MOVIE);
   const [selectedVenueId, setSelectedVenueId] = useState('');
   const [name, setName] = useState('');
   const [theatre, setTheatre] = useState('');
@@ -72,7 +74,7 @@ export default function CreateShowPage() {
 
   const selectedVenue = venues.find((venue) => venue.venue_id === selectedVenueId);
   const movieOptions = [
-    { value: '', label: 'Select movie' },
+    { value: CREATE_NEW_MOVIE, label: 'Create movie from show name' },
     ...movies.map((movie) => ({ value: movie.movie_id, label: movie.title })),
   ];
   const venueOptions = [
@@ -82,6 +84,8 @@ export default function CreateShowPage() {
 
   const handleMovieChange = (movieId: string) => {
     setSelectedMovieId(movieId);
+    if (movieId === CREATE_NEW_MOVIE) return;
+
     const movie = movies.find((item) => item.movie_id === movieId);
     if (movie && !name.trim()) setName(movie.title);
   };
@@ -115,7 +119,6 @@ export default function CreateShowPage() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!selectedMovieId) e.movie = 'Movie is required.';
     if (!selectedVenueId) e.venue = 'Venue is required.';
     if (!name.trim()) e.name = 'Show name is required.';
     if (!theatre.trim()) e.theatre = 'Theatre name is required.';
@@ -143,6 +146,7 @@ export default function CreateShowPage() {
     if (!validate()) return;
     setIsSubmitting(true);
     try {
+      const movieId = selectedMovieId === CREATE_NEW_MOVIE ? undefined : selectedMovieId;
       await createShow({
         show_name: name.trim(),
         theatre_name: theatre.trim(),
@@ -151,7 +155,7 @@ export default function CreateShowPage() {
         end_time: Math.floor(new Date(endTime).getTime() / 1000),
         price_per_seat: Number(price),
         seat_layout: { rows },
-        movie_id: selectedMovieId,
+        movie_id: movieId,
         venue_id: selectedVenueId,
       });
       toast.showToast(`Show created with ${totalSeats} seats.`, 'success');
