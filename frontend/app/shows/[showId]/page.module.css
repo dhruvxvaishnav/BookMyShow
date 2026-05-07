@@ -20,7 +20,7 @@
 .headerBar {
   padding: var(--space-7) var(--space-6) var(--space-4);
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 2px auto;
   text-align: center;
 }
 
