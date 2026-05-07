@@ -10,6 +10,7 @@ import { CardSkeleton } from '@/components/common/LoadingSkeleton';
 import EmptyState from '@/components/common/EmptyState';
 import { formatDate, formatTime, formatPrice } from '@/utils/format';
 import { getMoviePosterUrl } from '@/utils/moviePosters';
+import { getShowExperience, SHOW_EXPERIENCE_LABELS, type ShowExperience } from '@/utils/showExperience';
 import styles from './page.module.css';
 
 export default function MovieDetailPage({ params }: { params: Promise<{ movieId: string }> }) {
@@ -21,6 +22,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
   const [error, setError] = useState<string | null>(null);
   const [cityFilter, setCityFilter] = useState('All');
   const [selectedDate, setSelectedDate] = useState<string>('All');
+  const [experienceFilter, setExperienceFilter] = useState<ShowExperience>('all');
   const showtimesRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
@@ -59,8 +61,15 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
   const filteredShows = shows.filter((s) => {
     const matchCity = cityFilter === 'All' || s.venue?.city === cityFilter;
     const matchDate = selectedDate === 'All' || formatDate(s.start_time) === selectedDate;
-    return matchCity && matchDate;
+    const matchExperience = experienceFilter === 'all' || getShowExperience(s) === experienceFilter;
+    return matchCity && matchDate && matchExperience;
   });
+
+  const availableExperiences = new Set(shows.map(getShowExperience));
+  const experienceOptions: ShowExperience[] = [
+    'all',
+    ...(['normal', 'luxe', 'imax'] as const).filter((experience) => availableExperiences.has(experience)),
+  ];
 
   // Group shows by theatre
   const showsByTheatre = filteredShows.reduce<Record<string, Show[]>>((acc, show) => {
@@ -212,6 +221,22 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
                 {cities.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             )}
+
+            {/* Experience pills */}
+            {experienceOptions.length > 2 && (
+              <div className={styles.experiencePills} role="group" aria-label="Filter by show format">
+                {experienceOptions.map((experience) => (
+                  <button
+                    key={experience}
+                    className={experienceFilter === experience ? `${styles.experiencePill} ${styles.experiencePillActive}` : styles.experiencePill}
+                    onClick={() => setExperienceFilter(experience)}
+                    aria-pressed={experienceFilter === experience}
+                  >
+                    {SHOW_EXPERIENCE_LABELS[experience]}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -253,6 +278,8 @@ function TheatreShowGroup({
   availabilities: Record<string, ShowAvailability>;
   representativeShow: Show;
 }) {
+  const experience = getShowExperience(representativeShow);
+
   return (
     <div className={styles.theatreGroup} role="listitem">
       {/* Theatre header */}
@@ -260,6 +287,9 @@ function TheatreShowGroup({
         <div className={styles.theatreInfo}>
           <p className={styles.theatreName}>
             {representativeShow.venue?.name ?? representativeShow.theatre_name}
+            <span className={`${styles.experienceBadge} ${styles[`experienceBadge_${experience}`]}`}>
+              {SHOW_EXPERIENCE_LABELS[experience]}
+            </span>
           </p>
           {representativeShow.venue?.address && (
             <p className={styles.theatreAddress}>

@@ -9,16 +9,16 @@ use crate::db_err;
 
 #[derive(sqlx::FromRow)]
 struct SeatRow {
-    seat_id:           String,
-    seat_number:       String,
-    row_label:         String,
-    seat_type:         String,
-    show_id:           String,
-    status:            String,
+    seat_id: String,
+    seat_number: String,
+    row_label: String,
+    seat_type: String,
+    show_id: String,
+    status: String,
     locked_by_user_id: Option<String>,
-    locked_at:         Option<DateTime<Utc>>,
-    lock_expires_at:   Option<DateTime<Utc>>,
-    lock_id:           Option<String>,
+    locked_at: Option<DateTime<Utc>>,
+    lock_expires_at: Option<DateTime<Utc>>,
+    lock_id: Option<String>,
     booked_by_user_id: Option<String>,
 }
 
@@ -27,12 +27,12 @@ impl From<SeatRow> for Seat {
         let status = match r.status.as_str() {
             "Locked" => SeatStatus::Locked,
             "Booked" => SeatStatus::Booked,
-            _        => SeatStatus::Available,
+            _ => SeatStatus::Available,
         };
         let seat_type = match r.seat_type.as_str() {
-            "Premium"  => SeatType::Premium,
+            "Comfort" | "Premium" => SeatType::Comfort,
             "Recliner" => SeatType::Recliner,
-            _          => SeatType::Standard,
+            _ => SeatType::Standard,
         };
         // locked_by / booked_by embed the full User struct; we only store the ID.
         // Set to None — the service layer doesn't rely on the embedded user object
@@ -40,17 +40,17 @@ impl From<SeatRow> for Seat {
         let _ = r.locked_by_user_id;
         let _ = r.booked_by_user_id;
         Self {
-            seat_id:        r.seat_id,
-            seat_number:    r.seat_number,
-            row_label:      r.row_label,
+            seat_id: r.seat_id,
+            seat_number: r.seat_number,
+            row_label: r.row_label,
             seat_type,
-            show_id:        r.show_id,
+            show_id: r.show_id,
             status,
-            booked_by:      None,
-            locked_by:      None,
-            locked_at:      r.locked_at,
+            booked_by: None,
+            locked_by: None,
+            locked_at: r.locked_at,
             lock_expires_at: r.lock_expires_at,
-            lock_id:        r.lock_id,
+            lock_id: r.lock_id,
         }
     }
 }
@@ -60,13 +60,15 @@ pub struct PgSeatRepository {
 }
 
 impl PgSeatRepository {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]
 impl SeatRepository for PgSeatRepository {
     async fn save(&self, seat: Seat) -> Result<Seat, AppError> {
-        let status    = format!("{:?}", seat.status);
+        let status = format!("{:?}", seat.status);
         let seat_type = format!("{:?}", seat.seat_type);
         let locked_by_uid = seat.locked_by.as_ref().map(|u| &u.user_id).cloned();
         let booked_by_uid = seat.booked_by.as_ref().map(|u| &u.user_id).cloned();
@@ -104,10 +106,12 @@ impl SeatRepository for PgSeatRepository {
     }
 
     async fn save_all(&self, seats: Vec<Seat>) -> Result<(), AppError> {
-        if seats.is_empty() { return Ok(()); }
+        if seats.is_empty() {
+            return Ok(());
+        }
         let mut tx = self.pool.begin().await.map_err(db_err)?;
         for seat in seats {
-            let status    = format!("{:?}", seat.status);
+            let status = format!("{:?}", seat.status);
             let seat_type = format!("{:?}", seat.seat_type);
             sqlx::query(
                 r#"
@@ -147,14 +151,14 @@ impl SeatRepository for PgSeatRepository {
     }
 
     async fn find_by_ids(&self, seat_ids: &[String]) -> Result<Vec<Seat>, AppError> {
-        if seat_ids.is_empty() { return Ok(vec![]); }
-        let rows = sqlx::query_as::<_, SeatRow>(
-            "SELECT * FROM seats WHERE seat_id = ANY($1)",
-        )
-        .bind(seat_ids)
-        .fetch_all(&self.pool)
-        .await
-        .map_err(db_err)?;
+        if seat_ids.is_empty() {
+            return Ok(vec![]);
+        }
+        let rows = sqlx::query_as::<_, SeatRow>("SELECT * FROM seats WHERE seat_id = ANY($1)")
+            .bind(seat_ids)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
@@ -263,14 +267,13 @@ impl SeatRepository for PgSeatRepository {
         status: SeatStatus,
     ) -> Result<u32, AppError> {
         let status_str = format!("{:?}", status);
-        let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM seats WHERE show_id = $1 AND status = $2",
-        )
-        .bind(show_id)
-        .bind(&status_str)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let count: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM seats WHERE show_id = $1 AND status = $2")
+                .bind(show_id)
+                .bind(&status_str)
+                .fetch_one(&self.pool)
+                .await
+                .map_err(db_err)?;
         Ok(count.0 as u32)
     }
 }

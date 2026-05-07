@@ -9,23 +9,27 @@ use crate::db_err;
 
 #[derive(sqlx::FromRow)]
 struct UserRow {
-    user_id:       String,
-    user_name:     String,
-    email:         String,
+    user_id: String,
+    user_name: String,
+    email: String,
     password_hash: Option<String>,
-    role:          String,
-    created_at:    DateTime<Utc>,
+    role: String,
+    created_at: DateTime<Utc>,
 }
 
 impl From<UserRow> for User {
     fn from(r: UserRow) -> Self {
         Self {
-            user_id:       r.user_id,
-            user_name:     r.user_name,
-            email:         r.email,
+            user_id: r.user_id,
+            user_name: r.user_name,
+            email: r.email,
             password_hash: r.password_hash,
-            role: if r.role == "admin" { UserRole::Admin } else { UserRole::User },
-            created_at:    r.created_at,
+            role: if r.role == "admin" {
+                UserRole::Admin
+            } else {
+                UserRole::User
+            },
+            created_at: r.created_at,
         }
     }
 }
@@ -35,7 +39,9 @@ pub struct PgUserRepository {
 }
 
 impl PgUserRepository {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]

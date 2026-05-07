@@ -10,7 +10,7 @@ pub struct Seat {
     pub seat_number: String,
     /// Row label, e.g. "A", "B".
     pub row_label: String,
-    /// Category of seat (Standard / Premium / Recliner).
+    /// Category of seat (Standard / Comfort / Recliner).
     #[serde(default)]
     pub seat_type: SeatType,
     /// The show this seat belongs to.

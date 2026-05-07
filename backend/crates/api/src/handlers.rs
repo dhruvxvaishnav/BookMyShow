@@ -660,10 +660,20 @@ pub async fn get_booking(
         .await?
         .ok_or_else(|| common::AppError::BookingNotFound(booking_id.clone()))?;
 
-    let show = state.show_svc.get_show(&booking.show_id).await.ok().flatten();
+    let show = state
+        .show_svc
+        .get_show(&booking.show_id)
+        .await
+        .ok()
+        .flatten();
     let show_name = show.as_ref().map(|s| s.show_name.clone());
-    let all_seats = state.show_svc.get_seat_layout(&booking.show_id).await.unwrap_or_default();
-    let seat_numbers: Vec<String> = all_seats.iter()
+    let all_seats = state
+        .show_svc
+        .get_seat_layout(&booking.show_id)
+        .await
+        .unwrap_or_default();
+    let seat_numbers: Vec<String> = all_seats
+        .iter()
         .filter(|s| booking.seat_ids.contains(&s.seat_id))
         .map(|s| s.seat_number.clone())
         .collect();
@@ -710,8 +720,13 @@ pub async fn get_user_bookings(
     let bookings = state.booking_svc.get_user_bookings(&user_id).await?;
 
     // Batch-fetch unique shows to get names
-    let mut show_names: std::collections::HashMap<String, String> = std::collections::HashMap::new();
-    for show_id in bookings.iter().map(|b| &b.show_id).collect::<std::collections::HashSet<_>>() {
+    let mut show_names: std::collections::HashMap<String, String> =
+        std::collections::HashMap::new();
+    for show_id in bookings
+        .iter()
+        .map(|b| &b.show_id)
+        .collect::<std::collections::HashSet<_>>()
+    {
         if let Ok(Some(show)) = state.show_svc.get_show(show_id).await {
             show_names.insert(show_id.clone(), show.show_name.clone());
         }

@@ -9,29 +9,29 @@ use crate::db_err;
 
 #[derive(sqlx::FromRow)]
 struct MovieRow {
-    movie_id:         String,
-    title:            String,
-    genre:            String,
-    language:         String,
+    movie_id: String,
+    title: String,
+    genre: String,
+    language: String,
     duration_minutes: i32,
-    poster_url:       Option<String>,
-    rating:           f32,
-    description:      String,
-    created_at:       DateTime<Utc>,
+    poster_url: Option<String>,
+    rating: f32,
+    description: String,
+    created_at: DateTime<Utc>,
 }
 
 impl From<MovieRow> for Movie {
     fn from(r: MovieRow) -> Self {
         Self {
-            movie_id:         r.movie_id,
-            title:            r.title,
-            genre:            r.genre,
-            language:         r.language,
+            movie_id: r.movie_id,
+            title: r.title,
+            genre: r.genre,
+            language: r.language,
             duration_minutes: r.duration_minutes as u32,
-            poster_url:       r.poster_url,
-            rating:           r.rating,
-            description:      r.description,
-            created_at:       r.created_at,
+            poster_url: r.poster_url,
+            rating: r.rating,
+            description: r.description,
+            created_at: r.created_at,
         }
     }
 }
@@ -41,7 +41,9 @@ pub struct PgMovieRepository {
 }
 
 impl PgMovieRepository {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]

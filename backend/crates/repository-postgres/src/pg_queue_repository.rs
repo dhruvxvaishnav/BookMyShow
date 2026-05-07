@@ -9,43 +9,43 @@ use crate::db_err;
 
 #[derive(sqlx::FromRow)]
 struct QueueEntryRow {
-    queue_id:           String,
-    user_id:            String,
-    show_id:            String,
+    queue_id: String,
+    user_id: String,
+    show_id: String,
     requested_seat_ids: Vec<String>,
-    status:             String,
-    position:           i32,
-    created_at:         DateTime<Utc>,
-    processed_at:       Option<DateTime<Utc>>,
-    conflict_seats:     Option<Vec<String>>,
-    booking_id:         Option<String>,
-    lock_id:            Option<String>,
+    status: String,
+    position: i32,
+    created_at: DateTime<Utc>,
+    processed_at: Option<DateTime<Utc>>,
+    conflict_seats: Option<Vec<String>>,
+    booking_id: Option<String>,
+    lock_id: Option<String>,
 }
 
 fn parse_queue_status(s: &str) -> QueueStatus {
     match s {
         "Processing" => QueueStatus::Processing,
-        "Locked"     => QueueStatus::Locked,
-        "Conflict"   => QueueStatus::Conflict,
-        "Expired"    => QueueStatus::Expired,
-        _            => QueueStatus::Waiting,
+        "Locked" => QueueStatus::Locked,
+        "Conflict" => QueueStatus::Conflict,
+        "Expired" => QueueStatus::Expired,
+        _ => QueueStatus::Waiting,
     }
 }
 
 impl From<QueueEntryRow> for QueueEntry {
     fn from(r: QueueEntryRow) -> Self {
         Self {
-            queue_id:           r.queue_id,
-            user_id:            r.user_id,
-            show_id:            r.show_id,
+            queue_id: r.queue_id,
+            user_id: r.user_id,
+            show_id: r.show_id,
             requested_seat_ids: r.requested_seat_ids,
-            status:             parse_queue_status(&r.status),
-            position:           r.position as u32,
-            created_at:         r.created_at,
-            processed_at:       r.processed_at,
-            conflict_seats:     r.conflict_seats,
-            booking_id:         r.booking_id,
-            lock_id:            r.lock_id,
+            status: parse_queue_status(&r.status),
+            position: r.position as u32,
+            created_at: r.created_at,
+            processed_at: r.processed_at,
+            conflict_seats: r.conflict_seats,
+            booking_id: r.booking_id,
+            lock_id: r.lock_id,
         }
     }
 }
@@ -55,7 +55,9 @@ pub struct PgQueueRepository {
 }
 
 impl PgQueueRepository {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]
@@ -95,13 +97,12 @@ impl QueueRepository for PgQueueRepository {
     }
 
     async fn find_by_id(&self, queue_id: &str) -> Result<Option<QueueEntry>, AppError> {
-        let row = sqlx::query_as::<_, QueueEntryRow>(
-            "SELECT * FROM queue_entries WHERE queue_id = $1",
-        )
-        .bind(queue_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let row =
+            sqlx::query_as::<_, QueueEntryRow>("SELECT * FROM queue_entries WHERE queue_id = $1")
+                .bind(queue_id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(db_err)?;
         Ok(row.map(Into::into))
     }
 
@@ -122,25 +123,23 @@ impl QueueRepository for PgQueueRepository {
         status: QueueStatus,
     ) -> Result<u32, AppError> {
         let status_str = format!("{:?}", status);
-        let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM queue_entries WHERE show_id = $1 AND status = $2",
-        )
-        .bind(show_id)
-        .bind(&status_str)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let count: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM queue_entries WHERE show_id = $1 AND status = $2")
+                .bind(show_id)
+                .bind(&status_str)
+                .fetch_one(&self.pool)
+                .await
+                .map_err(db_err)?;
         Ok(count.0 as u32)
     }
 
     async fn max_position(&self, show_id: &str) -> Result<u32, AppError> {
-        let row: (Option<i64>,) = sqlx::query_as(
-            "SELECT MAX(position) FROM queue_entries WHERE show_id = $1",
-        )
-        .bind(show_id)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let row: (Option<i64>,) =
+            sqlx::query_as("SELECT MAX(position) FROM queue_entries WHERE show_id = $1")
+                .bind(show_id)
+                .fetch_one(&self.pool)
+                .await
+                .map_err(db_err)?;
         Ok(row.0.unwrap_or(0) as u32)
     }
 

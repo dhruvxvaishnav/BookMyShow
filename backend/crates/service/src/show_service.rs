@@ -61,8 +61,8 @@ impl ShowService {
         // Generate seats
         let mut seats = Vec::new();
         for row_config in &req.seat_layout.rows {
-            let seat_type = match row_config.seat_type.as_str() {
-                "premium" => SeatType::Premium,
+            let seat_type = match row_config.seat_type.to_lowercase().as_str() {
+                "comfort" | "premium" => SeatType::Comfort,
                 "recliner" => SeatType::Recliner,
                 _ => SeatType::Standard,
             };

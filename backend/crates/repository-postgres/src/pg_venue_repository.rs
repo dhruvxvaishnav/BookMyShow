@@ -9,25 +9,25 @@ use crate::db_err;
 
 #[derive(sqlx::FromRow)]
 struct VenueRow {
-    venue_id:     String,
-    name:         String,
-    address:      String,
-    city:         String,
+    venue_id: String,
+    name: String,
+    address: String,
+    city: String,
     screen_count: i32,
-    amenities:    Vec<String>,
-    created_at:   DateTime<Utc>,
+    amenities: Vec<String>,
+    created_at: DateTime<Utc>,
 }
 
 impl From<VenueRow> for Venue {
     fn from(r: VenueRow) -> Self {
         Self {
-            venue_id:     r.venue_id,
-            name:         r.name,
-            address:      r.address,
-            city:         r.city,
+            venue_id: r.venue_id,
+            name: r.name,
+            address: r.address,
+            city: r.city,
             screen_count: r.screen_count as u32,
-            amenities:    r.amenities,
-            created_at:   r.created_at,
+            amenities: r.amenities,
+            created_at: r.created_at,
         }
     }
 }
@@ -37,7 +37,9 @@ pub struct PgVenueRepository {
 }
 
 impl PgVenueRepository {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]

@@ -10,40 +10,40 @@ use crate::db_err;
 #[derive(sqlx::FromRow)]
 struct CompensationLogRow {
     compensation_id: String,
-    booking_id:      String,
-    show_id:         String,
-    user_id:         String,
+    booking_id: String,
+    show_id: String,
+    user_id: String,
     confirmed_seats: Vec<String>,
-    failed_seats:    Vec<String>,
-    total_amount:    f64,
-    failed_amount:   f64,
-    event_type:      String,
-    actor_id:        Option<String>,
-    status_from:     Option<String>,
-    status_to:       Option<String>,
-    message:         Option<String>,
-    metadata:        Option<serde_json::Value>,
-    created_at:      DateTime<Utc>,
+    failed_seats: Vec<String>,
+    total_amount: f64,
+    failed_amount: f64,
+    event_type: String,
+    actor_id: Option<String>,
+    status_from: Option<String>,
+    status_to: Option<String>,
+    message: Option<String>,
+    metadata: Option<serde_json::Value>,
+    created_at: DateTime<Utc>,
 }
 
 impl From<CompensationLogRow> for CompensationLog {
     fn from(r: CompensationLogRow) -> Self {
         Self {
             compensation_id: r.compensation_id,
-            booking_id:      r.booking_id,
-            show_id:         r.show_id,
-            user_id:         r.user_id,
+            booking_id: r.booking_id,
+            show_id: r.show_id,
+            user_id: r.user_id,
             confirmed_seats: r.confirmed_seats,
-            failed_seats:    r.failed_seats,
-            total_amount:    r.total_amount,
-            failed_amount:   r.failed_amount,
-            event_type:      r.event_type,
-            actor_id:        r.actor_id,
-            status_from:     r.status_from,
-            status_to:       r.status_to,
-            message:         r.message,
-            metadata:        r.metadata,
-            created_at:      r.created_at,
+            failed_seats: r.failed_seats,
+            total_amount: r.total_amount,
+            failed_amount: r.failed_amount,
+            event_type: r.event_type,
+            actor_id: r.actor_id,
+            status_from: r.status_from,
+            status_to: r.status_to,
+            message: r.message,
+            metadata: r.metadata,
+            created_at: r.created_at,
         }
     }
 }
@@ -53,7 +53,9 @@ pub struct PgCompensationLogRepository {
 }
 
 impl PgCompensationLogRepository {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]

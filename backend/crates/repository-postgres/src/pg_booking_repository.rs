@@ -9,51 +9,52 @@ use crate::db_err;
 
 #[derive(sqlx::FromRow)]
 struct BookingRow {
-    booking_id:     String,
-    user_id:        String,
-    show_id:        String,
-    seat_ids:       Vec<String>,
-    status:         String,
-    payment_id:     Option<String>,
-    total_amount:   f64,
-    lock_id:        Option<String>,
-    created_at:     DateTime<Utc>,
-    expires_at:     DateTime<Utc>,
-    confirmed_at:   Option<DateTime<Utc>>,
-    cancelled_at:   Option<DateTime<Utc>>,
+    booking_id: String,
+    user_id: String,
+    show_id: String,
+    seat_ids: Vec<String>,
+    status: String,
+    payment_id: Option<String>,
+    total_amount: f64,
+    lock_id: Option<String>,
+    created_at: DateTime<Utc>,
+    expires_at: DateTime<Utc>,
+    confirmed_at: Option<DateTime<Utc>>,
+    cancelled_at: Option<DateTime<Utc>>,
     seats_snapshot: Option<serde_json::Value>,
 }
 
 fn parse_status(s: &str) -> BookingStatus {
     match s {
-        "PaymentPending"  => BookingStatus::PaymentPending,
-        "Success"         => BookingStatus::Success,
-        "SuccessPartial"  => BookingStatus::SuccessPartial,
-        "PaymentFailed"   => BookingStatus::PaymentFailed,
-        "Expired"         => BookingStatus::Expired,
-        "Cancelled"       => BookingStatus::Cancelled,
-        "Queued"          => BookingStatus::Queued,
-        _                 => BookingStatus::Pending,
+        "PaymentPending" => BookingStatus::PaymentPending,
+        "Success" => BookingStatus::Success,
+        "SuccessPartial" => BookingStatus::SuccessPartial,
+        "PaymentFailed" => BookingStatus::PaymentFailed,
+        "Expired" => BookingStatus::Expired,
+        "Cancelled" => BookingStatus::Cancelled,
+        "Queued" => BookingStatus::Queued,
+        _ => BookingStatus::Pending,
     }
 }
 
 impl From<BookingRow> for Booking {
     fn from(r: BookingRow) -> Self {
-        let seats_snapshot: Option<Vec<Seat>> = r.seats_snapshot
+        let seats_snapshot: Option<Vec<Seat>> = r
+            .seats_snapshot
             .and_then(|v| serde_json::from_value(v).ok());
         Self {
-            booking_id:     r.booking_id,
-            user_id:        r.user_id,
-            show_id:        r.show_id,
-            seat_ids:       r.seat_ids,
-            status:         parse_status(&r.status),
-            payment_id:     r.payment_id,
-            total_amount:   r.total_amount,
-            lock_id:        r.lock_id,
-            created_at:     r.created_at,
-            expires_at:     r.expires_at,
-            confirmed_at:   r.confirmed_at,
-            cancelled_at:   r.cancelled_at,
+            booking_id: r.booking_id,
+            user_id: r.user_id,
+            show_id: r.show_id,
+            seat_ids: r.seat_ids,
+            status: parse_status(&r.status),
+            payment_id: r.payment_id,
+            total_amount: r.total_amount,
+            lock_id: r.lock_id,
+            created_at: r.created_at,
+            expires_at: r.expires_at,
+            confirmed_at: r.confirmed_at,
+            cancelled_at: r.cancelled_at,
             seats_snapshot,
         }
     }
@@ -64,14 +65,18 @@ pub struct PgBookingRepository {
 }
 
 impl PgBookingRepository {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]
 impl BookingRepository for PgBookingRepository {
     async fn save(&self, booking: Booking) -> Result<Booking, AppError> {
         let status = format!("{:?}", booking.status);
-        let snapshot = booking.seats_snapshot.as_ref()
+        let snapshot = booking
+            .seats_snapshot
+            .as_ref()
             .and_then(|s| serde_json::to_value(s).ok());
         let row = sqlx::query_as::<_, BookingRow>(
             r#"
@@ -110,13 +115,11 @@ impl BookingRepository for PgBookingRepository {
     }
 
     async fn find_by_id(&self, booking_id: &str) -> Result<Option<Booking>, AppError> {
-        let row = sqlx::query_as::<_, BookingRow>(
-            "SELECT * FROM bookings WHERE booking_id = $1",
-        )
-        .bind(booking_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let row = sqlx::query_as::<_, BookingRow>("SELECT * FROM bookings WHERE booking_id = $1")
+            .bind(booking_id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(row.map(Into::into))
     }
 
@@ -155,13 +158,11 @@ impl BookingRepository for PgBookingRepository {
     }
 
     async fn find_by_payment_id(&self, payment_id: &str) -> Result<Option<Booking>, AppError> {
-        let row = sqlx::query_as::<_, BookingRow>(
-            "SELECT * FROM bookings WHERE payment_id = $1",
-        )
-        .bind(payment_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let row = sqlx::query_as::<_, BookingRow>("SELECT * FROM bookings WHERE payment_id = $1")
+            .bind(payment_id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(row.map(Into::into))
     }
 
@@ -183,12 +184,11 @@ impl BookingRepository for PgBookingRepository {
     }
 
     async fn find_all(&self) -> Result<Vec<Booking>, AppError> {
-        let rows = sqlx::query_as::<_, BookingRow>(
-            "SELECT * FROM bookings ORDER BY created_at DESC",
-        )
-        .fetch_all(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let rows =
+            sqlx::query_as::<_, BookingRow>("SELECT * FROM bookings ORDER BY created_at DESC")
+                .fetch_all(&self.pool)
+                .await
+                .map_err(db_err)?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
 }

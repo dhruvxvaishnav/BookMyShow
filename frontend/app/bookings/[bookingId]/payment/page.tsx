@@ -184,7 +184,7 @@ export default function PaymentPage({ params }: PageProps) {
                   seats.map((seat) => (
                     <div key={seat.seat_id} className={styles.tableRow}>
                       <span className={styles.mono}>{seat.seat_number}</span>
-                      <span>{seat.seat_type}</span>
+                      <span>{seat.seat_type === 'premium' ? 'comfort' : seat.seat_type}</span>
                       <span>{formatPrice(seat.price)}</span>
                     </div>
                   ))

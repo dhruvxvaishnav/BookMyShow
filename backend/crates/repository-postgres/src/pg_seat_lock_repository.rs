@@ -9,31 +9,31 @@ use crate::db_err;
 
 #[derive(sqlx::FromRow)]
 struct SeatLockRow {
-    lock_id:       String,
-    user_id:       String,
-    show_id:       String,
-    seat_ids:      Vec<String>,
-    status:        String,
-    created_at:    DateTime<Utc>,
-    expires_at:    DateTime<Utc>,
+    lock_id: String,
+    user_id: String,
+    show_id: String,
+    seat_ids: Vec<String>,
+    status: String,
+    created_at: DateTime<Utc>,
+    expires_at: DateTime<Utc>,
     extended_count: i32,
 }
 
 impl From<SeatLockRow> for SeatLock {
     fn from(r: SeatLockRow) -> Self {
         let status = match r.status.as_str() {
-            "Expired"  => LockStatus::Expired,
+            "Expired" => LockStatus::Expired,
             "Released" => LockStatus::Released,
-            _          => LockStatus::Active,
+            _ => LockStatus::Active,
         };
         Self {
-            lock_id:       r.lock_id,
-            user_id:       r.user_id,
-            show_id:       r.show_id,
-            seat_ids:      r.seat_ids,
+            lock_id: r.lock_id,
+            user_id: r.user_id,
+            show_id: r.show_id,
+            seat_ids: r.seat_ids,
             status,
-            created_at:    r.created_at,
-            expires_at:    r.expires_at,
+            created_at: r.created_at,
+            expires_at: r.expires_at,
             extended_count: r.extended_count as u32,
         }
     }
@@ -44,7 +44,9 @@ pub struct PgSeatLockRepository {
 }
 
 impl PgSeatLockRepository {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]
@@ -78,13 +80,11 @@ impl SeatLockRepository for PgSeatLockRepository {
     }
 
     async fn find_by_id(&self, lock_id: &str) -> Result<Option<SeatLock>, AppError> {
-        let row = sqlx::query_as::<_, SeatLockRow>(
-            "SELECT * FROM seat_locks WHERE lock_id = $1",
-        )
-        .bind(lock_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let row = sqlx::query_as::<_, SeatLockRow>("SELECT * FROM seat_locks WHERE lock_id = $1")
+            .bind(lock_id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(row.map(Into::into))
     }
 
@@ -111,11 +111,7 @@ impl SeatLockRepository for PgSeatLockRepository {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
-    async fn update_status(
-        &self,
-        lock_id: &str,
-        status: LockStatus,
-    ) -> Result<SeatLock, AppError> {
+    async fn update_status(&self, lock_id: &str, status: LockStatus) -> Result<SeatLock, AppError> {
         let status_str = format!("{:?}", status);
         let row = sqlx::query_as::<_, SeatLockRow>(
             "UPDATE seat_locks SET status = $2 WHERE lock_id = $1 RETURNING *",

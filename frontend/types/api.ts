@@ -88,7 +88,7 @@ export interface Seat {
   seat_id: string;
   seat_number: string;
   row_label: string;
-  seat_type: 'standard' | 'premium' | 'recliner';
+  seat_type: 'standard' | 'comfort' | 'premium' | 'recliner';
   status: 'available' | 'locked' | 'booked';
   lock_expires_at: number | null; // Unix timestamp seconds
   price: number;
@@ -189,7 +189,7 @@ export interface CreateShowRequest {
 export interface RowConfig {
   row: string;
   seats: number;
-  seat_type: 'standard' | 'premium' | 'recliner';
+  seat_type: 'standard' | 'comfort' | 'premium' | 'recliner';
 }
 
 export interface AuditLog {

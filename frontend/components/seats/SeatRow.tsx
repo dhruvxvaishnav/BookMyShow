@@ -31,7 +31,7 @@ export default function SeatRow({
 }: SeatRowProps) {
   // Detect row type from first seat
   const firstSeat = seats[0];
-  const isPremium = firstSeat?.seat_type === 'premium';
+  const isComfort = firstSeat?.seat_type === 'comfort' || firstSeat?.seat_type === 'premium';
   const isRecliner = firstSeat?.seat_type === 'recliner';
 
   return (
@@ -39,7 +39,7 @@ export default function SeatRow({
       {/* Row label + type indicator */}
       <div className={styles.rowLabel}>
         <span className={styles.label}>{rowLabel}</span>
-        {isPremium && <Badge variant="purple">PR</Badge>}
+        {isComfort && <Badge variant="purple">CF</Badge>}
         {isRecliner && <Badge variant="cyan">RC</Badge>}
       </div>
 

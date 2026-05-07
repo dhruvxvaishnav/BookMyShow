@@ -136,8 +136,8 @@ export default function ShowAnalyticsPage({ params }: PageProps) {
             {seats.map((seat) => (
               <div key={seat.seat_id} className={styles.tableRow}>
                 <span className={styles.mono}>{seat.seat_number}</span>
-                <Badge variant={seat.seat_type === 'premium' ? 'purple' : seat.seat_type === 'recliner' ? 'cyan' : 'muted'}>
-                  {seat.seat_type}
+                <Badge variant={seat.seat_type === 'comfort' || seat.seat_type === 'premium' ? 'purple' : seat.seat_type === 'recliner' ? 'cyan' : 'muted'}>
+                  {seat.seat_type === 'premium' ? 'comfort' : seat.seat_type}
                 </Badge>
                 <Badge variant={seat.status === 'available' ? 'success' : seat.status === 'locked' ? 'warning' : 'info'}>
                   {seat.status}
@@ -275,7 +275,7 @@ function AdminSeatMap({
                 isLocked ? styles.seatLocked : '',
                 isBooked ? styles.seatBooked : '',
                 !isLocked && !isBooked ? styles.seatAvailable : '',
-                seat.seat_type === 'premium' ? styles.seatTypePremium : '',
+                seat.seat_type === 'comfort' || seat.seat_type === 'premium' ? styles.seatTypePremium : '',
                 seat.seat_type === 'recliner' ? styles.seatTypeRecliner : '',
               ].filter(Boolean).join(' ');
 
@@ -283,8 +283,8 @@ function AdminSeatMap({
                 <div key={seat.seat_id} className={styles.seatCell}>
                   <div
                     className={seatClass}
-                    title={`${seat.seat_number} — ${seat.seat_type} — ${seat.status}`}
-                    aria-label={`Seat ${seat.seat_number}, ${seat.seat_type}, ${seat.status}`}
+                    title={`${seat.seat_number} — ${seat.seat_type === 'premium' ? 'comfort' : seat.seat_type} — ${seat.status}`}
+                    aria-label={`Seat ${seat.seat_number}, ${seat.seat_type === 'premium' ? 'comfort' : seat.seat_type}, ${seat.status}`}
                   >
                     <span className={styles.seatNum}>{seat.seat_number.replace(/^[A-Z]+/, '')}</span>
                   </div>
@@ -311,7 +311,7 @@ function AdminSeatMap({
         <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatAvailable}`} /> Available</span>
         <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatLocked}`} /> Locked</span>
         <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatBooked}`} /> Booked</span>
-        <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatTypePremium}`} style={{ border: '2px solid #A855F7' }} /> Premium</span>
+        <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatTypePremium}`} style={{ border: '2px solid #A855F7' }} /> Comfort</span>
         <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.seatTypeRecliner}`} style={{ border: '2px solid #06B6D4' }} /> Recliner</span>
       </div>
     </div>

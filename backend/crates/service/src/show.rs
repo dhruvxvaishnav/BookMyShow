@@ -26,5 +26,5 @@ pub struct RowConfig {
     pub row: String, // e.g., "A", "B"
     pub seats: u32,  // number of seats in this row
     #[serde(default)]
-    pub seat_type: String, // "standard", "premium", "recliner"
+    pub seat_type: String, // "standard", "comfort", "recliner"
 }

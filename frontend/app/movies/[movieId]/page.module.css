@@ -271,6 +271,44 @@
   color: var(--void-black);
 }
 
+/* Experience pills */
+.experiencePills {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.experiencePill {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--stone-text);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.experiencePill:hover {
+  border-color: rgba(245, 166, 35, 0.4);
+  color: var(--parchment-text);
+}
+
+.experiencePillActive {
+  background: var(--antique-gold);
+  border-color: var(--antique-gold);
+  color: var(--void-black);
+  font-weight: 700;
+}
+
+.experiencePillActive:hover {
+  background: var(--gold-foil);
+  border-color: var(--gold-foil);
+  color: var(--void-black);
+}
+
 /* City select */
 .citySelect {
   padding: 7px 28px 7px 10px;
@@ -326,12 +364,45 @@
 .theatreInfo { flex: 1; min-width: 0; }
 
 .theatreName {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
   font-family: var(--font-body);
   font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--gold-foil);
+}
+
+.experienceBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.experienceBadge_normal {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--stone-text);
+}
+
+.experienceBadge_luxe {
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.28);
+  color: var(--antique-gold);
+}
+
+.experienceBadge_imax {
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.28);
+  color: #06B6D4;
 }
 
 .theatreAddress {

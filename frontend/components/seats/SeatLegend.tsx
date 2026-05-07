@@ -17,7 +17,7 @@ export default function SeatLegend() {
       </div>
       <div className={styles.item}>
         <div className={`${styles.swatch} ${styles.premium}`} />
-        <span>Premium</span>
+        <span>Comfort</span>
       </div>
       <div className={styles.item}>
         <div className={`${styles.swatch} ${styles.recliner}`} />

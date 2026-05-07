@@ -43,9 +43,10 @@ export default function Seat({
 
   // Type-specific modifier class
   const typeClass =
-    seat.seat_type === 'premium' ? styles.typePremium
+    seat.seat_type === 'comfort' || seat.seat_type === 'premium' ? styles.typePremium
     : seat.seat_type === 'recliner' ? styles.typeRecliner
     : '';
+  const seatTypeLabel = seat.seat_type === 'premium' ? 'comfort' : seat.seat_type;
 
   return (
     <div className={styles.wrapper}>
@@ -64,19 +65,19 @@ export default function Seat({
         onKeyDown={(event) => onKeyDown?.(event, seat)}
         disabled={!canClick}
         tabIndex={canClick ? tabIndex : undefined}
-        title={`${seat.seat_number} — ${seat.seat_type} — ${formatPrice(seat.price)}`}
-        aria-label={`${seat.seat_number}, ${seat.seat_type} seat, ${stateLabel[displayState]}, ${formatPrice(seat.price)}`}
+        title={`${seat.seat_number} — ${seatTypeLabel} — ${formatPrice(seat.price)}`}
+        aria-label={`${seat.seat_number}, ${seatTypeLabel} seat, ${stateLabel[displayState]}, ${formatPrice(seat.price)}`}
         aria-pressed={displayState === 'selected'}
       >
         <span className={styles.label}>{seat.seat_number}</span>
         <span className={styles.srOnly}>
-          {seat.seat_number}, {seat.seat_type}, {stateLabel[displayState]}, {formatPrice(seat.price)}
+          {seat.seat_number}, {seatTypeLabel}, {stateLabel[displayState]}, {formatPrice(seat.price)}
         </span>
       </button>
 
       <div className={styles.tooltip}>
         <strong>{seat.seat_number}</strong>
-        <span>{seat.seat_type}</span>
+        <span>{seatTypeLabel}</span>
         <span>{formatPrice(seat.price)}</span>
       </div>
     </div>

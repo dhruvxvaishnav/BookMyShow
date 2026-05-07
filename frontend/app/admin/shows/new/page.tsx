@@ -14,7 +14,7 @@ import styles from './page.module.css';
 
 const SEAT_TYPE_OPTIONS = [
   { value: 'standard', label: 'Standard (1× price)' },
-  { value: 'premium', label: 'Premium (1.5× price)' },
+  { value: 'comfort', label: 'Comfort (1.5× price)' },
   { value: 'recliner', label: 'Recliner (2× price)' },
 ];
 
@@ -25,9 +25,9 @@ const PRESETS = [
     { row: 'C', seats: 10, seat_type: 'standard' as const },
     { row: 'D', seats: 10, seat_type: 'standard' as const },
   ]},
-  { label: 'Premium Cinema (6 rows × 12 seats)', rows: [
-    { row: 'A', seats: 12, seat_type: 'premium' as const },
-    { row: 'B', seats: 12, seat_type: 'premium' as const },
+  { label: 'Comfort Cinema (6 rows × 12 seats)', rows: [
+    { row: 'A', seats: 12, seat_type: 'comfort' as const },
+    { row: 'B', seats: 12, seat_type: 'comfort' as const },
     { row: 'C', seats: 12, seat_type: 'standard' as const },
     { row: 'D', seats: 12, seat_type: 'standard' as const },
     { row: 'E', seats: 12, seat_type: 'standard' as const },
@@ -220,7 +220,7 @@ export default function CreateShowPage() {
                   <Select
                     options={SEAT_TYPE_OPTIONS}
                     value={row.seat_type}
-                    onChange={(e) => updateRow(i, 'seat_type', e.target.value as 'standard' | 'premium' | 'recliner')}
+                    onChange={(e) => updateRow(i, 'seat_type', e.target.value as 'standard' | 'comfort' | 'recliner')}
                   />
                   <button
                     className={styles.removeRowBtn}

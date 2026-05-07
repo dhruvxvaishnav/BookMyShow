@@ -2,9 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Film, Star, Clock, Ticket } from 'lucide-react';
-import { getShows, getShowAvailability } from '@/api/shows';
-import type { Movie, Show, ShowAvailability } from '@/types/api';
-import Badge from '@/components/common/Badge';
+import { getShows } from '@/api/shows';
+import type { Movie, Show } from '@/types/api';
 import EmptyState from '@/components/common/EmptyState';
 import { formatPrice } from '@/utils/format';
 import { getMoviePosterUrl } from '@/utils/moviePosters';
@@ -14,12 +13,10 @@ interface HomeMovie {
   movie: Movie;
   shows: Show[];
   minPrice: number;
-  availability?: ShowAvailability;
 }
 
 export default function HomePage() {
   const [shows, setShows] = useState<Show[]>([]);
-  const [availabilities, setAvailabilities] = useState<Record<string, ShowAvailability>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -30,16 +27,6 @@ export default function HomePage() {
     try {
       const data = await getShows();
       setShows(data);
-
-      // Load availability for each show in parallel
-      const avail = await Promise.all(
-        data.map((s) => getShowAvailability(s.show_id).catch(() => null))
-      );
-      const map: Record<string, ShowAvailability> = {};
-      data.forEach((s, i) => {
-        if (avail[i]) map[s.show_id] = avail[i]!;
-      });
-      setAvailabilities(map);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load shows.');
     } finally {
@@ -49,7 +36,7 @@ export default function HomePage() {
 
   useEffect(() => { loadShows(); }, [loadShows]);
 
-  const movies = getUniqueMovies(shows, availabilities);
+  const movies = getUniqueMovies(shows);
   const query = search.trim().toLowerCase();
   const filtered = movies.filter(({ movie }) =>
     movie.title.toLowerCase().includes(query) ||
@@ -58,16 +45,6 @@ export default function HomePage() {
   );
 
   const featured = movies[0] ?? null;
-
-  function availabilityBadge(movie: HomeMovie) {
-    const a = movie.availability;
-    if (!a) return null;
-    const { available_seats, total_seats, occupancy_percent } = a;
-    const pct = occupancy_percent ?? Math.round(((total_seats - available_seats) / total_seats) * 100);
-    if (pct >= 80) return <Badge variant="error">{available_seats} left</Badge>;
-    if (pct >= 50) return <Badge variant="warning">{available_seats} left</Badge>;
-    return <Badge variant="success">{available_seats} seats</Badge>;
-  }
 
   return (
     <>
@@ -209,7 +186,6 @@ export default function HomePage() {
                 <MovieCard
                   key={movie.movie.movie_id}
                   movie={movie}
-                  badge={availabilityBadge(movie)}
                   index={i}
                 />
               ))}
@@ -222,8 +198,7 @@ export default function HomePage() {
 }
 
 function getUniqueMovies(
-  shows: Show[],
-  availabilities: Record<string, ShowAvailability>
+  shows: Show[]
 ): HomeMovie[] {
   const map = new Map<string, HomeMovie>();
 
@@ -231,37 +206,18 @@ function getUniqueMovies(
     if (!show.movie || !show.movie_id) return;
 
     const existing = map.get(show.movie_id);
-    const availability = availabilities[show.show_id];
 
     if (!existing) {
       map.set(show.movie_id, {
         movie: show.movie,
         shows: [show],
         minPrice: show.price_per_seat,
-        availability,
       });
       return;
     }
 
     existing.shows.push(show);
     existing.minPrice = Math.min(existing.minPrice, show.price_per_seat);
-
-    if (!existing.availability) {
-      existing.availability = availability;
-    } else if (availability) {
-      existing.availability = {
-        ...existing.availability,
-        available_seats: existing.availability.available_seats + availability.available_seats,
-        total_seats: existing.availability.total_seats + availability.total_seats,
-        booked_seats: existing.availability.booked_seats + availability.booked_seats,
-        locked_seats: existing.availability.locked_seats + availability.locked_seats,
-      };
-      existing.availability.occupancy_percent = Math.round(
-        ((existing.availability.booked_seats + existing.availability.locked_seats) /
-          existing.availability.total_seats) *
-          100
-      );
-    }
   });
 
   return Array.from(map.values());
@@ -269,11 +225,9 @@ function getUniqueMovies(
 
 function MovieCard({
   movie,
-  badge,
   index,
 }: {
   movie: HomeMovie;
-  badge: React.ReactNode;
   index: number;
 }) {
   const poster = getMoviePosterUrl(movie.movie);
@@ -294,7 +248,6 @@ function MovieCard({
               <Film size={32} strokeWidth={0.75} />
             </div>
           )}
-          {badge && <div className={styles.availOverlay}>{badge}</div>}
         </div>
       </Link>
 

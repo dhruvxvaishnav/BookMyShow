@@ -9,33 +9,33 @@ use crate::db_err;
 
 #[derive(sqlx::FromRow)]
 struct ShowRow {
-    show_id:        String,
-    show_name:      String,
-    theatre_name:   String,
-    screen_number:  i32,
-    start_time:     DateTime<Utc>,
-    end_time:       DateTime<Utc>,
+    show_id: String,
+    show_name: String,
+    theatre_name: String,
+    screen_number: i32,
+    start_time: DateTime<Utc>,
+    end_time: DateTime<Utc>,
     price_per_seat: f64,
-    total_seats:    i32,
-    movie_id:       Option<String>,
-    venue_id:       Option<String>,
-    created_at:     DateTime<Utc>,
+    total_seats: i32,
+    movie_id: Option<String>,
+    venue_id: Option<String>,
+    created_at: DateTime<Utc>,
 }
 
 impl From<ShowRow> for Show {
     fn from(r: ShowRow) -> Self {
         Self {
-            show_id:        r.show_id,
-            show_name:      r.show_name,
-            theatre_name:   r.theatre_name,
-            screen_number:  r.screen_number as u32,
-            start_time:     r.start_time,
-            end_time:       r.end_time,
+            show_id: r.show_id,
+            show_name: r.show_name,
+            theatre_name: r.theatre_name,
+            screen_number: r.screen_number as u32,
+            start_time: r.start_time,
+            end_time: r.end_time,
             price_per_seat: r.price_per_seat,
-            total_seats:    r.total_seats as u32,
-            movie_id:       r.movie_id,
-            venue_id:       r.venue_id,
-            created_at:     r.created_at,
+            total_seats: r.total_seats as u32,
+            movie_id: r.movie_id,
+            venue_id: r.venue_id,
+            created_at: r.created_at,
         }
     }
 }
@@ -45,7 +45,9 @@ pub struct PgShowRepository {
 }
 
 impl PgShowRepository {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]

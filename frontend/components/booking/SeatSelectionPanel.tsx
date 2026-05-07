@@ -30,7 +30,7 @@ export default function SeatSelectionPanel({
   }, {} as Record<string, { count: number; price: number }>);
 
   const breakdownText = Object.entries(breakdown)
-    .map(([type, data]) => `${data.count}× ${type} ${formatPrice(data.price * data.count)}`)
+    .map(([type, data]) => `${data.count}× ${formatSeatType(type)} ${formatPrice(data.price * data.count)}`)
     .join(' + ');
 
   return (
@@ -98,6 +98,10 @@ export default function SeatSelectionPanel({
 }
 
 function BadgeInline({ type }: { type: string }) {
-  const cls = type === 'premium' ? styles.premiumBadge : type === 'recliner' ? styles.reclinerBadge : '';
-  return <span className={`${styles.typeBadge} ${cls}`}>{type}</span>;
+  const cls = type === 'comfort' || type === 'premium' ? styles.premiumBadge : type === 'recliner' ? styles.reclinerBadge : '';
+  return <span className={`${styles.typeBadge} ${cls}`}>{formatSeatType(type)}</span>;
+}
+
+function formatSeatType(type: string) {
+  return type === 'premium' ? 'comfort' : type;
 }

@@ -9,48 +9,48 @@ use crate::db_err;
 
 #[derive(sqlx::FromRow)]
 struct PaymentRow {
-    payment_id:        String,
+    payment_id: String,
     payment_intent_id: String,
-    booking_id:        String,
-    user_id:           String,
-    amount:            f64,
-    currency:          String,
-    status:            String,
-    gateway_name:      String,
-    gateway_response:  Option<String>,
-    idempotency_key:   Option<String>,
-    created_at:        DateTime<Utc>,
-    confirmed_at:      Option<DateTime<Utc>>,
-    failed_at:         Option<DateTime<Utc>>,
-    refunded_at:       Option<DateTime<Utc>>,
+    booking_id: String,
+    user_id: String,
+    amount: f64,
+    currency: String,
+    status: String,
+    gateway_name: String,
+    gateway_response: Option<String>,
+    idempotency_key: Option<String>,
+    created_at: DateTime<Utc>,
+    confirmed_at: Option<DateTime<Utc>>,
+    failed_at: Option<DateTime<Utc>>,
+    refunded_at: Option<DateTime<Utc>>,
 }
 
 fn parse_payment_status(s: &str) -> PaymentStatus {
     match s {
-        "Success"  => PaymentStatus::Success,
-        "Failed"   => PaymentStatus::Failed,
+        "Success" => PaymentStatus::Success,
+        "Failed" => PaymentStatus::Failed,
         "Refunded" => PaymentStatus::Refunded,
-        _          => PaymentStatus::Pending,
+        _ => PaymentStatus::Pending,
     }
 }
 
 impl From<PaymentRow> for Payment {
     fn from(r: PaymentRow) -> Self {
         Self {
-            payment_id:        r.payment_id,
+            payment_id: r.payment_id,
             payment_intent_id: r.payment_intent_id,
-            booking_id:        r.booking_id,
-            user_id:           r.user_id,
-            amount:            r.amount,
-            currency:          r.currency,
-            status:            parse_payment_status(&r.status),
-            gateway_name:      r.gateway_name,
-            gateway_response:  r.gateway_response,
-            idempotency_key:   r.idempotency_key,
-            created_at:        r.created_at,
-            confirmed_at:      r.confirmed_at,
-            failed_at:         r.failed_at,
-            refunded_at:       r.refunded_at,
+            booking_id: r.booking_id,
+            user_id: r.user_id,
+            amount: r.amount,
+            currency: r.currency,
+            status: parse_payment_status(&r.status),
+            gateway_name: r.gateway_name,
+            gateway_response: r.gateway_response,
+            idempotency_key: r.idempotency_key,
+            created_at: r.created_at,
+            confirmed_at: r.confirmed_at,
+            failed_at: r.failed_at,
+            refunded_at: r.refunded_at,
         }
     }
 }
@@ -60,7 +60,9 @@ pub struct PgPaymentRepository {
 }
 
 impl PgPaymentRepository {
-    pub fn new(pool: PgPool) -> Self { Self { pool } }
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
 }
 
 #[async_trait]
@@ -104,13 +106,11 @@ impl PaymentRepository for PgPaymentRepository {
     }
 
     async fn find_by_id(&self, payment_id: &str) -> Result<Option<Payment>, AppError> {
-        let row = sqlx::query_as::<_, PaymentRow>(
-            "SELECT * FROM payments WHERE payment_id = $1",
-        )
-        .bind(payment_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let row = sqlx::query_as::<_, PaymentRow>("SELECT * FROM payments WHERE payment_id = $1")
+            .bind(payment_id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(row.map(Into::into))
     }
 
@@ -118,13 +118,12 @@ impl PaymentRepository for PgPaymentRepository {
         &self,
         payment_intent_id: &str,
     ) -> Result<Option<Payment>, AppError> {
-        let row = sqlx::query_as::<_, PaymentRow>(
-            "SELECT * FROM payments WHERE payment_intent_id = $1",
-        )
-        .bind(payment_intent_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let row =
+            sqlx::query_as::<_, PaymentRow>("SELECT * FROM payments WHERE payment_intent_id = $1")
+                .bind(payment_intent_id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(db_err)?;
         Ok(row.map(Into::into))
     }
 
@@ -151,20 +150,16 @@ impl PaymentRepository for PgPaymentRepository {
     }
 
     async fn find_by_idempotency_key(&self, key: &str) -> Result<Option<Payment>, AppError> {
-        let row = sqlx::query_as::<_, PaymentRow>(
-            "SELECT * FROM payments WHERE idempotency_key = $1",
-        )
-        .bind(key)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(db_err)?;
+        let row =
+            sqlx::query_as::<_, PaymentRow>("SELECT * FROM payments WHERE idempotency_key = $1")
+                .bind(key)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(db_err)?;
         Ok(row.map(Into::into))
     }
 
-    async fn find_expired_pending(
-        &self,
-        before: DateTime<Utc>,
-    ) -> Result<Vec<Payment>, AppError> {
+    async fn find_expired_pending(&self, before: DateTime<Utc>) -> Result<Vec<Payment>, AppError> {
         let rows = sqlx::query_as::<_, PaymentRow>(
             "SELECT * FROM payments WHERE status = 'Pending' AND created_at < $1",
         )
