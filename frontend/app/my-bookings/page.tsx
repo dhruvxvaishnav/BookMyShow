@@ -18,8 +18,9 @@ const TABS: FilterTab[] = ['Upcoming', 'Past'];
 const PAGE_SIZE = 9;
 
 function isUpcoming(booking: Booking): boolean {
-  if (booking.show?.start_time) {
-    return booking.show.start_time > Date.now() / 1000;
+  const showStartTime = booking.show?.start_time ?? booking.show_start_time;
+  if (showStartTime) {
+    return showStartTime > Date.now() / 1000;
   }
   return booking.status === 'pending' || booking.status === 'payment_pending';
 }

@@ -667,6 +667,9 @@ pub async fn get_booking(
         .ok()
         .flatten();
     let show_name = show.as_ref().map(|s| s.show_name.clone());
+    let show_start_time = show.as_ref().map(|s| s.start_time.timestamp());
+    let theatre_name = show.as_ref().map(|s| s.theatre_name.clone());
+    let screen_number = show.as_ref().map(|s| s.screen_number);
     let all_seats = state
         .show_svc
         .get_seat_layout(&booking.show_id)
@@ -691,6 +694,9 @@ pub async fn get_booking(
         confirmed_at: booking.confirmed_at.map(|dt| dt.timestamp()),
         cancelled_at: booking.cancelled_at.map(|dt| dt.timestamp()),
         show_name,
+        show_start_time,
+        theatre_name,
+        screen_number,
         seat_numbers,
     })))
 }
@@ -719,8 +725,8 @@ pub async fn get_user_bookings(
 
     let bookings = state.booking_svc.get_user_bookings(&user_id).await?;
 
-    // Batch-fetch unique shows to get names
-    let mut show_names: std::collections::HashMap<String, String> =
+    // Batch-fetch unique shows so the client can classify future bookings.
+    let mut shows: std::collections::HashMap<String, domain::Show> =
         std::collections::HashMap::new();
     for show_id in bookings
         .iter()
@@ -728,14 +734,18 @@ pub async fn get_user_bookings(
         .collect::<std::collections::HashSet<_>>()
     {
         if let Ok(Some(show)) = state.show_svc.get_show(show_id).await {
-            show_names.insert(show_id.clone(), show.show_name.clone());
+            shows.insert(show_id.clone(), show);
         }
     }
 
     let responses: Vec<BookingResponse> = bookings
         .into_iter()
         .map(|b| {
-            let show_name = show_names.get(&b.show_id).cloned();
+            let show = shows.get(&b.show_id);
+            let show_name = show.map(|s| s.show_name.clone());
+            let show_start_time = show.map(|s| s.start_time.timestamp());
+            let theatre_name = show.map(|s| s.theatre_name.clone());
+            let screen_number = show.map(|s| s.screen_number);
             BookingResponse {
                 booking_id: b.booking_id,
                 user_id: b.user_id,
@@ -749,6 +759,9 @@ pub async fn get_user_bookings(
                 confirmed_at: b.confirmed_at.map(|dt| dt.timestamp()),
                 cancelled_at: b.cancelled_at.map(|dt| dt.timestamp()),
                 show_name,
+                show_start_time,
+                theatre_name,
+                screen_number,
                 seat_numbers: vec![],
             }
         })
@@ -1063,6 +1076,9 @@ pub async fn admin_list_bookings(
             confirmed_at: b.confirmed_at.map(|dt| dt.timestamp()),
             cancelled_at: b.cancelled_at.map(|dt| dt.timestamp()),
             show_name: None,
+            show_start_time: None,
+            theatre_name: None,
+            screen_number: None,
             seat_numbers: vec![],
         })
         .collect();
@@ -1096,6 +1112,9 @@ pub async fn admin_get_booking(
         confirmed_at: booking.confirmed_at.map(|dt| dt.timestamp()),
         cancelled_at: booking.cancelled_at.map(|dt| dt.timestamp()),
         show_name: None,
+        show_start_time: None,
+        theatre_name: None,
+        screen_number: None,
         seat_numbers: vec![],
     })))
 }

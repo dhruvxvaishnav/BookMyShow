@@ -25,6 +25,13 @@ export default function BookingCard({ booking }: BookingCardProps) {
   const variant = statusVariant[booking.status] ?? 'muted';
   const isConfirmed = booking.status === 'success';
   const posterUrl = booking.show?.movie?.poster_url ?? null;
+  const showTitle = booking.show?.movie?.title ?? booking.show?.name ?? booking.show_name;
+  const showStartTime = booking.show?.start_time ?? booking.show_start_time;
+  const theatreName = booking.show?.venue?.name ?? booking.show?.theatre_name ?? booking.theatre_name;
+  const screenNumber = booking.show?.screen_number ?? booking.screen_number;
+  const venueLine = theatreName
+    ? `${theatreName}${screenNumber !== undefined ? ` · Screen ${screenNumber}` : ''}`
+    : null;
 
   return (
     <div className={styles.card}>
@@ -36,21 +43,13 @@ export default function BookingCard({ booking }: BookingCardProps) {
         )}
 
         <div className={styles.info}>
-          {booking.show ? (
-            <>
-              <h3 className={styles.showName}>{booking.show.name}</h3>
-              <p className={styles.theatre}>
-                {booking.show.venue?.name ?? booking.show.theatre_name} · Screen {booking.show.screen_number}
-              </p>
-              {booking.show.venue?.address && (
-                <p className={styles.address}>{booking.show.venue.address}</p>
-              )}
-              <p className={styles.time}>{formatDateTime(booking.show.start_time)}</p>
-            </>
-          ) : booking.show_name ? (
-            <h3 className={styles.showName}>{booking.show_name}</h3>
-          ) : (
-            <h3 className={styles.showName}>Show #{booking.show_id.slice(0, 8)}</h3>
+          <h3 className={styles.showName}>{showTitle ?? `Show #${booking.show_id.slice(0, 8)}`}</h3>
+          {venueLine && <p className={styles.theatre}>{venueLine}</p>}
+          {booking.show?.venue?.address && (
+            <p className={styles.address}>{booking.show.venue.address}</p>
+          )}
+          {showStartTime && (
+            <p className={styles.time}>{formatDateTime(showStartTime)}</p>
           )}
           {booking.seat_numbers && booking.seat_numbers.length > 0 && (
             <p className={styles.theatre}>Seats: {booking.seat_numbers.join(', ')}</p>
@@ -77,6 +76,8 @@ export default function BookingCard({ booking }: BookingCardProps) {
         <span className={styles.seatList}>
           {booking.seats && booking.seats.length > 0
             ? formatSeatList(booking.seats.map((s) => s.seat_number))
+            : booking.seat_numbers && booking.seat_numbers.length > 0
+              ? formatSeatList(booking.seat_numbers)
             : `${booking.seat_ids.length} seat${booking.seat_ids.length !== 1 ? 's' : ''}`}
         </span>
       </div>

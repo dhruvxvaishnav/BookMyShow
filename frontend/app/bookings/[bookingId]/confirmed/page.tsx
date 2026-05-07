@@ -8,6 +8,7 @@ import Button from '@/components/forms/Button';
 import { BookingSkeleton } from '@/components/common/LoadingSkeleton';
 import { useToast } from '@/components/layout/Toast';
 import { getBooking } from '@/api/bookings';
+import { getShow } from '@/api/shows';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { getErrorMessage } from '@/utils/error';
 import type { Booking } from '@/types/api';
@@ -27,8 +28,9 @@ export default function ConfirmedPage({ params }: PageProps) {
 
   useEffect(() => {
     getBooking(bookingId)
-      .then((b) => {
-        setBooking(b);
+      .then(async (b) => {
+        const show = await getShow(b.show_id).catch(() => undefined);
+        setBooking(show ? { ...b, show } : b);
         if (b.status !== 'success') {
           router.replace(`/bookings/${bookingId}`);
         } else {

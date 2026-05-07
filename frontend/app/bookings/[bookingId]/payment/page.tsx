@@ -8,6 +8,7 @@ import Input from '@/components/forms/Input';
 import Modal from '@/components/layout/Modal';
 import { useToast } from '@/components/layout/Toast';
 import { getBooking } from '@/api/bookings';
+import { getShow } from '@/api/shows';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { initiatePayment, mockGatewayPay } from '@/api/payments';
 import { getErrorMessage } from '@/utils/error';
@@ -22,6 +23,11 @@ import styles from './page.module.css';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 interface PageProps { params: Promise<{ bookingId: string }> }
+
+async function enrichBookingWithShow(booking: Booking): Promise<Booking> {
+  const show = await getShow(booking.show_id).catch(() => undefined);
+  return show ? { ...booking, show } : booking;
+}
 
 export default function PaymentPage({ params }: PageProps) {
   const isAuthed = useRequireAuth();
@@ -43,8 +49,9 @@ export default function PaymentPage({ params }: PageProps) {
   // Load booking
   useEffect(() => {
     getBooking(bookingId)
-      .then((b) => {
-        setBooking(b);
+      .then(async (b) => {
+        const enrichedBooking = await enrichBookingWithShow(b);
+        setBooking(enrichedBooking);
         // 'payment_pending' is valid here — payment was already initiated
         if (b.status !== 'pending' && b.status !== 'payment_pending') {
           if (b.status === 'success') router.replace(`/bookings/${bookingId}/confirmed`);
@@ -79,7 +86,8 @@ export default function PaymentPage({ params }: PageProps) {
     const interval = setInterval(async () => {
       try {
         const b = await getBooking(bookingId);
-        setBooking(b);
+        const enrichedBooking = await enrichBookingWithShow(b);
+        setBooking(enrichedBooking);
         if (b.status === 'expired') {
           setShowExpiredModal(true);
           clearInterval(interval);
@@ -139,14 +147,21 @@ export default function PaymentPage({ params }: PageProps) {
   }
 
   const seats = booking?.seats ?? [];
+  const fallbackSeatLabels = booking?.seat_numbers && booking.seat_numbers.length > 0
+    ? booking.seat_numbers
+    : booking?.seat_ids ?? [];
   const seatLabels = seats.length > 0
     ? seats.map((seat) => seat.seat_number)
-    : booking?.seat_ids ?? [];
+    : fallbackSeatLabels;
   const subtotal = seats.length > 0
     ? seats.reduce((sum, seat) => sum + seat.price, 0)
     : booking?.total_amount ?? payment?.amount ?? 0;
   const total = payment?.amount ?? booking?.total_amount ?? 0;
   const convenienceFee = Math.max(total - subtotal, 0);
+  const movieTitle = booking?.show?.movie?.title ?? booking?.show?.name ?? booking?.show_name ?? 'Cinema Ticket';
+  const showStartTime = booking?.show?.start_time ?? booking?.show_start_time;
+  const venueName = booking?.show?.venue?.name ?? booking?.show?.theatre_name ?? booking?.theatre_name;
+  const screenNumber = booking?.show?.screen_number ?? booking?.screen_number;
 
   return (
     <>
@@ -166,12 +181,12 @@ export default function PaymentPage({ params }: PageProps) {
             <div className={styles.accentBar} />
             <div className={styles.cardBody}>
               <p className={styles.kicker}>Order Summary</p>
-              <h1 className={styles.movieTitle}>{booking?.show?.name ?? 'Cinema Ticket'}</h1>
+              <h1 className={styles.movieTitle}>{movieTitle}</h1>
 
               <div className={styles.showMeta}>
-                <span>{booking?.show ? formatDateTime(booking.show.start_time) : 'Show time unavailable'}</span>
-                <span>{booking?.show?.theatre_name ?? booking?.show?.venue?.name ?? 'Venue unavailable'}</span>
-                {booking?.show && <span>Screen {booking.show.screen_number}</span>}
+                <span>{showStartTime ? formatDateTime(showStartTime) : 'Show time unavailable'}</span>
+                <span>{venueName ?? 'Venue unavailable'}</span>
+                {screenNumber !== undefined && <span>Screen {screenNumber}</span>}
               </div>
 
               <div className={styles.seatTable}>

@@ -11,9 +11,18 @@ interface TicketDisplayProps {
 export default function TicketDisplay({ booking }: TicketDisplayProps) {
   const show = booking.show;
   const seats = booking.seats ?? [];
+  const ticketCount = booking.seat_numbers?.length || seats.length || booking.seat_ids.length;
+  const movieName = show?.movie?.title ?? booking.show_name ?? show?.name ?? 'Movie';
+  const venueName = show?.venue?.name ?? show?.theatre_name ?? 'Venue unavailable';
+  const screenNumber = show?.screen_number ?? '-';
   const seatLabels = seats.length > 0
     ? seats.map((seat) => seat.seat_number)
-    : booking.seat_ids.map((seatId) => seatId.slice(0, 8));
+    : booking.seat_numbers && booking.seat_numbers.length > 0
+      ? booking.seat_numbers
+      : booking.seat_ids.map((seatId) => seatId.slice(0, 8));
+  const sortedSeatLabels = [...seatLabels].sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true })
+  );
 
   return (
     <div className={styles.ticket}>
@@ -21,14 +30,14 @@ export default function TicketDisplay({ booking }: TicketDisplayProps) {
 
       <div className={styles.mainStub}>
         <div className={styles.header}>
-          <p className={styles.kicker}>Admit One</p>
-          <h2 className={styles.movieName}>{show?.name ?? 'Show'}</h2>
+          <p className={styles.kicker}>{formatAdmitLabel(ticketCount)}</p>
+          <h2 className={styles.movieName}>{movieName}</h2>
         </div>
 
         <div className={styles.ticketGrid}>
           <div>
             <span className={styles.sectionLabel}>Venue</span>
-            <p>{show?.theatre_name ?? 'Cineplex'} · Screen {show?.screen_number ?? '-'}</p>
+            <p>{venueName} · Screen {screenNumber}</p>
           </div>
           <div>
             <span className={styles.sectionLabel}>Show Time</span>
@@ -39,7 +48,7 @@ export default function TicketDisplay({ booking }: TicketDisplayProps) {
         <div className={styles.seatSection}>
           <span className={styles.sectionLabel}>Seats</span>
           <div className={styles.seatChips}>
-            {seatLabels.map((seat) => (
+            {sortedSeatLabels.map((seat) => (
               <span key={seat} className={styles.seatChip}>{seat}</span>
             ))}
           </div>
@@ -75,4 +84,9 @@ export default function TicketDisplay({ booking }: TicketDisplayProps) {
       </div>
     </div>
   );
+}
+
+function formatAdmitLabel(count: number) {
+  const words = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+  return `Admit ${words[count] ?? count}`;
 }

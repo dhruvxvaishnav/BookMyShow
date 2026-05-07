@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2 } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
@@ -8,8 +8,10 @@ import Input from '@/components/forms/Input';
 import Select from '@/components/forms/Select';
 import { useToast } from '@/components/layout/Toast';
 import { createShow } from '@/api/admin';
+import { getMovies } from '@/api/movies';
+import { getVenues } from '@/api/venues';
 import { useRequireAdmin } from '@/hooks/useRequireAuth';
-import type { RowConfig } from '@/types/api';
+import type { Movie, RowConfig, Venue } from '@/types/api';
 import styles from './page.module.css';
 
 const SEAT_TYPE_OPTIONS = [
@@ -39,6 +41,10 @@ export default function CreateShowPage() {
   const isAdmin = useRequireAdmin();
   const router = useRouter();
   const toast = useToast();
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [selectedMovieId, setSelectedMovieId] = useState('');
+  const [selectedVenueId, setSelectedVenueId] = useState('');
   const [name, setName] = useState('');
   const [theatre, setTheatre] = useState('');
   const [screen, setScreen] = useState('1');
@@ -49,7 +55,42 @@ export default function CreateShowPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    Promise.all([getMovies(), getVenues()])
+      .then(([movieList, venueList]) => {
+        setMovies(movieList);
+        setVenues(venueList);
+      })
+      .catch((err) => {
+        toast.showToast(err instanceof Error ? err.message : 'Failed to load movies and venues.', 'error');
+      });
+  }, [isAdmin, toast]);
+
   if (!isAdmin) return null;
+
+  const selectedVenue = venues.find((venue) => venue.venue_id === selectedVenueId);
+  const movieOptions = [
+    { value: '', label: 'Select movie' },
+    ...movies.map((movie) => ({ value: movie.movie_id, label: movie.title })),
+  ];
+  const venueOptions = [
+    { value: '', label: 'Select venue' },
+    ...venues.map((venue) => ({ value: venue.venue_id, label: `${venue.name} · ${venue.city}` })),
+  ];
+
+  const handleMovieChange = (movieId: string) => {
+    setSelectedMovieId(movieId);
+    const movie = movies.find((item) => item.movie_id === movieId);
+    if (movie && !name.trim()) setName(movie.title);
+  };
+
+  const handleVenueChange = (venueId: string) => {
+    setSelectedVenueId(venueId);
+    const venue = venues.find((item) => item.venue_id === venueId);
+    setTheatre(venue?.name ?? '');
+  };
 
   const addRow = () => {
     const nextLabel = rows.length > 0
@@ -74,9 +115,14 @@ export default function CreateShowPage() {
 
   const validate = () => {
     const e: Record<string, string> = {};
+    if (!selectedMovieId) e.movie = 'Movie is required.';
+    if (!selectedVenueId) e.venue = 'Venue is required.';
     if (!name.trim()) e.name = 'Show name is required.';
     if (!theatre.trim()) e.theatre = 'Theatre name is required.';
     if (!screen || Number(screen) < 1) e.screen = 'Screen number must be at least 1.';
+    if (selectedVenue && Number(screen) > selectedVenue.screen_count) {
+      e.screen = `Screen number must be between 1 and ${selectedVenue.screen_count}.`;
+    }
     if (!startTime) e.startTime = 'Start time is required.';
     if (!endTime) e.endTime = 'End time is required.';
     if (startTime && endTime && new Date(startTime) >= new Date(endTime)) {
@@ -105,6 +151,8 @@ export default function CreateShowPage() {
         end_time: Math.floor(new Date(endTime).getTime() / 1000),
         price_per_seat: Number(price),
         seat_layout: { rows },
+        movie_id: selectedMovieId,
+        venue_id: selectedVenueId,
       });
       toast.showToast(`Show created with ${totalSeats} seats.`, 'success');
       router.push('/admin');
@@ -129,6 +177,20 @@ export default function CreateShowPage() {
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Show Details</h2>
             <div className={styles.fieldGrid}>
+              <Select
+                label="Movie"
+                options={movieOptions}
+                value={selectedMovieId}
+                onChange={(e) => handleMovieChange(e.target.value)}
+                error={errors.movie}
+              />
+              <Select
+                label="Venue"
+                options={venueOptions}
+                value={selectedVenueId}
+                onChange={(e) => handleVenueChange(e.target.value)}
+                error={errors.venue}
+              />
               <Input
                 label="Show Name"
                 placeholder="Avengers: Endgame"

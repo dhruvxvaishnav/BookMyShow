@@ -106,6 +106,9 @@ pub struct BookingResponse {
     pub confirmed_at: Option<i64>,
     pub cancelled_at: Option<i64>,
     pub show_name: Option<String>,
+    pub show_start_time: Option<i64>,
+    pub theatre_name: Option<String>,
+    pub screen_number: Option<u32>,
     pub seat_numbers: Vec<String>,
 }
 

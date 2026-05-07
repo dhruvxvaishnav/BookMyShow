@@ -118,6 +118,9 @@ export interface Booking {
   seats?: Seat[];
   payment_id?: string;
   show_name?: string;
+  show_start_time?: number;
+  theatre_name?: string;
+  screen_number?: number;
   seat_numbers?: string[];
 }
 
@@ -184,6 +187,8 @@ export interface CreateShowRequest {
   end_time: number;
   price_per_seat: number;
   seat_layout: { rows: RowConfig[] };
+  movie_id?: string;
+  venue_id?: string;
 }
 
 export interface RowConfig {
