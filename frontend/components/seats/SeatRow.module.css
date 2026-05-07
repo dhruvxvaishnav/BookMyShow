@@ -1,14 +1,15 @@
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 36px minmax(max-content, 1fr) 36px;
   align-items: center;
   gap: var(--space-3);
+  width: 100%;
+  max-width: var(--section-max-width, 900px);
 }
 
 .rowLabel {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  min-width: 28px;
   justify-content: center;
 }
 
@@ -16,11 +17,32 @@
   font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--antique-gold);
 }
 
 .seats {
   display: flex;
-  gap: var(--space-1);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
   flex-wrap: nowrap;
+  min-width: max-content;
+}
+
+.seatSegment {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.row[data-experience='imax'] .seats {
+  gap: var(--space-10);
+}
+
+.row[data-experience='luxe'] .seats {
+  gap: var(--space-7);
+}
+
+.row[data-experience='luxe'] .seatSegment {
+  gap: var(--space-2);
 }

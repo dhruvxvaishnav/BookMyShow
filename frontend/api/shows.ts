@@ -16,7 +16,7 @@ export async function getShowAvailability(showId: string): Promise<ShowAvailabil
   return response.data;
 }
 
-export async function getSeatLayout(showId: string, page = 1, limit = 100): Promise<SeatLayoutResponse> {
+export async function getSeatLayout(showId: string, page = 1, limit = 500): Promise<SeatLayoutResponse> {
   const response = await apiClient.get<SeatLayoutResponse>(
     `/shows/${showId}/seats`,
     { params: { page, limit } }

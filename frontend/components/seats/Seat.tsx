@@ -10,6 +10,7 @@ interface SeatProps {
   seat: SeatType;
   displayState: SeatDisplayState;
   isConflicting?: boolean;
+  tooltipPlacement?: 'above' | 'below';
   onClick: (seat: SeatType) => void;
   buttonRef?: Ref<HTMLButtonElement>;
   tabIndex?: number;
@@ -21,6 +22,7 @@ export default function Seat({
   seat,
   displayState,
   isConflicting,
+  tooltipPlacement = 'above',
   onClick,
   buttonRef,
   tabIndex,
@@ -75,7 +77,7 @@ export default function Seat({
         </span>
       </button>
 
-      <div className={styles.tooltip}>
+      <div className={`${styles.tooltip} ${tooltipPlacement === 'below' ? styles.tooltipBelow : ''}`}>
         <strong>{seat.seat_number}</strong>
         <span>{seatTypeLabel}</span>
         <span>{formatPrice(seat.price)}</span>

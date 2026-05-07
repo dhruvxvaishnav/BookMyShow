@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, use, useRef } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import SeatGrid from '@/components/seats/SeatGrid';
 import QueueStatusBanner from '@/components/booking/QueueStatusBanner';
@@ -13,6 +13,7 @@ import { joinQueue } from '@/api/queue';
 import { getConflictingSeats, getErrorMessage } from '@/utils/error';
 import { ApiError } from '@/types/api';
 import { formatPrice, formatTime, formatDate } from '@/utils/format';
+import { getShowExperience, SHOW_EXPERIENCE_LABELS } from '@/utils/showExperience';
 import { Lock } from 'lucide-react';
 import type { Show, Seat } from '@/types/api';
 import styles from './page.module.css';
@@ -30,6 +31,8 @@ export default function SeatSelectionPage({ params }: PageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
+  const [ticketCount, setTicketCount] = useState<number | null>(null);
+  const [isTicketPickerOpen, setIsTicketPickerOpen] = useState(true);
   const [isLocking, setIsLocking] = useState(false);
   const [conflictingSeats, setConflictingSeats] = useState<string[]>([]);
   const [srAnnouncement, setSrAnnouncement] = useState('');
@@ -74,6 +77,12 @@ export default function SeatSelectionPage({ params }: PageProps) {
   }, [loadSeatLayout]);
 
   const handleSeatClick = (seat: Seat) => {
+    if (!ticketCount) {
+      setIsTicketPickerOpen(true);
+      toast.showToast('Choose how many tickets you want first.', 'info');
+      return;
+    }
+
     if (seat.status === 'booked') {
       toast.showToast(`Seat ${seat.seat_number} is already booked.`, 'warning');
       return;
@@ -87,23 +96,45 @@ export default function SeatSelectionPage({ params }: PageProps) {
 
     setSelectedSeatIds((prev) => {
       if (prev.includes(seat.seat_id)) {
-        setSrAnnouncement(`Seat ${seat.seat_number} deselected. ${prev.length - 1} seat${prev.length - 1 !== 1 ? 's' : ''} selected.`);
-        return prev.filter((id) => id !== seat.seat_id);
+        const next = prev.filter((id) => id !== seat.seat_id);
+        setSrAnnouncement(`Seat ${seat.seat_number} deselected. ${next.length} of ${ticketCount} selected.`);
+        return next;
       }
-      if (prev.length >= 10) {
-        toast.showToast('Maximum 10 seats per booking.', 'warning');
-        setSrAnnouncement('Maximum 10 seats per booking reached.');
+
+      const replaceSelection = prev.length >= ticketCount;
+      const baseSelection = replaceSelection ? [] : prev;
+      const remaining = replaceSelection ? ticketCount : ticketCount - prev.length;
+      const autoSelectedSeatIds = getAutoSelectedSeatIds(seat, seats, baseSelection, remaining);
+
+      if (autoSelectedSeatIds.length === 0) {
+        toast.showToast('No adjacent seats available from this spot.', 'warning');
         return prev;
       }
-      setSrAnnouncement(`Seat ${seat.seat_number} selected. ${prev.length + 1} seat${prev.length + 1 !== 1 ? 's' : ''} selected.`);
-      return [...prev, seat.seat_id];
+
+      const next = [...baseSelection, ...autoSelectedSeatIds].slice(0, ticketCount);
+      const remainingAfterSelection = ticketCount - next.length;
+      setSrAnnouncement(
+        remainingAfterSelection > 0
+          ? `${next.length} of ${ticketCount} selected. Choose ${remainingAfterSelection} more.`
+          : `${ticketCount} seats selected.`
+      );
+      return next;
     });
     setConflictingSeats([]);
+  };
+
+  const handleTicketCountSelect = (count: number) => {
+    setTicketCount(count);
+    setSelectedSeatIds((prev) => prev.slice(0, count));
+    setIsTicketPickerOpen(false);
+    setSrAnnouncement(`${count} ticket${count !== 1 ? 's' : ''} selected.`);
   };
 
   const selectedSeats = seats.filter((s) => selectedSeatIds.includes(s.seat_id));
   const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
   const count = selectedSeats.length;
+  const experience = show ? getShowExperience(show) : 'normal';
+  const remainingTickets = ticketCount ? Math.max(ticketCount - count, 0) : 0;
 
   const breakdown = selectedSeats.reduce((acc, seat) => {
     if (!acc[seat.seat_type]) acc[seat.seat_type] = { count: 0, price: seat.price };
@@ -112,7 +143,11 @@ export default function SeatSelectionPage({ params }: PageProps) {
   }, {} as Record<string, { count: number; price: number }>);
 
   const handleLock = async () => {
-    if (selectedSeatIds.length === 0) return;
+    if (!ticketCount) {
+      setIsTicketPickerOpen(true);
+      return;
+    }
+    if (selectedSeatIds.length !== ticketCount) return;
     setIsLocking(true);
     setConflictingSeats([]);
     try {
@@ -189,6 +224,8 @@ export default function SeatSelectionPage({ params }: PageProps) {
           <span className={styles.showMetaDot} />
           <span className={styles.showMetaItem}>{formatTime(show.start_time)}</span>
           <span className={styles.showMetaDot} />
+          <span className={`${styles.showMetaItem} ${styles.showFormat}`}>{SHOW_EXPERIENCE_LABELS[experience]}</span>
+          <span className={styles.showMetaDot} />
           <span className={styles.showMetaItem}>{show.theatre_name}</span>
           <span className={styles.showMetaDot} />
           <span className={styles.showMetaItem}>Screen {show.screen_number}</span>
@@ -206,6 +243,32 @@ export default function SeatSelectionPage({ params }: PageProps) {
         </div>
       )}
 
+      {isTicketPickerOpen && (
+        <div className={styles.ticketPickerBackdrop} role="presentation">
+          <section
+            className={styles.ticketPicker}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ticket-picker-title"
+          >
+            <span className={styles.ticketPickerEyebrow}>Tickets</span>
+            <h2 id="ticket-picker-title" className={styles.ticketPickerTitle}>How many seats?</h2>
+            <div className={styles.ticketCountGrid} role="list" aria-label="Choose ticket count">
+              {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
+                <button
+                  key={value}
+                  className={`${styles.ticketCountButton} ${ticketCount === value ? styles.ticketCountButtonActive : ''}`}
+                  onClick={() => handleTicketCountSelect(value)}
+                  aria-pressed={ticketCount === value}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+
       {/* Seat grid */}
       <div className={styles.gridArea}>
         <SeatGrid
@@ -215,6 +278,7 @@ export default function SeatSelectionPage({ params }: PageProps) {
           conflictingSeats={conflictingSeats}
           userId={userId}
           onSeatClick={handleSeatClick}
+          experience={experience}
         />
       </div>
 
@@ -222,11 +286,22 @@ export default function SeatSelectionPage({ params }: PageProps) {
       <div className={styles.stickyBar} role="region" aria-label="Seat selection summary">
         {/* Left: selected seat chips */}
         <div className={styles.stickyBarLeft}>
+          <button
+            className={styles.ticketCountControl}
+            onClick={() => setIsTicketPickerOpen(true)}
+            aria-label="Change ticket count"
+          >
+            {ticketCount ? `${ticketCount} ticket${ticketCount !== 1 ? 's' : ''}` : 'Choose tickets'}
+          </button>
           {count === 0 ? (
-            <span className={styles.stickyEmpty}>Select seats to continue</span>
+            <span className={styles.stickyEmpty}>
+              {ticketCount ? `Select ${ticketCount} seat${ticketCount !== 1 ? 's' : ''}` : 'Choose tickets to continue'}
+            </span>
           ) : (
             <>
-              <span className={styles.stickyBarLabel}>Selected:</span>
+              <span className={styles.stickyBarLabel}>
+                {remainingTickets > 0 ? `${remainingTickets} more` : 'Selected:'}
+              </span>
               {selectedSeats.map((s) => (
                 <span key={s.seat_id} className={styles.seatChip}>{s.seat_number}</span>
               ))}
@@ -238,7 +313,7 @@ export default function SeatSelectionPage({ params }: PageProps) {
         <div className={styles.stickyBarCenter} aria-hidden="true">
           {Object.entries(breakdown).map(([type, data]) => (
             <span key={type} className={styles.breakdownChip}>
-              <span className={styles.breakdownType}>{data.count}×&nbsp;{type}</span>
+              <span className={styles.breakdownType}>{data.count}×&nbsp;{formatSeatType(type)}</span>
               {' '}{formatPrice(data.price * data.count)}
             </span>
           ))}
@@ -253,14 +328,53 @@ export default function SeatSelectionPage({ params }: PageProps) {
           <button
             className={styles.lockBtn}
             onClick={handleLock}
-            disabled={count === 0 || isLocking}
+            disabled={!ticketCount || count !== ticketCount || isLocking}
             aria-busy={isLocking}
           >
             <Lock size={15} strokeWidth={2} />
-            {isLocking ? 'Locking…' : `Lock Seats${count > 0 ? ` (${count})` : ''}`}
+            {isLocking ? 'Locking…' : `Lock Seats${ticketCount ? ` (${count}/${ticketCount})` : ''}`}
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+function formatSeatType(type: string) {
+  if (type === 'premium') return 'Comfort';
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+function getAutoSelectedSeatIds(
+  clickedSeat: Seat,
+  seats: Seat[],
+  currentSelection: string[],
+  limit: number
+) {
+  const currentSelectionSet = new Set(currentSelection);
+  const rowSeats = seats
+    .filter((seat) => seat.row_label === clickedSeat.row_label)
+    .sort((a, b) => a.seat_number.localeCompare(b.seat_number, undefined, { numeric: true }));
+  const clickedIndex = rowSeats.findIndex((seat) => seat.seat_id === clickedSeat.seat_id);
+  if (clickedIndex < 0) return [];
+
+  const selected: Seat[] = [];
+
+  for (let index = clickedIndex; index < rowSeats.length && selected.length < limit; index += 1) {
+    const seat = rowSeats[index];
+    if (!isAutoSelectableSeat(seat, currentSelectionSet)) break;
+    selected.push(seat);
+  }
+
+  for (let index = clickedIndex - 1; index >= 0 && selected.length < limit; index -= 1) {
+    const seat = rowSeats[index];
+    if (!isAutoSelectableSeat(seat, currentSelectionSet)) break;
+    selected.unshift(seat);
+  }
+
+  return selected.map((seat) => seat.seat_id);
+}
+
+function isAutoSelectableSeat(seat: Seat, currentSelectionSet: Set<string>) {
+  return seat.status === 'available' && !currentSelectionSet.has(seat.seat_id);
 }

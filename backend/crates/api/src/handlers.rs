@@ -473,7 +473,7 @@ fn default_page() -> u32 {
     1
 }
 fn default_limit() -> u32 {
-    100
+    500
 }
 
 pub async fn get_seat_layout(

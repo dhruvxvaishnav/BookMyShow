@@ -1,40 +1,48 @@
 .wrapper {
   width: 100%;
-  max-width: 480px;
+  max-width: min(860px, 85vw);
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .curve {
   position: relative;
   width: 100%;
-  height: 6px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(245,166,35,0.3) 15%,
-    rgba(245,166,35,0.6) 40%,
-    rgba(245,166,35,0.8) 50%,
-    rgba(245,166,35,0.6) 60%,
-    rgba(245,166,35,0.3) 85%,
-    transparent
-  );
-  border-radius: 3px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.curve::before {
+  content: '';
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: 14px;
+  height: 48px;
+  border-bottom: 3px solid rgba(245, 166, 35, 0.9);
+  border-radius: 0 0 50% 50%;
+  box-shadow:
+    0 16px 26px rgba(245, 166, 35, 0.22),
+    0 28px 44px rgba(245, 166, 35, 0.12);
 }
 
 .label {
   position: absolute;
-  top: 50%;
+  top: calc(100% - 15px);
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
-  color: var(--accent-gold);
-  opacity: 0.7;
+  letter-spacing: 0.32em;
+  color: var(--muted-text);
+  opacity: 0.95;
   white-space: nowrap;
 }

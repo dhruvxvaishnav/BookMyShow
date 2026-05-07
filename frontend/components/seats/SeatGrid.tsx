@@ -6,7 +6,11 @@ import type { SeatDisplayState } from './Seat';
 import SeatRow from './SeatRow';
 import ScreenIndicator from './ScreenIndicator';
 import SeatLegend from './SeatLegend';
+import type { ShowExperience } from '@/utils/showExperience';
 import styles from './SeatGrid.module.css';
+
+type SeatMapExperience = Exclude<ShowExperience, 'all'>;
+type SeatZone = 'standard' | 'comfort' | 'recliner';
 
 interface SeatGridProps {
   seats: SeatType[];
@@ -15,7 +19,14 @@ interface SeatGridProps {
   conflictingSeats: string[];
   userId: string;
   onSeatClick: (seat: SeatType) => void;
+  experience?: SeatMapExperience;
 }
+
+const ZONE_LABELS: Record<SeatZone, string> = {
+  recliner: 'Recliner',
+  comfort: 'Comfort',
+  standard: 'Standard',
+};
 
 export default function SeatGrid({
   seats,
@@ -24,6 +35,7 @@ export default function SeatGrid({
   conflictingSeats,
   userId,
   onSeatClick,
+  experience = 'normal',
 }: SeatGridProps) {
   const [focusedSeatId, setFocusedSeatId] = useState<string | undefined>();
   const seatRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -39,9 +51,28 @@ export default function SeatGrid({
     for (const key of Object.keys(grouped)) {
       grouped[key].sort((a, b) => a.seat_number.localeCompare(b.seat_number, undefined, { numeric: true }));
     }
-    // Return sorted by row label
-    return Object.keys(grouped).sort().map((label) => ({ label, seats: grouped[label] }));
+    // The screen sits at the bottom, so show back rows first and front rows last.
+    return Object.keys(grouped)
+      .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
+      .map((label) => ({ label, seats: grouped[label] }));
   }, [seats]);
+
+  const sections = useMemo(() => {
+    const groupedSections: Array<{ zone: SeatZone; rows: typeof rows }> = [];
+
+    for (const row of rows) {
+      const zone = getSeatZone(row.seats[0]?.seat_type);
+      const current = groupedSections.at(-1);
+
+      if (current?.zone === zone) {
+        current.rows.push(row);
+      } else {
+        groupedSections.push({ zone, rows: [row] });
+      }
+    }
+
+    return groupedSections;
+  }, [rows]);
 
   // Compute display state per seat
   const displayStates = useMemo(() => {
@@ -123,27 +154,50 @@ export default function SeatGrid({
   }, [focusSeat, focusableRows]);
 
   return (
-    <div className={styles.grid} role="grid" aria-label="Seat map">
-      <ScreenIndicator />
-
+    <div className={`${styles.grid} ${styles[`grid_${experience}`]}`} role="grid" aria-label="Seat map">
       <div className={styles.rows} aria-label="Seat rows">
-        {rows.map(({ label, seats: rowSeats }) => (
-          <SeatRow
-            key={label}
-            rowLabel={label}
-            seats={rowSeats}
-            displayStates={displayStates}
-            conflictingSeats={conflictingSeats}
-            onSeatClick={onSeatClick}
-            focusedSeatId={focusedSeatId}
-            registerSeat={registerSeat}
-            onSeatFocus={setFocusedSeatId}
-            onSeatKeyDown={handleSeatKeyDown}
-          />
+        {sections.map((section, sectionIndex) => (
+          <section
+            key={`${section.zone}-${section.rows.map((row) => row.label).join('-')}`}
+            className={`${styles.typeSection} ${styles[`typeSection_${section.zone}`]}`}
+            aria-label={`${ZONE_LABELS[section.zone]} seats`}
+          >
+            <div className={styles.typeSectionLabel} aria-hidden="true">
+              <span className={styles.typeSectionLabelText}>{ZONE_LABELS[section.zone]}</span>
+              <span className={styles.typeSectionLine} />
+            </div>
+
+            <div className={styles.typeSectionRows}>
+              {section.rows.map(({ label, seats: rowSeats }) => (
+                <SeatRow
+                  key={label}
+                  rowLabel={label}
+                  seats={rowSeats}
+                  displayStates={displayStates}
+                  conflictingSeats={conflictingSeats}
+                  onSeatClick={onSeatClick}
+                  focusedSeatId={focusedSeatId}
+                  registerSeat={registerSeat}
+                  onSeatFocus={setFocusedSeatId}
+                  onSeatKeyDown={handleSeatKeyDown}
+                  experience={experience}
+                  tooltipPlacement={sectionIndex === 0 ? 'below' : 'above'}
+                />
+              ))}
+            </div>
+          </section>
         ))}
       </div>
+
+      <ScreenIndicator />
 
       <SeatLegend />
     </div>
   );
+}
+
+function getSeatZone(seatType?: string): SeatZone {
+  if (seatType === 'recliner') return 'recliner';
+  if (seatType === 'comfort' || seatType === 'premium') return 'comfort';
+  return 'standard';
 }

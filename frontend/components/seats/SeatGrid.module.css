@@ -1,11 +1,27 @@
 .grid {
+  --seat-width: 30px;
+  --seat-height: 28px;
+  --section-max-width: 900px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
-  padding: var(--space-8) var(--space-6) var(--space-6);
+  gap: var(--space-7);
+  padding: var(--space-5) var(--space-6) var(--space-8);
   width: 100%;
   overflow-x: auto;
+  overflow-y: visible;
+}
+
+.grid_imax {
+  --seat-width: 34px;
+  --seat-height: 32px;
+  --section-max-width: 1080px;
+}
+
+.grid_luxe {
+  --seat-width: 38px;
+  --seat-height: 36px;
+  --section-max-width: 780px;
 }
 
 .typeSection {
@@ -13,15 +29,16 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
+  gap: var(--space-3);
 }
 
 .typeSectionLabel {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-5);
   width: 100%;
-  max-width: 640px;
-  margin-bottom: var(--space-4);
+  max-width: var(--section-max-width);
+  padding: 0 var(--space-1);
 }
 
 .typeSectionLabelText {
@@ -33,6 +50,10 @@
   color: var(--gold-foil);
   white-space: nowrap;
 }
+
+.typeSection_recliner .typeSectionLabelText { color: #06B6D4; }
+.typeSection_comfort .typeSectionLabelText { color: #A855F7; }
+.typeSection_standard .typeSectionLabelText { color: var(--muted-text); }
 
 .typeSectionLine {
   flex: 1;
@@ -47,13 +68,34 @@
   );
 }
 
+.typeSection_recliner .typeSectionLine {
+  background: linear-gradient(to right, rgba(6,182,212,0.55), transparent);
+}
+
+.typeSection_comfort .typeSectionLine {
+  background: linear-gradient(to right, rgba(168,85,247,0.55), transparent);
+}
+
+.typeSection_standard .typeSectionLine {
+  background: linear-gradient(to right, rgba(107,114,128,0.5), transparent);
+}
+
 .rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  align-items: center;
+  min-width: min-content;
+  width: 100%;
+}
+
+.typeSectionRows {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   align-items: center;
+  width: 100%;
   min-width: min-content;
-  margin-bottom: var(--space-2);
 }
 
 .sectionDivider {

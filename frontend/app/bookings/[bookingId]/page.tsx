@@ -10,7 +10,7 @@ import Badge from '@/components/common/Badge';
 import { BookingSkeleton } from '@/components/common/LoadingSkeleton';
 import EmptyState from '@/components/common/EmptyState';
 import { useToast } from '@/components/layout/Toast';
-import { getBooking, extendLock, cancelBooking } from '@/api/bookings';
+import { getBooking, cancelBooking } from '@/api/bookings';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { getErrorMessage } from '@/utils/error';
 import { formatPrice, formatDateTime } from '@/utils/format';
@@ -39,21 +39,14 @@ export default function BookingDetailsPage({ params }: PageProps) {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isExtending, setIsExtending] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showExpiredModal, setShowExpiredModal] = useState(false);
-  const [extensionsUsed, setExtensionsUsed] = useState(0);
-  const MAX_EXTENSIONS = 2;
 
   const loadBooking = useCallback(async () => {
     try {
       const data = await getBooking(bookingId);
       setBooking(data);
-      // Load extensions from localStorage
-      const stored = localStorage.getItem('bms_lock_extensions');
-      const exts: Record<string, number> = stored ? JSON.parse(stored) : {};
-      setExtensionsUsed(exts[bookingId] ?? 0);
       if (data.status === 'expired') setShowExpiredModal(true);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -81,25 +74,6 @@ export default function BookingDetailsPage({ params }: PageProps) {
   }, [booking, bookingId]);
 
   if (!isAuthed) return null;
-
-  const handleExtend = async () => {
-    setIsExtending(true);
-    try {
-      const updated = await extendLock(bookingId);
-      setBooking(updated);
-      // Track extension count
-      const stored = localStorage.getItem('bms_lock_extensions');
-      const exts: Record<string, number> = stored ? JSON.parse(stored) : {};
-      exts[bookingId] = (exts[bookingId] ?? 0) + 1;
-      localStorage.setItem('bms_lock_extensions', JSON.stringify(exts));
-      setExtensionsUsed(exts[bookingId]);
-      toast.showToast('Lock extended by 2 minutes.', 'success');
-    } catch (err) {
-      toast.showToast(getErrorMessage(err), 'error');
-    } finally {
-      setIsExtending(false);
-    }
-  };
 
   const handleCancel = async () => {
     setIsCancelling(true);
@@ -210,19 +184,6 @@ export default function BookingDetailsPage({ params }: PageProps) {
           {/* Actions */}
           {isPending && (
             <div className={styles.actions}>
-              <Button
-                variant="secondary"
-                disabled={extensionsUsed >= MAX_EXTENSIONS}
-                isLoading={isExtending}
-                onClick={handleExtend}
-                title={
-                  extensionsUsed >= MAX_EXTENSIONS
-                    ? 'Maximum extensions reached'
-                    : undefined
-                }
-              >
-                Extend Lock (+2 min)
-              </Button>
               <Button
                 variant="primary"
                 onClick={() => router.push(`/bookings/${bookingId}/payment`)}

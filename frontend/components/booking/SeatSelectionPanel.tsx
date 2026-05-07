@@ -91,7 +91,7 @@ export default function SeatSelectionPanel({
         >
           Lock Seats {count > 0 ? `(${count})` : ''}
         </Button>
-        <p className={styles.note}>5 min lock · extend up to 2 times</p>
+        <p className={styles.note}>5 min lock</p>
       </div>
     </div>
   );

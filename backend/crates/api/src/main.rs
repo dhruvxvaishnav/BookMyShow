@@ -562,16 +562,19 @@ async fn seed_demo_data(
     }
 
     let normal_hall = |seats: u8| -> Vec<RowConfig> {
+        let standard_seats = seats.saturating_sub(2).max(8);
+        let recliner_seats = seats.saturating_sub(4).max(6);
+
         vec![
-            row!("A", seats as u32, "Standard"),
-            row!("B", seats as u32, "Standard"),
+            row!("A", standard_seats as u32, "Standard"),
+            row!("B", standard_seats as u32, "Standard"),
             row!("C", seats as u32, "Comfort"),
             row!("D", seats as u32, "Comfort"),
             row!("E", seats as u32, "Comfort"),
             row!("F", seats as u32, "Comfort"),
             row!("G", seats as u32, "Comfort"),
-            row!("H", seats as u32, "Recliner"),
-            row!("I", seats as u32, "Recliner"),
+            row!("H", recliner_seats as u32, "Recliner"),
+            row!("I", recliner_seats as u32, "Recliner"),
         ]
     };
     let luxe_hall = |rows: u8, seats: u8| -> Vec<RowConfig> {
@@ -581,15 +584,16 @@ async fn seed_demo_data(
     };
     let imax_hall = || {
         vec![
-            row!("A", 14, "Standard"),
-            row!("B", 14, "Standard"),
-            row!("C", 16, "Comfort"),
-            row!("D", 16, "Comfort"),
-            row!("E", 16, "Comfort"),
-            row!("F", 18, "Comfort"),
-            row!("G", 18, "Comfort"),
+            row!("A", 16, "Standard"),
+            row!("B", 18, "Standard"),
+            row!("C", 20, "Comfort"),
+            row!("D", 20, "Comfort"),
+            row!("E", 22, "Comfort"),
+            row!("F", 22, "Comfort"),
+            row!("G", 20, "Comfort"),
             row!("H", 18, "Recliner"),
             row!("I", 18, "Recliner"),
+            row!("J", 16, "Recliner"),
         ]
     };
 
