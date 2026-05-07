@@ -1,497 +1,434 @@
-# BookMyShow — Rust Backend
+# Cineplex - Full-Stack Movie Ticket Booking Platform
 
-> A production-grade movie seat booking backend built in Rust.  
-> This project is how I taught myself real-world backend engineering, system design, and concurrent programming.
+Cineplex is a full-stack cinema booking platform inspired by BookMyShow. It supports movie discovery, venue and showtime selection, interactive seat booking, timed seat locks, payment flow, booking confirmation, user booking history, and admin show management.
 
----
+This project is designed to demonstrate real-world product engineering, backend system design, Rust service architecture, and a polished Next.js user experience.
 
-## The Story
+> Portfolio note: screenshots and demo videos can be added later in the sections marked below.
 
-I started this project because I wanted to understand how systems like BookMyShow actually work under the hood.
+## Project Snapshot
 
-Not the UI. Not the app. The **hard part** — what happens in the milliseconds between two users clicking the same seat at the same time? Who gets it? How does the server guarantee only one person wins? What happens to the loser's payment?
+| Area | Details |
+| --- | --- |
+| Frontend | Next.js App Router, React, TypeScript, CSS Modules |
+| Backend | Rust, Axum, Tokio, SQLx, layered crate architecture |
+| Database | PostgreSQL |
+| Cache / infra | Redis-ready Docker setup |
+| Auth | JWT user auth and admin auth |
+| Payments | Mock card flow plus Stripe integration hooks |
+| Deployment | Docker Compose for frontend, backend, Postgres, Redis |
 
-These questions pulled me into a rabbit hole of concurrent systems, distributed locking, state machines, and async Rust. This repo is the result. Every design decision in here maps to something I had to learn, break, fix, and understand from first principles.
+## Why This Project Matters
 
----
+Booking platforms are deceptively complex. The hard problem is not just showing movies; it is preventing double booking when multiple users compete for the same seats, expiring abandoned locks, handling payment retries, and keeping booking state consistent.
 
-## What This Project Taught Me
+This project models those problems directly:
 
-### 1. Race Conditions Are Invisible Until They're Catastrophic
+- Seats can be locked for a short period before payment.
+- Expired locks are released by background workers.
+- Booking state moves through a clear lifecycle.
+- Payment initiation is retry-safe.
+- Admin-created shows are linked to movies and venues so they appear in user flows.
+- User-facing and admin-facing workflows share the same backend domain model.
 
-The core problem: two users simultaneously select seat A1. Both see it as `Available`. Both send their requests. Without synchronisation, **both succeed** — you've now double-booked the same seat.
+## Demo Placeholders
 
-This is a race condition. It doesn't happen in testing. It happens at 10,000 concurrent users on premiere night.
+Add screenshots here when ready:
 
-The fix I implemented: a **per-show `RwLock`**. Before any seat lock acquisition, the service acquires an exclusive write guard scoped to that `show_id`. Only one lock operation per show can proceed at a time. I learned that the lock granularity matters enormously — a global mutex would serialise all shows; per-show granularity means Show A's lock contention never affects Show B.
+- Home / movie discovery screen
+- Movie detail and showtime selection screen
+- Seat selection screen with Normal, Luxe, and IMAX layouts
+- Payment screen
+- Booking confirmation ticket
+- My Bookings screen
+- Admin dashboard and create-show flow
 
-```
-User A ──────► acquire show_mutex ──► check seat ──► lock seat ──► release mutex
-User B ──────► waiting...............► acquire show_mutex ──► seat already Locked ──► 409
-```
+Add demo video here:
 
-### 2. Double-Checked Locking Is a Real Pattern
+- End-to-end booking walkthrough
+- Admin creates a show, user books it
 
-Even inside the critical section, I do a second database read. Why?
+## Core Features
 
-Because the first check happened **before** the mutex was acquired. By the time we're inside the lock, another goroutine might have already changed state. Reading once before, and once inside the critical section, is called **double-checked locking** — and it's the only way to be certain.
+### User Experience
 
-```rust
-// BEFORE acquiring mutex (fast path, no contention)
-let seats = repo.find_by_ids(&seat_ids).await?;
+- Browse movies with poster images, ratings, language, genre, and duration.
+- View movie details and available showtimes.
+- Filter showtimes by date, city, and format.
+- Choose between show formats such as Normal, Luxe, and IMAX.
+- Select seats from an interactive seat map.
+- Choose ticket quantity from 1 to 10 and auto-select adjacent seats.
+- Lock selected seats before payment.
+- Complete payment through a mock card payment flow.
+- View a polished booking confirmation ticket.
+- View upcoming and past bookings correctly based on show time.
 
-// Acquire per-show mutex
-let _guard = show_lock.write().await;
+### Admin Experience
 
-// INSIDE critical section: re-read to catch any changes since the pre-check
-let current_seats = repo.find_by_ids(&seat_ids).await?;
-for seat in &current_seats {
-    if seat.status != SeatStatus::Available {
-        return Err(AppError::SeatsUnavailable(...));
-    }
-}
-```
+- Admin login and protected admin pages.
+- Dashboard with revenue, active bookings, locked seats, and show status.
+- Create new shows with custom seat layout.
+- Select or auto-create a movie from the show name.
+- Link shows to venues so they appear correctly on user pages.
+- View show analytics such as occupancy and revenue.
+- Inspect bookings and audit logs.
+- Cancel shows and release associated booking state.
 
-### 3. State Machines Make Business Logic Explicit
+### Booking and Payment Lifecycle
 
-A booking goes through a well-defined lifecycle. Trying to track this with boolean flags (`is_paid`, `is_cancelled`, `is_confirmed`) leads to impossible states. Rust enums make invalid states unrepresentable:
+- Seat locking with TTL.
+- Booking statuses including pending, payment pending, success, partial success, failed, expired, and cancelled.
+- Payment initiation and mock gateway completion.
+- Expired payment and lock cleanup.
+- Compensation log support for partial booking failures.
 
-```
-Pending ──► PaymentPending ──► Success
-   │               │
-   ▼               ▼
-Cancelled     PaymentFailed
-   │
-   ▼
- Expired
-```
+## System Design Highlights
 
-Every service method that mutates a booking first checks the current status and rejects transitions that don't belong in the state machine. This eliminated an entire class of bugs.
+### 1. Seat Locking and Double Booking Prevention
 
-### 4. Background Tasks Are How You Build Time-Aware Systems
+The central system-design problem is preventing two users from booking the same seat at the same time.
 
-A seat lock has a TTL (5 minutes by default). When it expires, the seat must go back to `Available` automatically — even if the user just closed their browser and walked away.
+The backend handles this with a seat locking service and per-show synchronization. Lock operations for the same show are serialized, while different shows can still be processed independently.
 
-I learned that you can't rely on request-driven cleanup for this. You need a **background task** — an async loop that wakes up every 10 seconds, finds expired locks, and releases them:
-
-```rust
-tokio::spawn(async move {
-    let mut ticker = interval(Duration::from_secs(10));
-    loop {
-        ticker.tick().await;
-        lock_svc.process_expired_locks().await?;
-    }
-});
-```
-
-This is also how payment timeouts work — a second background task runs every 30 seconds and expires payments that never received a gateway callback.
-
-### 5. The Repository Pattern Makes Code Testable
-
-Every data access goes through a trait:
-
-```rust
-pub trait SeatRepository: Send + Sync {
-    async fn find_by_id(&self, seat_id: &str) -> Result<Option<Seat>, AppError>;
-    async fn lock_seat(...) -> Result<Seat, AppError>;
-    // ...
-}
+```text
+User A -> lock A1,A2 -> show-level critical section -> seats become Locked
+User B -> lock A1,A2 -> re-check seats -> receives unavailable response
 ```
 
-The service layer depends on **the trait, not the implementation**. In tests, I swap in `InMemoryRepository`. In production, the same code will work with `PostgresRepository`. This is the Dependency Inversion Principle — high-level policy shouldn't depend on low-level details.
+This gives the system the right balance: strong correctness for a show under contention without globally blocking all booking traffic.
 
-### 6. Idempotency Is About Making Retries Safe
+### 2. Timed Seat Holds
 
-Payment is the most dangerous operation. Networks fail. Users double-click. Servers retry. If `initiate_payment` isn't idempotent, a user gets charged twice.
+When a user selects seats, those seats are not immediately booked. They are temporarily locked while the user completes payment.
 
-My solution: an `Idempotency-Key` header. The first call creates the payment; subsequent calls with the same key return the same payment. The key is stored with the payment record and checked on every call:
+If the user abandons the flow, a background worker releases the seats after the lock expires.
 
-```rust
-if let Some(key) = &idempotency_key
-    && let Some(existing) = repo.find_by_idempotency_key(key).await?
-{
-    return Ok(existing); // safe to call multiple times
-}
+```text
+Available -> Locked -> Booked
+              |
+              +-> Available again if lock expires
 ```
 
-### 7. Error Handling as Documentation
+### 3. Booking State Machine
 
-Rust's `Result<T, E>` forces you to think about every failure mode. I modelled every error as a typed enum variant:
+Bookings are represented as explicit lifecycle states instead of scattered boolean flags.
 
-```rust
-AppError::SeatsUnavailable(Vec<String>)   // 409 — with which seats
-AppError::LockExpired(String)             // 410 — with which lock
-AppError::RateLimitExceeded              // 429
-AppError::PaymentMismatch { expected, actual } // 422
+```text
+Pending -> PaymentPending -> Success
+   |            |
+   |            +-> PaymentFailed
+   |
+   +-> Cancelled
+   +-> Expired
+
+PaymentPending -> SuccessPartial
 ```
 
-Each variant maps to an HTTP status code. The error response includes a machine-readable `code` string so clients can handle specific errors without string-matching messages.
+This makes invalid state transitions easier to reject and reason about.
 
-### 8. Rate Limiting Protects You From Yourself
+### 4. Background Workers
 
-A user who spams `POST /shows/:id/seats/lock` can starve other users during a high-demand window. A sliding-window rate limiter per user-per-endpoint prevents this. I implemented it with a `VecDeque<Instant>` — push on each request, prune entries older than 60 seconds, reject if count exceeds the limit.
+The backend runs time-aware background jobs using Tokio:
 
-### 9. The Queue System: Fairness Under Load
+- lock expiration sweep
+- payment timeout sweep
+- queue processing loop
 
-Without a queue, concurrent lock requests race in an uncontrolled way. With hundreds of users hitting the same show simultaneously, the "winner" is whoever's request arrived first by network latency — essentially random.
+These jobs keep the system consistent even when users close their browser or payment is never completed.
 
-The per-show queue fixes this. Users join the queue (`POST /shows/:id/queue/join`), get a position, and a background processor grants locks in order. Users poll their status. This is how real ticketing systems handle surge traffic.
+### 5. Queue-Oriented Booking Flow
 
-### 10. Partial Failures Need Compensation Logs
+The backend includes a queue service for high-contention show booking. This models how real ticketing systems handle spikes when many users attempt to book the same show at the same time.
 
-When a payment succeeds but a seat confirmation fails (a race I discovered could theoretically happen), I needed a way to track it. I created `SuccessPartial` as a booking status and a `CompensationLog` table:
+### 6. Idempotent Payment Initiation
 
-```rust
-CompensationLog {
-    confirmed_seats: Vec<String>,  // seats that made it
-    failed_seats: Vec<String>,     // seats that didn't
-    failed_amount: f64,            // pro-rata refund candidate
-}
+Payment initiation is designed to be retry-safe. The backend supports idempotency keys so duplicate requests do not create duplicate payment records.
+
+This matters because payment flows often involve refreshes, retries, double-clicks, and network failures.
+
+### 7. Repository Abstraction
+
+The backend service layer depends on repository traits, not concrete database implementations.
+
+```text
+API handlers -> service layer -> repository traits -> Postgres / in-memory repositories
 ```
 
-This is the foundation of a real compensation pattern — you acknowledge the inconsistency, record it durably, and process the refund asynchronously. No data loss, no silent corruption.
+This makes core business logic testable and keeps persistence details out of the domain layer.
 
----
+## Rust Backend Highlights
+
+The Rust backend is organized as a Cargo workspace:
+
+```text
+backend/
+  crates/
+    common/                 shared config, errors, API response types
+    domain/                 pure domain models and enums
+    repository/             repository traits
+    repository-inmemory/    in-memory repository implementations
+    repository-postgres/    PostgreSQL repository implementations
+    service/                business logic and orchestration
+    api/                    Axum routes, handlers, app state, startup
+```
+
+Key Rust engineering choices:
+
+- Axum for async HTTP APIs.
+- Tokio for async runtime and background tasks.
+- SQLx for PostgreSQL persistence.
+- Trait-based repositories for clean dependency inversion.
+- Strong domain modeling with Rust enums and structs.
+- Centralized error handling through typed application errors.
+- Clear separation between HTTP handlers, services, repositories, and domain models.
+- JWT-based auth for users and admins.
+- Admin bootstrap user seeded from environment variables.
+
+Important backend concepts implemented:
+
+- show management
+- movie and venue management
+- seat layout generation
+- seat locking and expiry
+- booking lifecycle management
+- payment initiation and completion
+- queue management
+- audit logs
+- compensation logs
+- analytics for occupancy and revenue
+
+## Next.js Frontend Highlights
+
+The frontend is built with Next.js App Router and TypeScript.
+
+Key frontend engineering choices:
+
+- Typed API client using Axios and shared TypeScript interfaces.
+- Auth-protected user and admin pages.
+- App Router page organization.
+- CSS Modules for scoped styling.
+- Reusable UI components for buttons, inputs, selects, modals, badges, loading states, and booking components.
+- Responsive dark cinema-style interface.
+- Interactive seat map with multiple layout types.
+- Clean booking confirmation ticket UI.
+
+Important frontend flows:
+
+- user registration and login
+- movie browsing
+- movie detail and showtime selection
+- seat quantity selection
+- seat selection
+- payment
+- confirmation ticket
+- my bookings
+- admin dashboard
+- admin show creation
+- admin booking inspection
+
+## Domain Model
+
+| Model | Purpose |
+| --- | --- |
+| Movie | Film metadata such as title, genre, language, rating, poster, and duration |
+| Venue | Theatre information, city, address, screens, and amenities |
+| Show | A movie screening at a venue and screen for a specific time |
+| Seat | A physical seat for a show, with type and status |
+| Booking | User's selected seats and lifecycle state |
+| Payment | Payment intent, gateway state, and amount |
+| QueueEntry | User's position in a high-contention booking queue |
+| CompensationLog | Record for partial success and refund-like recovery scenarios |
+| AuditLog | Timeline of booking and admin events |
+
+## Seat Layouts and Pricing
+
+The project supports different show experiences:
+
+- Normal: standard, comfort, and recliner sections.
+- Luxe: recliner-only seating.
+- IMAX: premium large-format layout.
+
+Seat pricing is based on seat type:
+
+- Standard: base price
+- Comfort: higher multiplier
+- Recliner: premium multiplier
+
+The seat layout UI separates rows and sections visually, shows the screen at the bottom, and supports selected, locked, booked, and available states.
+
+## API Overview
+
+Representative API areas:
+
+```text
+Auth
+  POST /auth/register
+  POST /auth/login
+  POST /auth/refresh
+
+Movies and shows
+  GET  /movies
+  GET  /movies/:movie_id
+  GET  /movies/:movie_id/shows
+  GET  /shows
+  GET  /shows/:show_id
+  GET  /shows/:show_id/seats
+  GET  /shows/:show_id/availability
+
+Booking
+  POST   /shows/:show_id/seats/lock
+  GET    /bookings/:booking_id
+  POST   /bookings/:booking_id/cancel
+  DELETE /bookings/:booking_id/lock
+  GET    /bookings/user/:user_id
+
+Payment
+  POST /bookings/:booking_id/payment/initiate
+  POST /payments/mock/pay
+
+Admin
+  POST /admin/shows
+  GET  /admin/bookings
+  GET  /admin/audit
+  POST /admin/venues
+  POST /admin/movies
+```
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────┐
-│                  HTTP Layer (Axum)                │
-│  /shows  /bookings  /payments  /queue  /admin     │
-└─────────────────────┬────────────────────────────┘
-                      │ AppState (Arc-shared)
-                      ▼
-┌──────────────────────────────────────────────────┐
-│               Service Layer (Async)               │
-│                                                   │
-│  SeatLockingService  ←── per-show RwLock map      │
-│  BookingService      ←── state machine            │
-│  PaymentService      ←── mock gateway + idempotency│
-│  ShowService         ←── CRUD + analytics         │
-│  QueueService        ←── fair-queue processor     │
-└─────────────────────┬────────────────────────────┘
-                      │ Repository Traits
-                      ▼
-┌──────────────────────────────────────────────────┐
-│            Repository Layer (Trait-based)         │
-│                                                   │
-│  InMemoryRepository  (default, dev + tests)       │
-│  PostgresRepository  (planned)                    │
-└──────────────────────────────────────────────────┘
+```text
+Browser
+  |
+  v
+Next.js frontend
+  |
+  v
+Rust Axum API
+  |
+  +--> Auth service
+  +--> Movie / venue / show service
+  +--> Seat locking service
+  +--> Booking service
+  +--> Payment service
+  +--> Queue service
+  |
+  v
+Repository traits
+  |
+  +--> PostgreSQL repositories
+  +--> In-memory repositories
 
-Background Tasks (Tokio):
-  ├── Lock expiration sweep    every 10s
-  ├── Payment timeout sweep    every 30s
-  └── Queue processor          every 500ms
+Background workers:
+  - expired seat lock cleanup
+  - expired payment cleanup
+  - queue processor
 ```
 
-### Cargo Workspace Layout
-
-```
-backend/
-├── crates/
-│   ├── common/          # AppConfig, AppError, ApiResponse
-│   ├── domain/          # Pure domain structs + enums (no I/O)
-│   ├── repository/      # Repository traits (interfaces)
-│   ├── repository-inmemory/  # In-memory implementations
-│   ├── service/         # All business logic + benches/
-│   └── api/             # Axum handlers, routes, main.rs
-└── config.toml          # Runtime configuration
-```
-
-The dependency direction is strict:
-
-```
-api → service → repository → domain
-              ↘ common ↙
-```
-
-`domain` has zero external dependencies. `service` knows nothing about HTTP. This layering is what makes the system testable and replaceable.
-
----
-
-## Domain Models
-
-| Struct | Description |
-|--------|-------------|
-| `Show` | A movie screening with time, theatre, price |
-| `Seat` | One seat in a show — status: `Available / Locked / Booked` |
-| `SeatLock` | A timed hold on a set of seats for one user |
-| `Booking` | A user's intent to purchase seats, with full lifecycle status |
-| `Payment` | Payment record linked to a booking, with gateway reference |
-| `QueueEntry` | A user's place in the per-show request queue |
-| `CompensationLog` | Audit record for partial booking failures |
-
-### Booking Status Flow
-
-```
-Pending ──[initiate payment]──► PaymentPending ──[gateway SUCCESS]──► Success
-   │                                   │                                  │
-   │                                   └───[gateway FAILED]──► PaymentFailed
-   │                                   └───[partial seats]──► SuccessPartial
-   ├──[user cancels]──► Cancelled
-   └──[TTL expires]──► Expired
-```
-
-### Seat Status Flow
-
-```
-Available ──[lock_seats]──► Locked ──[confirm_booking]──► Booked
-                              │
-                              └──[release_lock / expire]──► Available
-```
-
----
-
-## API Reference
-
-### Shows
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/admin/shows` | Admin | Create show + auto-generate seats |
-| `GET` | `/shows` | Public | List all shows |
-| `GET` | `/shows/:id` | Public | Get show details |
-| `GET` | `/shows/:id/seats` | Public | Paginated seat layout with status |
-| `GET` | `/shows/:id/availability` | Public | Available / locked / booked counts |
-| `DELETE` | `/admin/shows/:id` | Admin | Cancel show + refund all bookings |
-| `GET` | `/admin/shows/:id/analytics` | Admin | Occupancy rate + revenue |
-
-### Booking & Locking
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/shows/:id/seats/lock` | `X-User-Id` | Lock seats → creates booking |
-| `POST` | `/bookings/:id/extend-lock` | `X-User-Id` | Extend lock TTL (max 2×) |
-| `DELETE` | `/bookings/:id/lock` | `X-User-Id` | Release lock manually |
-| `GET` | `/bookings/:id` | `X-User-Id` | Get booking status |
-| `POST` | `/bookings/:id/cancel` | `X-User-Id` | Cancel booking |
-| `GET` | `/bookings/user/:uid` | `X-User-Id` | User's booking history |
-| `GET` | `/admin/bookings` | Admin | All bookings in system |
-| `POST` | `/admin/shows/:sid/seats/:id/override` | Admin | Force-release a locked seat |
-
-### Payment
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/bookings/:id/payment/initiate` | `X-User-Id` | Start payment (idempotent) |
-| `POST` | `/payments/callback/:intent_id` | Internal | Gateway callback |
-| `GET` | `/payments/:id` | `X-User-Id` | Payment status |
-| `POST` | `/payments/:id/refund` | Admin | Issue refund |
-| `POST` | `/mock-gateway/pay` | Public | Simulate a payment gateway call |
-
-### Queue
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/shows/:id/queue/join` | `X-User-Id` | Join the seat request queue |
-| `GET` | `/queue/:id/status` | `X-User-Id` | Poll queue position + result |
-| `DELETE` | `/queue/:id` | `X-User-Id` | Leave queue |
-
-### Standard Response Envelope
-
-```json
-{ "success": true, "data": { ... } }
-{ "success": false, "error": { "code": "SEATS_UNAVAILABLE", "message": "..." } }
-```
-
----
-
-## Getting Started
+## Local Development
 
 ### Prerequisites
 
-- Rust 1.78+ (Edition 2024)
-- `cargo`
+- Docker and Docker Compose
+- Node.js 20+
+- Rust toolchain
+- PostgreSQL if running backend outside Docker
+
+### Docker setup
 
 ```bash
-# Clone
-git clone https://github.com/dhruvxvaishnav/BookMyShow
-cd BookMyShow/backend
-
-# Build
-cargo build --release
-
-# Run (defaults to 0.0.0.0:8080)
-cargo run -p api
-
-# Or with env overrides
-APP_PORT=9090 LOG_FORMAT=text cargo run -p api
+docker compose build
+docker compose up
 ```
 
-### Configuration
+Services:
 
-All settings are in `backend/config.toml`. Every value can be overridden via environment variable:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8080
+- Metrics: http://localhost:9000
+- PostgreSQL: localhost:5432
+- Redis: localhost:6379
 
-| Env Var | Default | Effect |
-|---------|---------|--------|
-| `APP_PORT` | `8080` | HTTP listen port |
-| `APP_HOST` | `0.0.0.0` | HTTP bind address |
-| `LOG_LEVEL` | `info` | Tracing log level |
-| `LOG_FORMAT` | `json` | `json` or `text` |
-| `SEAT_LOCK_TTL_SECS` | `300` | Seat lock duration (seconds) |
-| `SEAT_LOCK_MAX_EXTENSIONS` | `2` | Max lock extensions per session |
-| `SEAT_LOCK_EXTENSION_SECS` | `120` | Seconds added per extension |
-| `SEAT_LOCK_GRACE_PERIOD_SECS` | `30` | Buffer after expiry before release |
-| `ADMIN_TOKEN` | `admin-secret` | `X-Admin-Token` header value |
+Default admin credentials:
 
-### Quick Tour with curl
+```text
+Email: admin@bookmyshow.com
+Password: Admin@123
+```
+
+These can be overridden with `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+
+### Frontend only
 
 ```bash
-# 1. Create a show (admin)
-curl -X POST http://localhost:8080/admin/shows \
-  -H "X-Admin-Token: admin-secret" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "show_name": "Avengers: Endgame",
-    "theatre_name": "PVR Nexus",
-    "screen_number": 1,
-    "start_time": 1777000000,
-    "end_time": 1777010000,
-    "price_per_seat": 250.0,
-    "seat_layout": {
-      "rows": [
-        { "row": "A", "seats": 10, "seat_type": "premium" },
-        { "row": "B", "seats": 10, "seat_type": "standard" },
-        { "row": "C", "seats": 10, "seat_type": "recliner" }
-      ]
-    }
-  }'
-
-# 2. List seats (use the show_id from above)
-curl http://localhost:8080/shows/<show_id>/seats
-
-# 3. Lock seats
-curl -X POST http://localhost:8080/shows/<show_id>/seats/lock \
-  -H "X-User-Id: user-test-001" \
-  -H "Content-Type: application/json" \
-  -d '{ "seat_ids": ["<seat_id_1>", "<seat_id_2>"] }'
-
-# 4. Initiate payment
-curl -X POST http://localhost:8080/bookings/<booking_id>/payment/initiate \
-  -H "X-User-Id: user-test-001"
-
-# 5. Simulate gateway callback (success)
-curl -X POST "http://localhost:8080/payments/callback/<payment_intent_id>?status=SUCCESS"
-
-# 6. Check booking status
-curl http://localhost:8080/bookings/<booking_id> \
-  -H "X-User-Id: user-test-001"
+cd frontend
+npm install
+npm run dev
 ```
 
----
-
-## Tests
+### Backend checks
 
 ```bash
-# All tests
-cargo test
-
-# A specific suite
-cargo test -p service
-
-# With output
-cargo test -- --nocapture
+cargo check --manifest-path backend/Cargo.toml -p api
+cargo fmt --manifest-path backend/Cargo.toml --all
 ```
 
-The test suite covers:
-- Concurrent seat locking (50 goroutines racing for 1 seat — exactly 1 wins)
-- Lock extension and max-extension enforcement
-- Full booking flow: lock → pay → confirm
-- Payment failure → seat release
-- Payment idempotency
-- Rate limiting
-- Admin operations
-
----
-
-## Benchmarks
+### Frontend checks
 
 ```bash
-# Run all benchmarks (generates HTML report in target/criterion/)
-cargo bench -p service
-
-# Run a specific benchmark group
-cargo bench -p service --bench seat_locking
-cargo bench -p service --bench booking_flow
-
-# Open the HTML report
-open target/criterion/report/index.html
+cd frontend
+./node_modules/.bin/tsc --noEmit
+npm run build
 ```
 
-### What's Being Measured
+## Environment Variables
 
-| Benchmark | PRD Target | What it tests |
-|-----------|-----------|---------------|
-| `lock_single_seat` | < 50ms p99 | Single seat lock hot path |
-| `lock_ten_seats` | < 200ms p99 | Maximum seat count lock |
-| `lock_n_seats/1..10` | — | Lock time vs seat count |
-| `lock_release_roundtrip` | — | Full lock + release cycle |
-| `availability_query_40_seats` | < 20ms p99 | Seat status scan |
-| `lock_extension` | — | TTL extension hot path |
-| `concurrent_lock_contention/N` | — | Contention at N=2,5,10,20 users |
-| `end_to_end_booking_flow` | < 500ms | lock → pay → confirm |
-| `booking_confirmation` | < 100ms p99 | Payment-to-booked transition |
-| `payment_callback_processing` | < 500ms p99 | Gateway callback path |
-| `expired_lock_sweep_20_active` | — | Background task overhead |
+Common variables used by Docker Compose:
 
----
+```text
+JWT_SECRET
+ADMIN_EMAIL
+ADMIN_PASSWORD
+DATABASE_URL
+REDIS_URL
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+NEXT_PUBLIC_API_BASE_URL
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+OTLP_ENDPOINT
+```
 
-## Tech Stack
+## What This Shows on a Resume
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Language | Rust 2024 | Memory safety, fearless concurrency, zero-cost abstractions |
-| Async runtime | Tokio | Industry-standard async executor |
-| HTTP framework | Axum 0.7 | Ergonomic, tower-compatible, zero-copy routing |
-| Serialisation | Serde + serde_json | De-facto standard, derive macros |
-| Logging | tracing + tracing-subscriber | Structured JSON logs, spans, async-native |
-| Configuration | config + TOML | File + env-var layered config |
-| Benchmarking | criterion 0.5 | Statistical benchmarks, HTML reports |
-| IDs | uuid v4 | Globally unique, no coordination needed |
-| Time | chrono | Timezone-aware timestamps |
+This project is useful to highlight because it is not a simple CRUD app. It demonstrates:
 
----
+- full-stack product thinking
+- concurrent booking and seat-locking design
+- Rust backend engineering
+- async services and background jobs
+- state-machine driven business logic
+- repository pattern and layered architecture
+- PostgreSQL persistence
+- admin and user workflows
+- Dockerized local deployment
+- typed Next.js frontend development
+- UI polish for a real consumer workflow
 
-## System Design Concepts Covered
+Suggested resume bullet:
 
-If you're using this project to learn, here's a map of what's where:
+```text
+Built a full-stack cinema booking platform using Rust, Axum, Next.js, PostgreSQL, and Docker, featuring timed seat locks, booking state machines, payment flow, admin show management, venue/movie linking, and concurrent double-booking prevention.
+```
 
-| Concept | Where to look |
-|---------|--------------|
-| Race condition prevention | `seat_locking_service.rs` → `lock_seats()` |
-| Per-resource mutex | `show_locks: HashMap<String, Arc<RwLock<()>>>` |
-| Double-checked locking | `lock_seats()` — two `find_by_ids` calls |
-| State machine | `booking_status.rs`, `booking_service.rs` |
-| Background task pattern | `main.rs` — three `tokio::spawn` loops |
-| Repository pattern | `repository/src/*.rs` traits |
-| Dependency injection | `AppState` in `state.rs` |
-| Idempotency | `payment_service.rs` → `initiate_payment()` |
-| TTL + grace period | `seat_lock.rs` → `is_active()`, `is_expired()` |
-| Compensation log | `compensation_log.rs`, `booking_service.rs` |
-| Rate limiting (sliding window) | `rate_limiter.rs` |
-| Fair queue | `queue_service.rs`, `queue_service.rs` → `process_next()` |
-| Partial failure handling | `BookingStatus::SuccessPartial` |
-| Error modelling | `common/src/error.rs` |
-| HTTP error mapping | `impl_from_response.rs` |
-| JSON structured logging | `main.rs` — `.json()` layer |
+## Future Improvements
 
----
+- Add production Stripe webhook handling.
+- Add email or SMS ticket delivery.
+- Add real-time seat updates with WebSockets.
+- Add richer movie and venue creation flows in admin.
+- Add screenshot gallery and hosted demo video.
+- Add more integration tests around payment and queue edge cases.
+- Add observability dashboards for metrics and traces.
 
-## What's Next
+## Status
 
-- [ ] **Postgres repository** — swap the in-memory layer for real persistence
-- [x] **Docker + Docker Compose** — one-command deployment
-- [ ] **Input validation** — `validator` crate on all HTTP request bodies
-- [ ] **Tests for admin endpoints** — analytics, override, bulk bookings
-- [ ] **PostgreSQL transactions** — atomic seat locking at the DB level
-- [x] **JWT authentication** — replace the `X-User-Id` header
-- [x] **Metrics & Tracing** — Prometheus counters for lock contention, booking rate, error rate and OpenTelemetry tracing
-- [ ] **`validator` crate** — validate `show_name`, `email`, `seat_ids` at the HTTP boundary
-
----
-
-## License
-
-MIT
+The project is actively being refined. Core booking, payment, admin, movie, venue, and seat-selection flows are implemented, with ongoing UI and portfolio polish.
