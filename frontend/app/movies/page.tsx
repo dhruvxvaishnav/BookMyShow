@@ -6,6 +6,7 @@ import { getMovies } from '@/api/movies';
 import type { Movie } from '@/types/api';
 import { CardSkeleton } from '@/components/common/LoadingSkeleton';
 import EmptyState from '@/components/common/EmptyState';
+import { getMoviePosterUrl } from '@/utils/moviePosters';
 import styles from './page.module.css';
 
 const GENRES = ['All', 'Action / Superhero', 'Sci-Fi / Adventure', 'Comedy / Drama', 'Drama', 'Thriller', 'Horror', 'Romance'];
@@ -145,6 +146,8 @@ export default function MoviesPage() {
 }
 
 function MovieCard({ movie, index }: { movie: Movie; index: number }) {
+  const poster = getMoviePosterUrl(movie);
+
   return (
     <article
       className={styles.card}
@@ -153,8 +156,8 @@ function MovieCard({ movie, index }: { movie: Movie; index: number }) {
     >
       {/* Poster */}
       <div className={styles.poster}>
-        {movie.poster_url ? (
-          <img src={movie.poster_url} alt={movie.title} className={styles.posterImg} />
+        {poster ? (
+          <img src={poster} alt={movie.title} className={styles.posterImg} />
         ) : (
           <div className={styles.posterPlaceholder}>
             <Film size={40} strokeWidth={0.75} aria-hidden="true" />

@@ -3,12 +3,19 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Film, Star, Clock, Ticket } from 'lucide-react';
 import { getShows, getShowAvailability } from '@/api/shows';
-import type { Show, ShowAvailability } from '@/types/api';
+import type { Movie, Show, ShowAvailability } from '@/types/api';
 import Badge from '@/components/common/Badge';
-import { CardSkeleton } from '@/components/common/LoadingSkeleton';
 import EmptyState from '@/components/common/EmptyState';
-import { formatTime, formatPrice } from '@/utils/format';
+import { formatPrice } from '@/utils/format';
+import { getMoviePosterUrl } from '@/utils/moviePosters';
 import styles from './page.module.css';
+
+interface HomeMovie {
+  movie: Movie;
+  shows: Show[];
+  minPrice: number;
+  availability?: ShowAvailability;
+}
 
 export default function HomePage() {
   const [shows, setShows] = useState<Show[]>([]);
@@ -42,15 +49,18 @@ export default function HomePage() {
 
   useEffect(() => { loadShows(); }, [loadShows]);
 
-  const filtered = shows.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.theatre_name.toLowerCase().includes(search.toLowerCase())
+  const movies = getUniqueMovies(shows, availabilities);
+  const query = search.trim().toLowerCase();
+  const filtered = movies.filter(({ movie }) =>
+    movie.title.toLowerCase().includes(query) ||
+    movie.genre.toLowerCase().includes(query) ||
+    movie.language.toLowerCase().includes(query)
   );
 
-  const featured = shows[0] ?? null;
+  const featured = movies[0] ?? null;
 
-  function availabilityBadge(showId: string) {
-    const a = availabilities[showId];
+  function availabilityBadge(movie: HomeMovie) {
+    const a = movie.availability;
     if (!a) return null;
     const { available_seats, total_seats, occupancy_percent } = a;
     const pct = occupancy_percent ?? Math.round(((total_seats - available_seats) / total_seats) * 100);
@@ -65,9 +75,9 @@ export default function HomePage() {
       <section className={styles.hero} aria-label="Featured show">
         {/* Blurred backdrop */}
         <div className={styles.heroBg}>
-          {featured?.movie?.poster_url ? (
+          {getMoviePosterUrl(featured?.movie) ? (
             <img
-              src={featured.movie.poster_url}
+              src={getMoviePosterUrl(featured?.movie)!}
               alt=""
               className={styles.heroBgImg}
               aria-hidden="true"
@@ -88,56 +98,48 @@ export default function HomePage() {
                 <p className="marquee-label" style={{ marginBottom: '16px' }}>Now Featuring</p>
 
                 <h1 className={styles.heroTitle}>
-                  {featured.movie?.title ?? featured.name}
+                  {featured.movie.title}
                 </h1>
 
                 <p className={styles.heroSubtitle}>
-                  {featured.venue?.name ?? featured.theatre_name}
+                  {featured.shows.length} {featured.shows.length === 1 ? 'show' : 'shows'} available
                 </p>
 
                 <div className={styles.heroBadges}>
-                  {featured.movie?.genre && (
-                    <span className={styles.genreBadge}>{featured.movie.genre}</span>
-                  )}
-                  {featured.movie?.rating != null && (
-                    <span className={styles.ratingBadge}>
-                      <Star size={12} strokeWidth={2} aria-hidden="true" />
-                      {featured.movie.rating.toFixed(1)}
-                    </span>
-                  )}
-                  {featured.start_time && (
-                    <span className={styles.timeBadge}>
-                      <Clock size={12} strokeWidth={1.5} aria-hidden="true" />
-                      {formatTime(featured.start_time)}
-                    </span>
-                  )}
+                  <span className={styles.genreBadge}>{featured.movie.genre}</span>
+                  <span className={styles.ratingBadge}>
+                    <Star size={12} strokeWidth={2} aria-hidden="true" />
+                    {featured.movie.rating.toFixed(1)}
+                  </span>
+                  <span className={styles.timeBadge}>
+                    <Clock size={12} strokeWidth={1.5} aria-hidden="true" />
+                    {featured.movie.duration_minutes} min
+                  </span>
                 </div>
 
-                {featured.movie?.description && (
-                  <p className={styles.heroDescription}>
-                    {featured.movie.description.slice(0, 160)}
-                    {featured.movie.description.length > 160 ? '…' : ''}
-                  </p>
-                )}
+                <p className={styles.heroDescription}>
+                  {featured.movie.description.slice(0, 160)}
+                  {featured.movie.description.length > 160 ? '...' : ''}
+                </p>
 
                 <div className={styles.heroActions}>
-                  <Link href={`/shows/${featured.show_id}`} className={styles.bookNowBtn}>
+                  <Link href={`/movies/${featured.movie.movie_id}`} className={styles.bookNowBtn}>
                     <Ticket size={16} strokeWidth={1.5} aria-hidden="true" />
                     Book Now
                   </Link>
                   <Link href="/movies" className={styles.viewAllBtn}>
-                    View All Shows
+                    View All Movies
                   </Link>
                 </div>
               </div>
 
               {/* Right column — poster */}
               <div className={styles.heroRight} aria-hidden="true">
-                {featured.movie?.poster_url ? (
+                {getMoviePosterUrl(featured.movie) ? (
                   <div className={styles.heroPosterFrame}>
                     <img
-                      src={featured.movie.poster_url}
-                      alt={featured.movie?.title ?? featured.name}
+                      src={getMoviePosterUrl(featured.movie)!}
+                      alt={featured.movie.title}
                       className={styles.heroPosterImg}
                     />
                   </div>
@@ -167,10 +169,10 @@ export default function HomePage() {
             <div className={styles.searchWrap}>
               <input
                 className={styles.search}
-                placeholder="Search shows or theatres..."
+                placeholder="Search movies..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                aria-label="Search shows or theatres"
+                aria-label="Search movies"
               />
             </div>
           </div>
@@ -190,7 +192,7 @@ export default function HomePage() {
             </div>
           ) : filtered.length === 0 ? (
             <EmptyState
-              title="No shows available"
+              title="No movies available"
               description={search ? 'Try adjusting your search.' : 'Check back later for upcoming shows.'}
               icon="clapperboard"
               action={
@@ -203,12 +205,11 @@ export default function HomePage() {
             />
           ) : (
             <div className={styles.scrollRow} role="list">
-              {filtered.map((show, i) => (
-                <ShowCard
-                  key={show.show_id}
-                  show={show}
-                  availability={availabilities[show.show_id]}
-                  badge={availabilityBadge(show.show_id)}
+              {filtered.map((movie, i) => (
+                <MovieCard
+                  key={movie.movie.movie_id}
+                  movie={movie}
+                  badge={availabilityBadge(movie)}
                   index={i}
                 />
               ))}
@@ -220,19 +221,63 @@ export default function HomePage() {
   );
 }
 
-function ShowCard({
-  show,
-  availability,
+function getUniqueMovies(
+  shows: Show[],
+  availabilities: Record<string, ShowAvailability>
+): HomeMovie[] {
+  const map = new Map<string, HomeMovie>();
+
+  shows.forEach((show) => {
+    if (!show.movie || !show.movie_id) return;
+
+    const existing = map.get(show.movie_id);
+    const availability = availabilities[show.show_id];
+
+    if (!existing) {
+      map.set(show.movie_id, {
+        movie: show.movie,
+        shows: [show],
+        minPrice: show.price_per_seat,
+        availability,
+      });
+      return;
+    }
+
+    existing.shows.push(show);
+    existing.minPrice = Math.min(existing.minPrice, show.price_per_seat);
+
+    if (!existing.availability) {
+      existing.availability = availability;
+    } else if (availability) {
+      existing.availability = {
+        ...existing.availability,
+        available_seats: existing.availability.available_seats + availability.available_seats,
+        total_seats: existing.availability.total_seats + availability.total_seats,
+        booked_seats: existing.availability.booked_seats + availability.booked_seats,
+        locked_seats: existing.availability.locked_seats + availability.locked_seats,
+      };
+      existing.availability.occupancy_percent = Math.round(
+        ((existing.availability.booked_seats + existing.availability.locked_seats) /
+          existing.availability.total_seats) *
+          100
+      );
+    }
+  });
+
+  return Array.from(map.values());
+}
+
+function MovieCard({
+  movie,
   badge,
   index,
 }: {
-  show: Show;
-  availability?: ShowAvailability;
+  movie: HomeMovie;
   badge: React.ReactNode;
   index: number;
 }) {
-  const poster = show.movie?.poster_url ?? null;
-  const title = show.movie?.title ?? show.name;
+  const poster = getMoviePosterUrl(movie.movie);
+  const title = movie.movie.title;
 
   return (
     <article
@@ -240,7 +285,7 @@ function ShowCard({
       role="listitem"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <Link href={`/shows/${show.show_id}`} className={styles.showCardLink} tabIndex={-1} aria-hidden="true">
+      <Link href={`/movies/${movie.movie.movie_id}`} className={styles.showCardLink} tabIndex={-1} aria-hidden="true">
         <div className={styles.showCardPoster}>
           {poster ? (
             <img src={poster} alt={title} className={styles.showCardPosterImg} />
@@ -255,16 +300,14 @@ function ShowCard({
 
       <div className={styles.showCardBody}>
         <h3 className={styles.showCardTitle}>{title}</h3>
-        <p className={styles.showCardTheatre}>{show.venue?.name ?? show.theatre_name}</p>
-        {show.start_time && (
-          <p className={styles.showCardTime}>
-            <Clock size={11} strokeWidth={1.5} aria-hidden="true" />
-            {formatTime(show.start_time)}
-          </p>
-        )}
-        <p className={styles.showCardPrice}>{formatPrice(show.price_per_seat)}</p>
+        <p className={styles.showCardTheatre}>{movie.movie.genre}</p>
+        <p className={styles.showCardTime}>
+          <Clock size={11} strokeWidth={1.5} aria-hidden="true" />
+          {movie.movie.duration_minutes} min
+        </p>
+        <p className={styles.showCardPrice}>From {formatPrice(movie.minPrice)}</p>
 
-        <Link href={`/shows/${show.show_id}`} className={styles.showCardBook} aria-label={`Book ${title}`}>
+        <Link href={`/movies/${movie.movie.movie_id}`} className={styles.showCardBook} aria-label={`Choose showtime and venue for ${title}`}>
           Book
         </Link>
       </div>

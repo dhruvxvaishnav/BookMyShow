@@ -362,16 +362,16 @@ async fn seed_demo_data(
         "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", 8.5,
         "The story of J. Robert Oppenheimer and his role in the development of the atomic bomb.");
     let m_barbie   = movie!("Barbie",                     "Comedy / Fantasy",    "English", 114,
-        "https://image.tmdb.org/t/p/w500/iuFNMS8vlbee3T1eH7cjqnEtNNp.jpg", 6.9,
+        "https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg", 6.9,
         "Barbie and Ken leave Barbieland on a journey of self-discovery in the real world.");
     let m_kgf      = movie!("KGF: Chapter 2",             "Action / Drama",      "Kannada", 168,
-        "https://image.tmdb.org/t/p/w500/bQXAqRx2Fgc46qaYVnqCVXiJAgR.jpg", 8.2,
+        "https://image.tmdb.org/t/p/w500/khNVygolU0TxLIDWff5tQlAhZ23.jpg", 8.2,
         "Rocky's bloodied rise to power puts him against the deadly Adheera and Ramika Sen.");
     let m_pathaan  = movie!("Pathaan",                    "Action / Thriller",   "Hindi",   146,
-        "https://image.tmdb.org/t/p/w500/eRHJ4W3LQEAuPBDRqMNnFWlXFGE.jpg", 5.9,
+        "https://image.tmdb.org/t/p/w500/cQOuFy19m0B8kpui7enCthaI8rP.jpg", 5.9,
         "An exiled spy takes on a lethal mercenary organisation threatening India.");
     let m_jawan    = movie!("Jawan",                      "Action / Thriller",   "Hindi",   169,
-        "https://image.tmdb.org/t/p/w500/mJFlJRbMRKIVKHBqHlWYXCWDnTx.jpg", 6.5,
+        "https://image.tmdb.org/t/p/w500/uRd0SU6vt84DXobyQ5AI5OG7Mh4.jpg", 6.5,
         "A prison warden recruits inmates to expose corrupt politicians and unfinished business.");
     let m_inception = movie!("Inception",                 "Sci-Fi / Thriller",   "English", 148,
         "https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg", 8.8,
@@ -383,7 +383,7 @@ async fn seed_demo_data(
         "https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg", 8.4,
         "A failed comedian descends into madness and becomes the criminal mastermind Joker.");
     let m_rrrr     = movie!("RRR",                        "Action / Drama",      "Telugu",  182,
-        "https://image.tmdb.org/t/p/w500/nEufeZlyAOLqO7vh8I651GXdJ8.jpg", 7.8,
+        "https://image.tmdb.org/t/p/w500/ljHw5eIMnki3HekwkKwCCHsRSbH.jpg", 7.8,
         "Two legendary Indian revolutionaries team up to fight British colonial rule.");
     let m_kalki    = movie!("Kalki 2898 AD",              "Sci-Fi / Action",     "Telugu",  181,
         "https://image.tmdb.org/t/p/w500/zGLHX92Gk96O1DJvLil7ObJTbaL.jpg", 6.7,

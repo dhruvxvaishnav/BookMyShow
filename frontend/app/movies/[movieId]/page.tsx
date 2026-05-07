@@ -9,6 +9,7 @@ import type { Movie, Show, ShowAvailability } from '@/types/api';
 import { CardSkeleton } from '@/components/common/LoadingSkeleton';
 import EmptyState from '@/components/common/EmptyState';
 import { formatDate, formatTime, formatPrice } from '@/utils/format';
+import { getMoviePosterUrl } from '@/utils/moviePosters';
 import styles from './page.module.css';
 
 export default function MovieDetailPage({ params }: { params: Promise<{ movieId: string }> }) {
@@ -98,14 +99,16 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
     );
   }
 
+  const poster = getMoviePosterUrl(movie);
+
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────── */}
       <section className={styles.hero} aria-label={`${movie.title} details`}>
         {/* Blurred backdrop */}
         <div className={styles.heroBg} aria-hidden="true">
-          {movie.poster_url && (
-            <img src={movie.poster_url} alt="" className={styles.heroBgImg} />
+          {poster && (
+            <img src={poster} alt="" className={styles.heroBgImg} />
           )}
           <div className={styles.heroBgOverlay} />
         </div>
@@ -120,8 +123,8 @@ export default function MovieDetailPage({ params }: { params: Promise<{ movieId:
           <div className={styles.heroBody}>
             {/* Poster */}
             <div className={styles.posterFrame} aria-hidden="true">
-              {movie.poster_url ? (
-                <img src={movie.poster_url} alt={movie.title} className={styles.posterImg} />
+              {poster ? (
+                <img src={poster} alt={movie.title} className={styles.posterImg} />
               ) : (
                 <div className={styles.posterPlaceholder}>
                   <Film size={48} strokeWidth={0.75} />

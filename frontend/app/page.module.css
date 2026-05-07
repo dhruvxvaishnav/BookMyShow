@@ -301,25 +301,17 @@
   box-shadow: 0 0 0 3px var(--accent-gold-glow);
 }
 
-/* ── Horizontal Scroll Row ───────────────────────────────── */
+/* ── Movie Grid ───────────────────────────────────────────── */
 .scrollRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: var(--space-4);
-  overflow-x: auto;
   padding-bottom: var(--space-4);
-  /* Smooth scrollbar */
-  scrollbar-width: thin;
-  scrollbar-color: var(--ornament-bronze) transparent;
 }
-
-.scrollRow::-webkit-scrollbar { height: 4px; }
-.scrollRow::-webkit-scrollbar-track { background: transparent; }
-.scrollRow::-webkit-scrollbar-thumb { background: var(--ornament-bronze); border-radius: 2px; }
 
 /* ── Show Card ───────────────────────────────────────────── */
 .showCard {
-  flex-shrink: 0;
-  width: 160px;
+  width: 100%;
   background: var(--deep-surface);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-lg);
@@ -352,8 +344,8 @@
 
 .showCardPoster {
   position: relative;
-  width: 160px;
-  height: 240px;
+  width: 100%;
+  aspect-ratio: 2 / 3;
   background: var(--elevated-surface);
   overflow: hidden;
 }
@@ -438,7 +430,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: var(--space-2);
   padding: 6px 0;
   background: var(--antique-gold);
   color: var(--void-black) !important;
@@ -458,8 +449,7 @@
 
 /* Card skeleton */
 .cardSkeleton {
-  flex-shrink: 0;
-  width: 160px;
+  width: 100%;
   height: 320px;
   background: var(--deep-surface);
   border-radius: var(--radius-lg);
